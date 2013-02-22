@@ -27,12 +27,12 @@ namespace CvsGitConverter
 		/// <summary>
 		/// Parse the log returning a list of the individual commits to the individual files.
 		/// </summary>
-		public IEnumerable<Commit> Parse()
+		public IEnumerable<FileRevision> Parse()
 		{
 			var state = State.Start;
 			string currentFile = null;
 			string revision = null;
-			Commit commit = null;
+			FileRevision commit = null;
 
 			foreach (var line in m_reader)
 			{
@@ -65,7 +65,7 @@ namespace CvsGitConverter
 						if (!match.Success)
 							throw MakeParseException("Invalid commit info line: '{0}'", line);
 						var time = DateTime.ParseExact(match.Groups[1].Value, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
-						commit = new Commit(currentFile, revision, time, match.Groups[2].Value, match.Groups[3].Value);
+						commit = new FileRevision(currentFile, revision, time, match.Groups[2].Value, match.Groups[3].Value);
 						state = State.ExpectCommitMessage;
 						break;
 					case State.ExpectCommitMessage:

@@ -11,7 +11,7 @@ namespace CvsGitConverter
 	/// <summary>
 	/// Represents a commit to a single file.
 	/// </summary>
-	class Commit
+	class FileRevision
 	{
 		private StringBuilder m_messageBuf = new StringBuilder();
 
@@ -26,7 +26,7 @@ namespace CvsGitConverter
 			get { return m_messageBuf.ToString(); }
 		}
 
-		public Commit(string file, string revision, DateTime time, string author, string commitId)
+		public FileRevision(string file, string revision, DateTime time, string author, string commitId)
 		{
 			this.File = file;
 			this.Revision = revision;

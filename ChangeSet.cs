@@ -12,9 +12,9 @@ namespace CvsGitConverter
 	/// <summary>
 	/// Represents a set of changes to files committed in one go.
 	/// </summary>
-	class ChangeSet : IEnumerable<Commit>
+	class ChangeSet : IEnumerable<FileRevision>
 	{
-		private readonly List<Commit> m_commits = new List<Commit>();
+		private readonly List<FileRevision> m_commits = new List<FileRevision>();
 		private DateTime? m_time;
 
 		public readonly string CommitId;
@@ -37,14 +37,14 @@ namespace CvsGitConverter
 			CommitId = commitId;
 		}
 
-		public void Add(Commit commit)
+		public void Add(FileRevision commit)
 		{
 			m_time = null;
 			m_commits.Add(commit);
 		}
 
 		
-		public IEnumerator<Commit> GetEnumerator()
+		public IEnumerator<FileRevision> GetEnumerator()
 		{
 			return m_commits.GetEnumerator();
 		}

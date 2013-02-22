@@ -43,7 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ChangeSet.cs" />
-    <Compile Include="Commit.cs" />
+    <Compile Include="FileRevision.cs" />
     <Compile Include="CvsLogParser.cs" />
     <Compile Include="CvsLogReader.cs" />
     <Compile Include="ParseException.cs" />
