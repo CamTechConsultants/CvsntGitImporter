@@ -17,6 +17,7 @@ namespace CvsGitConverter
 	{
 		private readonly List<FileRevision> m_commits = new List<FileRevision>();
 		private DateTime? m_time;
+		private string m_message;
 		private List<string> m_errors;
 
 		public readonly string CommitId;
@@ -34,6 +35,16 @@ namespace CvsGitConverter
 			}
 		}
 
+		public string Message
+		{
+			get
+			{
+				if (m_message == null)
+					m_message = String.Join(Environment.NewLine + Environment.NewLine, m_commits.Select(c => c.Message).Distinct());
+				return m_message;
+			}
+		}
+
 		public IEnumerable<string> Errors
 		{
 			get { return m_errors ?? Enumerable.Empty<string>(); }
@@ -47,6 +58,7 @@ namespace CvsGitConverter
 		public void Add(FileRevision commit)
 		{
 			m_time = null;
+			m_message = null;
 			m_commits.Add(commit);
 		}
 
@@ -58,9 +70,9 @@ namespace CvsGitConverter
 			if (authors.Count() > 1)
 				AddError("Multiple authors found: {0}", String.Join(", ", authors));
 
-			var messages = m_commits.Select(c => c.Message).Distinct();
-			if (messages.Count() > 1)
-				AddError("Multiple messages found:\r\n{0}", String.Join("\r\n----------------\r\n", messages));
+			var times = m_commits.Select(c => c.Time).Distinct();
+			if (times.Max() - times.Min() >= TimeSpan.FromMinutes(1))
+				AddError("Times vary too much: {0}", String.Join(", ", times));
 
 			return !Errors.Any();
 		}
