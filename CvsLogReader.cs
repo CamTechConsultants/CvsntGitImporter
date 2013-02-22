@@ -6,13 +6,12 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 
 namespace CvsGitConverter
 {
 	/// <summary>
-	///
+	/// Read a log file line by line, tracking the current line number.
 	/// </summary>
 	class CvsLogReader : IEnumerable<string>
 	{

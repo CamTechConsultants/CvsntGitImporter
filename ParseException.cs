@@ -9,7 +9,7 @@ using System.Runtime.Serialization;
 namespace CvsGitConverter
 {
 	/// <summary>
-	///
+	/// An exception that occurred while parsing.
 	/// </summary>
 	class ParseException : Exception
 	{

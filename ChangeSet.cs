@@ -6,12 +6,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace CvsGitConverter
 {
 	/// <summary>
-	///
+	/// Represents a set of changes to files committed in one go.
 	/// </summary>
 	class ChangeSet : IEnumerable<Commit>
 	{

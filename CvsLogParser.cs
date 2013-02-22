@@ -6,15 +6,12 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace CvsGitConverter
 {
 	/// <summary>
-	///
+	/// CVS log file parser.
 	/// </summary>
 	class CvsLogParser
 	{
@@ -27,6 +24,9 @@ namespace CvsGitConverter
 			m_reader = new CvsLogReader(logFile);
 		}
 
+		/// <summary>
+		/// Parse the log returning a list of the individual commits to the individual files.
+		/// </summary>
 		public IEnumerable<Commit> Parse()
 		{
 			var state = State.Start;
