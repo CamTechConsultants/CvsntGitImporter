@@ -54,6 +54,13 @@ namespace CvsGitConverter
 					}
 				}
 			}
+
+			foreach (var f in parser.Files)
+			{
+				Console.Out.WriteLine("File {0}", f.Name);
+				foreach (var t in f.Branches)
+					Console.Out.WriteLine("  {0} = {1}", t.Key, t.Value);
+			}
 		}
 	}
 }

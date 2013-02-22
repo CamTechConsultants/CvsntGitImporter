@@ -4,7 +4,10 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
+
 namespace CvsGitConverter
 {
 	/// <summary>
@@ -26,6 +29,14 @@ namespace CvsGitConverter
 				throw new ArgumentException(String.Format("Invalid revision format: '{0}'", value));
 
 			m_value = value;
+		}
+
+		/// <summary>
+		/// Split the revision up into parts.
+		/// </summary>
+		public IEnumerable<int> Parts
+		{
+			get { return m_value.Split('.').Select(p => int.Parse(p)); }
 		}
 
 		public override string ToString()

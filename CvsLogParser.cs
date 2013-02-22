@@ -17,11 +17,21 @@ namespace CvsGitConverter
 	{
 		private const string LogSeparator = "----------------------------";
 		private const string FileSeparator = "=============================================================================";
+
 		private readonly CvsLogReader m_reader;
+		private readonly List<FileInfo> m_files = new List<FileInfo>();
 
 		public CvsLogParser(string logFile)
 		{
 			m_reader = new CvsLogReader(logFile);
+		}
+
+		/// <summary>
+		/// Gets a list of all the files.
+		/// </summary>
+		public IEnumerable<FileInfo> Files
+		{
+			get { return m_files; }
 		}
 
 		/// <summary>
@@ -30,7 +40,7 @@ namespace CvsGitConverter
 		public IEnumerable<FileRevision> Parse()
 		{
 			var state = State.Start;
-			string currentFile = null;
+			FileInfo currentFile = null;
 			Revision revision = Revision.Empty;
 			FileRevision commit = null;
 
@@ -41,13 +51,29 @@ namespace CvsGitConverter
 					case State.Start:
 						if (line.StartsWith("Working file: "))
 						{
-							currentFile = line.Substring(14);
+							currentFile = new FileInfo(line.Substring(14));
+							m_files.Add(currentFile);
 							state = State.InFileHeader;
 						}
 						break;
 					case State.InFileHeader:
 						if (line == LogSeparator)
 							state = State.ExpectCommitRevision;
+						else if (line == "symbolic names:")
+							state = State.InTags;
+						break;
+					case State.InTags:
+						if (!line.StartsWith("\t"))
+						{
+							state = State.InFileHeader;
+						}
+						else
+						{
+							var tagMatch = Regex.Match(line, @"^\t(\S+): (\S+)");
+							if (!tagMatch.Success)
+								throw MakeParseException("Invalid tag line: '{0}'", line);
+							currentFile.AddTag(tagMatch.Groups[1].Value, new Revision(tagMatch.Groups[2].Value));
+						}
 						break;
 					case State.ExpectCommitRevision:
 						if (line.StartsWith("revision "))
@@ -68,7 +94,7 @@ namespace CvsGitConverter
 						var time = DateTime.ParseExact(match.Groups[1].Value, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
 						var mergepoint = match.Groups[4].Value.Length == 0 ? Revision.Empty : new Revision(match.Groups[4].Value);
 
-						commit = new FileRevision(file: currentFile, revision: revision, mergepoint: mergepoint, time: time,
+						commit = new FileRevision(file: currentFile.Name, revision: revision, mergepoint: mergepoint, time: time,
 								author: match.Groups[2].Value, commitId: match.Groups[3].Value);
 
 						state = State.ExpectCommitMessage;
@@ -102,6 +128,7 @@ namespace CvsGitConverter
 		{
 			Start = 0,
 			InFileHeader,
+			InTags,
 			ExpectCommitRevision,
 			ExpectCommitInfo,
 			ExpectCommitMessage,
