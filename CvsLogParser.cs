@@ -61,11 +61,16 @@ namespace CvsGitConverter
 						}
 						break;
 					case State.ExpectCommitInfo:
-						var match = Regex.Match(line, @"date: (\d{4}/\d\d/\d\d \d\d:\d\d:\d\d);  author: (\S+?);.*  commitid: (\S+?);");
+						var match = Regex.Match(line, @"date: (\d{4}/\d\d/\d\d \d\d:\d\d:\d\d);  author: (\S+?);.*  commitid: (\S+?);  (?:mergepoint: (\S+);)?");
 						if (!match.Success)
 							throw MakeParseException("Invalid commit info line: '{0}'", line);
+
 						var time = DateTime.ParseExact(match.Groups[1].Value, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
-						commit = new FileRevision(currentFile, revision, time, match.Groups[2].Value, match.Groups[3].Value);
+						var mergepoint = match.Groups[4].Value.Length == 0 ? null : match.Groups[4].Value;
+
+						commit = new FileRevision(file: currentFile, revision: revision, mergepoint: mergepoint, time: time,
+								author: match.Groups[2].Value, commitId: match.Groups[3].Value);
+
 						state = State.ExpectCommitMessage;
 						break;
 					case State.ExpectCommitMessage:

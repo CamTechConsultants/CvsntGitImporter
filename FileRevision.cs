@@ -17,6 +17,7 @@ namespace CvsGitConverter
 
 		public readonly string File;
 		public readonly string Revision;
+		public readonly string Mergepoint;
 		public readonly DateTime Time;
 		public readonly string Author;
 		public readonly string CommitId;
@@ -26,10 +27,11 @@ namespace CvsGitConverter
 			get { return m_messageBuf.ToString(); }
 		}
 
-		public FileRevision(string file, string revision, DateTime time, string author, string commitId)
+		public FileRevision(string file, string revision, string mergepoint, DateTime time, string author, string commitId)
 		{
 			this.File = file;
 			this.Revision = revision;
+			this.Mergepoint = mergepoint;
 			this.Time = time;
 			this.Author = author;
 			this.CommitId = commitId;
