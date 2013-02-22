@@ -79,7 +79,7 @@ namespace CvsGitConverter
 							yield return commit;
 							state = State.Start;
 						}
-						else
+						else if (!line.StartsWith("branches:  "))
 						{
 							commit.AddMessage(line);
 						}
