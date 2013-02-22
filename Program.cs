@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace CvsGitConverter
 {
@@ -18,7 +19,9 @@ namespace CvsGitConverter
 				throw new ArgumentException("Need a cvs.log file");
 
 			var parser = new CvsLogParser(args[0]);
-			var revisions = parser.Parse();
+			var revisions = from r in parser.Parse()
+							where !(r.Revision == "1.1" && Regex.IsMatch(r.Message, @"file .* was initially added on branch "))
+							select r;
 
 			var commits = new Dictionary<string, Commit>();
 
