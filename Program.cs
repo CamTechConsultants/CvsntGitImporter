@@ -38,9 +38,18 @@ namespace CvsGitConverter
 
 			foreach (var commit in commits.Values.OrderBy(c => c.Time))
 			{
-				Console.Out.WriteLine("Commit: {0} {1}", commit.CommitId, commit.Time);
-				foreach (var revision in commit)
-					Console.Out.WriteLine("  {0} r{1}", revision.File, revision.Revision);
+				if (!commit.Verify())
+				{
+					Console.Error.WriteLine("Verification failed: {0} {1}", commit.CommitId, commit.Time);
+					foreach (var revision in commit)
+						Console.Error.WriteLine("  {0} r{1}", revision.File, revision.Revision);
+
+					foreach (var error in commit.Errors)
+					{
+						Console.Error.WriteLine(error);
+						Console.Error.WriteLine("========================================");
+					}
+				}
 			}
 		}
 	}
