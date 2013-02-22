@@ -43,12 +43,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Commit.cs" />
+    <Compile Include="FileInfo.cs" />
     <Compile Include="FileRevision.cs" />
     <Compile Include="CvsLogParser.cs" />
     <Compile Include="CvsLogReader.cs" />
     <Compile Include="ParseException.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Revision.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

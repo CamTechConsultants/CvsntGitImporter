@@ -31,7 +31,7 @@ namespace CvsGitConverter
 		{
 			var state = State.Start;
 			string currentFile = null;
-			string revision = null;
+			Revision revision = Revision.Empty;
 			FileRevision commit = null;
 
 			foreach (var line in m_reader)
@@ -52,7 +52,7 @@ namespace CvsGitConverter
 					case State.ExpectCommitRevision:
 						if (line.StartsWith("revision "))
 						{
-							revision = line.Substring(9);
+							revision = new Revision(line.Substring(9));
 							state = State.ExpectCommitInfo;
 						}
 						else
@@ -66,7 +66,7 @@ namespace CvsGitConverter
 							throw MakeParseException("Invalid commit info line: '{0}'", line);
 
 						var time = DateTime.ParseExact(match.Groups[1].Value, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
-						var mergepoint = match.Groups[4].Value.Length == 0 ? null : match.Groups[4].Value;
+						var mergepoint = match.Groups[4].Value.Length == 0 ? Revision.Empty : new Revision(match.Groups[4].Value);
 
 						commit = new FileRevision(file: currentFile, revision: revision, mergepoint: mergepoint, time: time,
 								author: match.Groups[2].Value, commitId: match.Groups[3].Value);
