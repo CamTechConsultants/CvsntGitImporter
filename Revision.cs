@@ -13,7 +13,7 @@ namespace CvsGitConverter
 	/// <summary>
 	/// Represents a CVS revision number.
 	/// </summary>
-	struct Revision
+	class Revision
 	{
 		private string m_value;
 
