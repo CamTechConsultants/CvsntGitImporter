@@ -27,15 +27,15 @@ namespace CvsGitConverter
 
 			foreach (var revision in revisions)
 			{
-				Commit changeSet;
-				if (commits.TryGetValue(revision.CommitId, out changeSet))
+				Commit commit;
+				if (commits.TryGetValue(revision.CommitId, out commit))
 				{
-					changeSet.Add(revision);
+					commit.Add(revision);
 				}
 				else
 				{
-					changeSet = new Commit(revision.CommitId) { revision };
-					commits.Add(changeSet.CommitId, changeSet);
+					commit = new Commit(revision.CommitId) { revision };
+					commits.Add(commit.CommitId, commit);
 				}
 			}
 
