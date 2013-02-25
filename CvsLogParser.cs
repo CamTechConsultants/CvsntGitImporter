@@ -94,7 +94,7 @@ namespace CvsGitConverter
 						var time = DateTime.ParseExact(match.Groups[1].Value, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
 						var mergepoint = match.Groups[4].Value.Length == 0 ? Revision.Empty : new Revision(match.Groups[4].Value);
 
-						commit = new FileRevision(file: currentFile.Name, revision: revision, mergepoint: mergepoint, time: time,
+						commit = new FileRevision(file: currentFile, revision: revision, mergepoint: mergepoint, time: time,
 								author: match.Groups[2].Value, commitId: match.Groups[3].Value);
 
 						state = State.ExpectCommitMessage;
