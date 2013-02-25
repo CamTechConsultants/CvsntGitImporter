@@ -43,5 +43,10 @@ namespace CvsGitConverter
 				m_messageBuf.Append(Environment.NewLine);
 			m_messageBuf.Append(line);
 		}
+
+		public override string ToString()
+		{
+			return String.Format("{0} r{1}", File.Name, Revision);
+		}
 	}
 }

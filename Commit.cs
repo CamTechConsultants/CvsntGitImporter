@@ -77,6 +77,11 @@ namespace CvsGitConverter
 			return !Errors.Any();
 		}
 
+		public override string ToString()
+		{
+			return String.Join(", ", m_commits);
+		}
+
 		public IEnumerator<FileRevision> GetEnumerator()
 		{
 			return m_commits.GetEnumerator();
