@@ -60,7 +60,7 @@ namespace CvsGitConverter
 		/// </summary>
 		private static Revision GetBranchStem(int[] parts)
 		{
-			return new Revision(String.Format("{0}.{1}", String.Join(".", parts.Take(parts.Length - 2)), parts[parts.Length - 1]));
+			return Revision.Create(String.Format("{0}.{1}", String.Join(".", parts.Take(parts.Length - 2)), parts[parts.Length - 1]));
 		}
 	}
 }

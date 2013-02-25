@@ -72,13 +72,13 @@ namespace CvsGitConverter
 							var tagMatch = Regex.Match(line, @"^\t(\S+): (\S+)");
 							if (!tagMatch.Success)
 								throw MakeParseException("Invalid tag line: '{0}'", line);
-							currentFile.AddTag(tagMatch.Groups[1].Value, new Revision(tagMatch.Groups[2].Value));
+							currentFile.AddTag(tagMatch.Groups[1].Value, Revision.Create(tagMatch.Groups[2].Value));
 						}
 						break;
 					case State.ExpectCommitRevision:
 						if (line.StartsWith("revision "))
 						{
-							revision = new Revision(line.Substring(9));
+							revision = Revision.Create(line.Substring(9));
 							state = State.ExpectCommitInfo;
 						}
 						else
@@ -92,7 +92,7 @@ namespace CvsGitConverter
 							throw MakeParseException("Invalid commit info line: '{0}'", line);
 
 						var time = DateTime.ParseExact(match.Groups[1].Value, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
-						var mergepoint = match.Groups[4].Value.Length == 0 ? Revision.Empty : new Revision(match.Groups[4].Value);
+						var mergepoint = match.Groups[4].Value.Length == 0 ? Revision.Empty : Revision.Create(match.Groups[4].Value);
 
 						commit = new FileRevision(file: currentFile, revision: revision, mergepoint: mergepoint, time: time,
 								author: match.Groups[2].Value, commitId: match.Groups[3].Value);

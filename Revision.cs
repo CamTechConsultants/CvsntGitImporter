@@ -15,20 +15,33 @@ namespace CvsGitConverter
 	/// </summary>
 	class Revision
 	{
+		private static Dictionary<string, Revision> m_cache = new Dictionary<string, Revision>();
+
 		private string m_value;
 
 		public static Revision Empty = new Revision("");
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="Revision"/> struct.
-		/// </summary>
-		/// <exception cref="ArgumentException">if the revision string is invalid</exception>
-		public Revision(string value)
+		private Revision(string value)
 		{
 			if (value.Length > 0 && !Regex.IsMatch(value, @"\d+(\.\d+){1,}"))
 				throw new ArgumentException(String.Format("Invalid revision format: '{0}'", value));
 
 			m_value = value;
+		}
+
+		/// <summary>
+		/// Returns an instance of the <see cref="Revision"/> class.
+		/// </summary>
+		/// <exception cref="ArgumentException">if the revision string is invalid</exception>
+		public static Revision Create(string value)
+		{
+			Revision r;
+			if (m_cache.TryGetValue(value, out r))
+				return r;
+
+			r = new Revision(value);
+			m_cache.Add(value, r);
+			return r;
 		}
 
 		/// <summary>
