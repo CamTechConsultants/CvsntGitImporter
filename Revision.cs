@@ -59,21 +59,24 @@ namespace CvsGitConverter
 		{
 			get
 			{
-				var parts = this.Parts.ToArray();
-				return parts.Length > 3 && parts[parts.Length - 2] == 0;
+				return m_parts.Length > 3 && m_parts[m_parts.Length - 2] == 0;
 			}
 		}
 
 		/// <summary>
-		/// If the revision is actually a branch, get the stem for all revisions on the branch.
+		/// Get the branch stem for a revision.
 		/// </summary>
-		/// <remarks>Effectively converts a.b.0.x into a.b.x</remarks>
+		/// <remarks>If the revision is a branch point, then effectively converts a.b.0.x into a.b.x,
+		/// otherwise it just removes the last item.</remarks>
+		/// <exception cref="InvalidOperationException">if the revision is on MAIN</exception>
 		public Revision BranchStem
 		{
 			get
 			{
-				var parts = this.Parts.ToArray();
-				return Revision.Create(String.Format("{0}.{1}", String.Join(".", parts.Take(parts.Length - 2)), parts[parts.Length - 1]));
+				if (IsBranch)
+					return Revision.Create(String.Format("{0}.{1}", String.Join(".", m_parts.Take(m_parts.Length - 2)), m_parts[m_parts.Length - 1]));
+				else
+					return Revision.Create(String.Join(".", m_parts.Take(m_parts.Length - 1)));
 			}
 		}
 
