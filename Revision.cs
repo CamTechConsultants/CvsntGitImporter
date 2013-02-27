@@ -17,7 +17,7 @@ namespace CvsGitConverter
 	{
 		private static Dictionary<string, Revision> m_cache = new Dictionary<string, Revision>();
 
-		private string m_value;
+		private int[] m_parts;
 
 		public static Revision Empty = new Revision("");
 
@@ -26,7 +26,7 @@ namespace CvsGitConverter
 			if (value.Length > 0 && !Regex.IsMatch(value, @"\d+(\.\d+){1,}"))
 				throw new ArgumentException(String.Format("Invalid revision format: '{0}'", value));
 
-			m_value = value;
+			m_parts = value.Split('.').Select(p => int.Parse(p)).ToArray();
 		}
 
 		/// <summary>
@@ -49,7 +49,7 @@ namespace CvsGitConverter
 		/// </summary>
 		public IEnumerable<int> Parts
 		{
-			get { return m_value.Split('.').Select(p => int.Parse(p)); }
+			get { return m_parts; }
 		}
 
 		/// <summary>
@@ -79,32 +79,47 @@ namespace CvsGitConverter
 
 		public override string ToString()
 		{
-			return m_value;
+			return String.Join(".", m_parts);
 		}
 
 		public static bool operator==(Revision a, string b)
 		{
-			return a.m_value == b;
+			return a.ToString() == b;
 		}
 
 		public static bool operator !=(Revision a, string b)
 		{
-			return a.m_value != b;
+			return a.ToString() != b;
 		}
 
 		public override bool Equals(object obj)
 		{
 			if (obj is string)
-				return m_value == (string)obj;
-			else if (obj is Revision)
-				return m_value == ((Revision)obj).m_value;
+			{
+				return this.ToString() == (string)obj;
+			}
 			else
-				return false;
+			{
+				var other = obj as Revision;
+				if (other == null)
+					return false;
+
+				if (this.m_parts.Length != other.m_parts.Length)
+					return false;
+
+				for (int i = 0; i < m_parts.Length; i++)
+				{
+					if (this.m_parts[i] != other.m_parts[i])
+						return false;
+				}
+
+				return true;
+			}
 		}
 
 		public override int GetHashCode()
 		{
-			return m_value.GetHashCode();
+			return m_parts.GetHashCode();
 		}
 	}
 }
