@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace CvsGitConverter
@@ -94,7 +95,17 @@ namespace CvsGitConverter
 			if (isMerge)
 			{
 				if (m_files.Any(f => f.Mergepoint == Revision.Empty))
-					AddError("Some files are merged, some are not");
+				{
+					var buf = new StringBuilder();
+					buf.AppendLine("Some files are merged, some are not");
+					buf.AppendLine("    Merged:");
+					m_files.Where(f => f.Mergepoint != Revision.Empty).Aggregate(buf, (sb, f) => sb.AppendFormat("        {0}\r\n", f.File));
+					buf.AppendLine("    Not Merged:");
+					m_files.Where(f => f.Mergepoint == Revision.Empty).Aggregate(buf, (sb, f) => sb.AppendFormat("        {0}\r\n", f.File));
+
+					AddError(buf.ToString());
+				}
+
 				var mergedFromBranches = m_files.Select(f => f.BranchMergedFrom).Distinct();
 				if (mergedFromBranches.Count() > 1)
 					AddError("Multiple branches merged from found: {0}", String.Join(", ", mergedFromBranches));
