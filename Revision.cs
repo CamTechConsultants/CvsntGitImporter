@@ -52,6 +52,31 @@ namespace CvsGitConverter
 			get { return m_value.Split('.').Select(p => int.Parse(p)); }
 		}
 
+		/// <summary>
+		/// Is this revision actually the start of a branch?
+		/// </summary>
+		public bool IsBranch
+		{
+			get
+			{
+				var parts = this.Parts.ToArray();
+				return parts.Length > 3 && parts[parts.Length - 2] == 0;
+			}
+		}
+
+		/// <summary>
+		/// If the revision is actually a branch, get the stem for all revisions on the branch.
+		/// </summary>
+		/// <remarks>Effectively converts a.b.0.x into a.b.x</remarks>
+		public Revision BranchStem
+		{
+			get
+			{
+				var parts = this.Parts.ToArray();
+				return Revision.Create(String.Format("{0}.{1}", String.Join(".", parts.Take(parts.Length - 2)), parts[parts.Length - 1]));
+			}
+		}
+
 		public override string ToString()
 		{
 			return m_value;
