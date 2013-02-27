@@ -90,6 +90,21 @@ namespace CvsGitConverter
 			if (branches.Count() > 1)
 				AddError("Multiple branches found: {0}", String.Join(", ", branches));
 
+			bool isMerge = m_files.First().Mergepoint != Revision.Empty;
+			if (isMerge)
+			{
+				if (m_files.Any(f => f.Mergepoint == Revision.Empty))
+					AddError("Some files are merged, some are not");
+				var mergedFromBranches = m_files.Select(f => f.BranchMergedFrom).Distinct();
+				if (mergedFromBranches.Count() > 1)
+					AddError("Multiple branches merged from found: {0}", String.Join(", ", mergedFromBranches));
+			}
+			else
+			{
+				if (m_files.Any(f => f.Mergepoint != Revision.Empty))
+					AddError("Some files are merged, some are not");
+			}
+
 			return !Errors.Any();
 		}
 

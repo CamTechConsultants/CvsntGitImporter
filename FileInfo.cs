@@ -40,6 +40,27 @@ namespace CvsGitConverter
 				Tags[name] = revision;
 		}
 
+		/// <summary>
+		/// Gets the branch for a revision.
+		/// </summary>
+		public string GetBranch(Revision revision)
+		{
+			if (revision.Parts.Count() == 2)
+			{
+				return "MAIN";
+			}
+			else
+			{
+				var branchStem = revision.BranchStem;
+				string branchTag;
+				if (!this.Branches.TryGetValue(branchStem, out branchTag))
+					throw new Exception(String.Format("Branch with stem {0} not found on file {1} when looking for r{2}",
+							branchStem, this.Name, revision));
+
+				return branchTag;
+			}
+		}
+
 		public override string ToString()
 		{
 			return Name;

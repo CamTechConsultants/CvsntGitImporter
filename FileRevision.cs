@@ -33,21 +33,20 @@ namespace CvsGitConverter
 		/// </summary>
 		public string Branch
 		{
+			get { return this.File.GetBranch(this.Revision); }
+		}
+
+		/// <summary>
+		/// Gets the branch that this commit was merged from, or null if there is no merge.
+		/// </summary>
+		public string BranchMergedFrom
+		{
 			get
 			{
-				if (Revision.Parts.Count() == 2)
-				{
-					return "MAIN";
-				}
+				if (Mergepoint == Revision.Empty)
+					return null;
 				else
-				{
-					var branchStem = Revision.BranchStem;
-					string branchTag;
-					if (!File.Branches.TryGetValue(branchStem, out branchTag))
-						throw new Exception(String.Format("Branch with stem {0} not found", branchStem));
-
-					return branchTag;
-				}
+					return this.File.GetBranch(this.Mergepoint);
 			}
 		}
 
