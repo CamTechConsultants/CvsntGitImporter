@@ -47,19 +47,18 @@ namespace CvsGitConverter
 					foreach (var revision in commit)
 						Console.Error.WriteLine("  {0} r{1}", revision.File, revision.Revision);
 
+					bool first = true;
 					foreach (var error in commit.Errors)
 					{
+						if (first)
+							first = false;
+						else
+							Console.Error.WriteLine("----------------------------------------");
 						Console.Error.WriteLine(error);
-						Console.Error.WriteLine("========================================");
 					}
-				}
-			}
 
-			foreach (var f in parser.Files)
-			{
-				Console.Out.WriteLine("File {0}", f.Name);
-				foreach (var t in f.Branches)
-					Console.Out.WriteLine("  {0} = {1}", t.Key, t.Value);
+					Console.Error.WriteLine("========================================");
+				}
 			}
 		}
 	}
