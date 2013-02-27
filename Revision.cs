@@ -19,7 +19,7 @@ namespace CvsGitConverter
 
 		private int[] m_parts;
 
-		public static Revision Empty = new Revision("");
+		public static Revision Empty = new Revision(new int[0]);
 
 		private Revision(string value)
 		{
@@ -27,6 +27,11 @@ namespace CvsGitConverter
 				throw new ArgumentException(String.Format("Invalid revision format: '{0}'", value));
 
 			m_parts = value.Split('.').Select(p => int.Parse(p)).ToArray();
+		}
+
+		private Revision(int[] parts)
+		{
+			m_parts = parts;
 		}
 
 		/// <summary>
@@ -73,10 +78,21 @@ namespace CvsGitConverter
 		{
 			get
 			{
+				if (m_parts.Length <= 2)
+					throw new InvalidOperationException("Cannot get branch stem for revisions on MAIN");
+
+				var branchParts = new int[m_parts.Length - 1];
 				if (IsBranch)
-					return Revision.Create(String.Format("{0}.{1}", String.Join(".", m_parts.Take(m_parts.Length - 2)), m_parts[m_parts.Length - 1]));
+				{
+					Array.Copy(m_parts, branchParts, m_parts.Length - 2);
+					branchParts[branchParts.Length - 1] = m_parts[m_parts.Length - 1];
+				}
 				else
-					return Revision.Create(String.Join(".", m_parts.Take(m_parts.Length - 1)));
+				{
+					Array.Copy(m_parts, branchParts, m_parts.Length - 1);
+				}
+
+				return Revision.Create(String.Join(".", branchParts));
 			}
 		}
 
