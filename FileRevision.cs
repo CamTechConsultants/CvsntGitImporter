@@ -4,6 +4,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Text;
 
 namespace CvsGitConverter
@@ -25,6 +26,29 @@ namespace CvsGitConverter
 		public string Message
 		{
 			get { return m_messageBuf.ToString(); }
+		}
+
+		/// <summary>
+		/// Gets the branch this commit was made on.
+		/// </summary>
+		public string Branch
+		{
+			get
+			{
+				if (Revision.Parts.Count() == 2)
+				{
+					return "MAIN";
+				}
+				else
+				{
+					var branchStem = Revision.BranchStem;
+					string branchTag;
+					if (!File.Branches.TryGetValue(branchStem, out branchTag))
+						throw new Exception(String.Format("Branch with stem {0} not found", branchStem));
+
+					return branchTag;
+				}
+			}
 		}
 
 		public FileRevision(FileInfo file, Revision revision, Revision mergepoint, DateTime time, string author, string commitId)

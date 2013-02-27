@@ -24,7 +24,7 @@ namespace CvsGitConverter
 		/// <summary>
 		/// The branches defined on the file.
 		/// </summary>
-		public readonly Dictionary<string, Revision> Branches = new Dictionary<string, Revision>();
+		public readonly Dictionary<Revision, string> Branches = new Dictionary<Revision, string>();
 
 		public FileInfo(string name)
 		{
@@ -35,7 +35,7 @@ namespace CvsGitConverter
 		{
 			// work out whether it's a normal tag or a branch tag
 			if (revision.IsBranch)
-				Branches[name] = revision.BranchStem;
+				Branches[revision.BranchStem] = name;
 			else
 				Tags[name] = revision;
 		}
