@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Commit.cs" />
+    <Compile Include="CommitBuilder.cs" />
     <Compile Include="FileInfo.cs" />
     <Compile Include="FileRevision.cs" />
     <Compile Include="CvsLogParser.cs" />

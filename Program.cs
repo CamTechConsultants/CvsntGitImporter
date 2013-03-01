@@ -5,9 +5,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 
 namespace CvsGitConverter
 {
@@ -19,27 +16,15 @@ namespace CvsGitConverter
 				throw new ArgumentException("Need a cvs.log file");
 
 			var parser = new CvsLogParser(args[0]);
-			var revisions = from r in parser.Parse()
-							where !(r.Revision == "1.1" && Regex.IsMatch(r.Message, @"file .* was initially added on branch "))
-							select r;
+			var builder = new CommitBuilder(parser);
+			var commits = builder.GetCommits();
 
-			var commits = new Dictionary<string, Commit>();
+			Verify(commits);
+		}
 
-			foreach (var revision in revisions)
-			{
-				Commit commit;
-				if (commits.TryGetValue(revision.CommitId, out commit))
-				{
-					commit.Add(revision);
-				}
-				else
-				{
-					commit = new Commit(revision.CommitId) { revision };
-					commits.Add(commit.CommitId, commit);
-				}
-			}
-
-			foreach (var commit in commits.Values.OrderBy(c => c.Time))
+		private static void Verify(IEnumerable<Commit> commits)
+		{
+			foreach (var commit in commits)
 			{
 				if (!commit.Verify())
 				{
