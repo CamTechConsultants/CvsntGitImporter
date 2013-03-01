@@ -76,7 +76,7 @@ namespace CvsGitConverter
 			m_files.Add(commit);
 		}
 
-		public bool Verify()
+		public bool Verify(bool fussy = false)
 		{
 			m_errors = null;
 
@@ -88,9 +88,12 @@ namespace CvsGitConverter
 			if (times.Max() - times.Min() >= TimeSpan.FromMinutes(1))
 				AddError("Times vary too much: {0}", String.Join(", ", times));
 
-			var branches = m_files.Select(c => c.Branch).Distinct();
-			if (branches.Count() > 1)
-				AddError("Multiple branches found: {0}", String.Join(", ", branches));
+			if (fussy)
+			{
+				var branches = m_files.Select(c => c.Branch).Distinct();
+				if (branches.Count() > 1)
+					AddError("Multiple branches found: {0}", String.Join(", ", branches));
+			}
 
 			bool isMerge = m_files.First().Mergepoint != Revision.Empty;
 			if (isMerge)
