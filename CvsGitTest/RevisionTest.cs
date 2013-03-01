@@ -10,7 +10,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace CvsGitTest
 {
 	[TestClass]
-	public class UnitTest1
+	public class RevisionTest
 	{
 		[TestMethod]
 		public void IsBranch_NonBranchRevision()
