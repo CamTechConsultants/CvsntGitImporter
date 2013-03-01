@@ -63,6 +63,7 @@ namespace CvsGitConverter
 			get { return m_errors ?? Enumerable.Empty<string>(); }
 		}
 
+
 		public Commit(string commitId)
 		{
 			CommitId = commitId;
@@ -94,26 +95,15 @@ namespace CvsGitConverter
 			bool isMerge = m_files.First().Mergepoint != Revision.Empty;
 			if (isMerge)
 			{
-				if (m_files.Any(f => f.Mergepoint == Revision.Empty))
+				// deleted files have no mergepoints, so ignore; also ignore those with no mergepoint
+				var mergedFromBranches = m_files.Where(f => !f.IsDead && f.Mergepoint != Revision.Empty).Select(f => f.BranchMergedFrom).Distinct();
+				if (mergedFromBranches.Count() > 1)
 				{
 					var buf = new StringBuilder();
-					buf.AppendLine("Some files are merged, some are not");
-					buf.AppendLine("    Merged:");
-					m_files.Where(f => f.Mergepoint != Revision.Empty).Aggregate(buf, (sb, f) => sb.AppendFormat("        {0}\r\n", f.File));
-					buf.AppendLine("    Not Merged:");
-					m_files.Where(f => f.Mergepoint == Revision.Empty).Aggregate(buf, (sb, f) => sb.AppendFormat("        {0}\r\n", f.File));
-
+					buf.AppendFormat("Multiple branches merged from found: {0}\r\n", String.Join(", ", mergedFromBranches));
+					m_files.Aggregate(buf, (sb, f) => sb.AppendFormat("    {0}: {1}\r\n", f, f.BranchMergedFrom));
 					AddError(buf.ToString());
 				}
-
-				var mergedFromBranches = m_files.Select(f => f.BranchMergedFrom).Distinct();
-				if (mergedFromBranches.Count() > 1)
-					AddError("Multiple branches merged from found: {0}", String.Join(", ", mergedFromBranches));
-			}
-			else
-			{
-				if (m_files.Any(f => f.Mergepoint != Revision.Empty))
-					AddError("Some files are merged, some are not");
 			}
 
 			return !Errors.Any();
@@ -123,6 +113,7 @@ namespace CvsGitConverter
 		{
 			return String.Join(", ", m_files);
 		}
+
 
 		public IEnumerator<FileRevision> GetEnumerator()
 		{

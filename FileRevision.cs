@@ -22,6 +22,7 @@ namespace CvsGitConverter
 		public readonly DateTime Time;
 		public readonly string Author;
 		public readonly string CommitId;
+		public readonly bool IsDead;
 
 		public string Message
 		{
@@ -50,7 +51,8 @@ namespace CvsGitConverter
 			}
 		}
 
-		public FileRevision(FileInfo file, Revision revision, Revision mergepoint, DateTime time, string author, string commitId)
+		public FileRevision(FileInfo file, Revision revision, Revision mergepoint, DateTime time, string author,
+				string commitId, bool isDead = false)
 		{
 			this.File = file;
 			this.Revision = revision;
@@ -58,6 +60,7 @@ namespace CvsGitConverter
 			this.Time = time;
 			this.Author = author;
 			this.CommitId = commitId;
+			this.IsDead = isDead;
 		}
 
 		public void AddMessage(string line)

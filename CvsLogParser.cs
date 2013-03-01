@@ -87,15 +87,25 @@ namespace CvsGitConverter
 						}
 						break;
 					case State.ExpectCommitInfo:
-						var match = Regex.Match(line, @"date: (\d{4}/\d\d/\d\d \d\d:\d\d:\d\d);  author: (\S+?);.*  commitid: (\S+?);  (?:mergepoint: (\S+);)?");
+						var infoPattern = @"date: (?<date>\d{4}/\d\d/\d\d \d\d:\d\d:\d\d);  author: (?<author>\S+?);  " +
+										  @"state: (?<state>\S+?);.*  commitid: (?<commitid>\S+?);  " +
+										  @"(?:mergepoint: (?<mergepoint>\S+);)?";
+						var match = Regex.Match(line, infoPattern);
 						if (!match.Success)
 							throw MakeParseException("Invalid commit info line: '{0}'", line);
 
-						var time = DateTime.ParseExact(match.Groups[1].Value, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
-						var mergepoint = match.Groups[4].Value.Length == 0 ? Revision.Empty : Revision.Create(match.Groups[4].Value);
+						var time = DateTime.ParseExact(match.Groups["date"].Value, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
+						var mergepointStr = match.Groups["mergepoint"].Value;
+						var mergepoint = mergepointStr.Length == 0 ? Revision.Empty : Revision.Create(mergepointStr);
 
-						commit = new FileRevision(file: currentFile, revision: revision, mergepoint: mergepoint, time: time,
-								author: match.Groups[2].Value, commitId: match.Groups[3].Value);
+						commit = new FileRevision(
+								file: currentFile,
+								revision: revision,
+								mergepoint: mergepoint,
+								time: time,
+								author: match.Groups["author"].Value,
+								commitId: match.Groups["commitid"].Value,
+								isDead: match.Groups["state"].Value == "dead");
 
 						state = State.ExpectCommitMessage;
 						break;
