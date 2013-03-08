@@ -18,8 +18,12 @@ namespace CvsGitConverter
 
 		public CommitBuilder(CvsLogParser parser)
 		{
+			m_parser = parser;
 		}
 
+		/// <summary>
+		/// Get all the commits in a CVS log ordered by date.
+		/// </summary>
 		public IEnumerable<Commit> GetCommits()
 		{
 			var revisions = from r in m_parser.Parse()
