@@ -98,6 +98,26 @@ namespace CvsGitConverter
 			}
 		}
 
+		/// <summary>
+		/// Does this revision directly precede another?
+		/// </summary>
+		public bool DirectlyPrecedes(Revision other)
+		{
+			var precedingParts = new int[other.m_parts.Length];
+			Array.Copy(other.m_parts, precedingParts, other.m_parts.Length);
+
+			precedingParts[precedingParts.Length - 1]--;
+			if (precedingParts[precedingParts.Length - 1] == 0 && precedingParts.Length > 2)
+			{
+				// we've reached the start of a branch - trim the last two elements
+				var tmp = precedingParts;
+				precedingParts = new int[precedingParts.Length - 2];
+				Array.Copy(tmp, precedingParts, precedingParts.Length);
+			}
+
+			return PartsEqual(m_parts, precedingParts);
+		}
+
 		public override string ToString()
 		{
 			return String.Join(".", m_parts);
