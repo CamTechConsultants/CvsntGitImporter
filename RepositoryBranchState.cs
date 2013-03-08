@@ -11,9 +11,9 @@ using System.Text;
 namespace CvsGitConverter
 {
 	/// <summary>
-	/// Tracks the versions of all files in the repository.
+	/// Tracks the versions of all files in the repository for a specific branch.
 	/// </summary>
-	class RepositoryState
+	class RepositoryBranchState
 	{
 		private readonly Dictionary<string, Revision> m_files = new Dictionary<string, Revision>(StringComparer.OrdinalIgnoreCase);
 
@@ -45,7 +45,7 @@ namespace CvsGitConverter
 			}
 		}
 
-		public RepositoryState(string branch)
+		public RepositoryBranchState(string branch)
 		{
 		}
 

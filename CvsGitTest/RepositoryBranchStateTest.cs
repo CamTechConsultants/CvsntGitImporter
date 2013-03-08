@@ -16,12 +16,12 @@ namespace CvsGitTest
 	///
 	/// </summary>
 	[TestClass]
-	public class RepositoryStateTest
+	public class RepositoryBranchStateTest
 	{
 		[TestMethod]
 		public void ApplyCommit_FilesUpdated()
 		{
-			var repoState = new RepositoryState("MAIN");
+			var repoState = new RepositoryBranchState("MAIN");
 
 			var file1 = new FileInfo("file1");
 			var file2 = new FileInfo("file2");
@@ -49,7 +49,7 @@ namespace CvsGitTest
 		[TestMethod]
 		public void ApplyCommit_FileDeleted()
 		{
-			var repoState = new RepositoryState("MAIN");
+			var repoState = new RepositoryBranchState("MAIN");
 
 			var file1 = new FileInfo("file1");
 			var file2 = new FileInfo("file2");
