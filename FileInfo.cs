@@ -14,17 +14,15 @@ namespace CvsGitConverter
 	/// </summary>
 	class FileInfo
 	{
+		private readonly Dictionary<Revision, List<string>> m_tags = new Dictionary<Revision, List<string>>();
+		private readonly Dictionary<Revision, string> m_branches = new Dictionary<Revision, string>();
+
+
+		/// <summary>
+		/// The file's name.
+		/// </summary>
 		public readonly string Name;
 
-		/// <summary>
-		/// The tags defined on the file.
-		/// </summary>
-		public readonly Dictionary<Revision, List<string>> Tags = new Dictionary<Revision, List<string>>();
-
-		/// <summary>
-		/// The branches defined on the file.
-		/// </summary>
-		public readonly Dictionary<Revision, string> Branches = new Dictionary<Revision, string>();
 
 		public FileInfo(string name)
 		{
@@ -36,15 +34,15 @@ namespace CvsGitConverter
 			// work out whether it's a normal tag or a branch tag
 			if (revision.IsBranch)
 			{
-				Branches[revision.BranchStem] = name;
+				m_branches[revision.BranchStem] = name;
 			}
 			else
 			{
 				List<string> tags;
-				if (Tags.TryGetValue(revision, out tags))
+				if (m_tags.TryGetValue(revision, out tags))
 					tags.Add(name);
 				else
-					Tags[revision] = new List<string>(1) { name };
+					m_tags[revision] = new List<string>(1) { name };
 			}
 		}
 
@@ -61,7 +59,7 @@ namespace CvsGitConverter
 			{
 				var branchStem = revision.BranchStem;
 				string branchTag;
-				if (!this.Branches.TryGetValue(branchStem, out branchTag))
+				if (!m_branches.TryGetValue(branchStem, out branchTag))
 				{
 					throw new RepositoryConsistencyException(String.Format(
 							"Branch with stem {0} not found on file {1} when looking for r{2}",
@@ -78,7 +76,7 @@ namespace CvsGitConverter
 		public IEnumerable<string> GetTags(Revision revision)
 		{
 			List<string> tags;
-			if (Tags.TryGetValue(revision, out tags))
+			if (m_tags.TryGetValue(revision, out tags))
 				return tags;
 			else
 				return Enumerable.Empty<string>();
