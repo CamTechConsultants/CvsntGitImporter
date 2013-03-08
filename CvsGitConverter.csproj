@@ -53,6 +53,7 @@
     <Compile Include="ParseException.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RepositoryConsistencyException.cs" />
     <Compile Include="RepositoryState.cs" />
     <Compile Include="Revision.cs" />
     <Compile Include="SplitMultiBranchCommits.cs" />

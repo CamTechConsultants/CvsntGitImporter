@@ -54,8 +54,11 @@ namespace CvsGitConverter
 				var branchStem = revision.BranchStem;
 				string branchTag;
 				if (!this.Branches.TryGetValue(branchStem, out branchTag))
-					throw new Exception(String.Format("Branch with stem {0} not found on file {1} when looking for r{2}",
+				{
+					throw new RepositoryConsistencyException(String.Format(
+							"Branch with stem {0} not found on file {1} when looking for r{2}",
 							branchStem, this.Name, revision));
+				}
 
 				return branchTag;
 			}
