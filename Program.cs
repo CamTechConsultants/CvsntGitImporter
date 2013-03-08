@@ -11,12 +11,14 @@ namespace CvsGitConverter
 {
 	class Program
 	{
+		static readonly DateTime StartDate = new DateTime(2003, 1, 1);
+
 		static void Main(string[] args)
 		{
 			if (args.Length != 1)
 				throw new ArgumentException("Need a cvs.log file");
 
-			var parser = new CvsLogParser(args[0]);
+			var parser = new CvsLogParser(args[0], startDate: StartDate);
 			var builder = new CommitBuilder(parser);
 			var commits = builder.GetCommits().SplitMultiBranchCommits().ToList();
 

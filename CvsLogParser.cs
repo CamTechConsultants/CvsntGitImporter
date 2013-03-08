@@ -19,11 +19,13 @@ namespace CvsGitConverter
 		private const string FileSeparator = "=============================================================================";
 
 		private readonly CvsLogReader m_reader;
+		private readonly DateTime m_startDate;
 		private readonly List<FileInfo> m_files = new List<FileInfo>();
 
-		public CvsLogParser(string logFile)
+		public CvsLogParser(string logFile, DateTime startDate)
 		{
 			m_reader = new CvsLogReader(logFile);
+			m_startDate = startDate;
 		}
 
 		/// <summary>
@@ -98,31 +100,46 @@ namespace CvsGitConverter
 						var mergepointStr = match.Groups["mergepoint"].Value;
 						var mergepoint = mergepointStr.Length == 0 ? Revision.Empty : Revision.Create(mergepointStr);
 
-						commit = new FileRevision(
-								file: currentFile,
-								revision: revision,
-								mergepoint: mergepoint,
-								time: time,
-								author: match.Groups["author"].Value,
-								commitId: match.Groups["commitid"].Value,
-								isDead: match.Groups["state"].Value == "dead");
+						if (time >= m_startDate)
+						{
+							var commitId = match.Groups["commitid"].Value;
+							if (commitId.Length == 0)
+								throw MakeParseException("Commit is missing a commit id: '{0}'", line);
+
+							commit = new FileRevision(
+									file: currentFile,
+									revision: revision,
+									mergepoint: mergepoint,
+									time: time,
+									author: match.Groups["author"].Value,
+									commitId: commitId,
+									isDead: match.Groups["state"].Value == "dead");
+						}
+						else
+						{
+							// too early
+							commit = null;
+						}
 
 						state = State.ExpectCommitMessage;
 						break;
 					case State.ExpectCommitMessage:
 						if (line == LogSeparator)
 						{
-							yield return commit;
+							if (commit != null)
+								yield return commit;
 							state = State.ExpectCommitRevision;
 						}
 						else if (line == FileSeparator)
 						{
-							yield return commit;
+							if (commit != null)
+								yield return commit;
 							state = State.Start;
 						}
 						else if (!line.StartsWith("branches:  "))
 						{
-							commit.AddMessage(line);
+							if (commit != null)
+								commit.AddMessage(line);
 						}
 						break;
 				}
