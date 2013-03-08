@@ -19,7 +19,7 @@ namespace CvsGitConverter
 		/// <summary>
 		/// The tags defined on the file.
 		/// </summary>
-		public readonly Dictionary<string, Revision> Tags = new Dictionary<string, Revision>();
+		public readonly Dictionary<Revision, List<string>> Tags = new Dictionary<Revision, List<string>>();
 
 		/// <summary>
 		/// The branches defined on the file.
@@ -35,9 +35,17 @@ namespace CvsGitConverter
 		{
 			// work out whether it's a normal tag or a branch tag
 			if (revision.IsBranch)
+			{
 				Branches[revision.BranchStem] = name;
+			}
 			else
-				Tags[name] = revision;
+			{
+				List<string> tags;
+				if (Tags.TryGetValue(revision, out tags))
+					tags.Add(name);
+				else
+					Tags[revision] = new List<string>(1) { name };
+			}
 		}
 
 		/// <summary>
@@ -62,6 +70,18 @@ namespace CvsGitConverter
 
 				return branchTag;
 			}
+		}
+
+		/// <summary>
+		/// Gets a list of tags applied to a revision.
+		/// </summary>
+		public IEnumerable<string> GetTags(Revision revision)
+		{
+			List<string> tags;
+			if (Tags.TryGetValue(revision, out tags))
+				return tags;
+			else
+				return Enumerable.Empty<string>();
 		}
 
 		public override string ToString()

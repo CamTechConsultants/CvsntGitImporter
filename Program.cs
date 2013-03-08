@@ -5,6 +5,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CvsGitConverter
 {
@@ -17,9 +18,24 @@ namespace CvsGitConverter
 
 			var parser = new CvsLogParser(args[0]);
 			var builder = new CommitBuilder(parser);
-			var commits = builder.GetCommits();
+			var commits = builder.GetCommits().SplitMultiBranchCommits().ToList();
 
 			Verify(commits);
+
+			// build lookup of all files
+			var allFiles = new Dictionary<string, FileInfo>();
+			foreach (var f in parser.Files)
+				allFiles.Add(f.Name, f);
+
+			var tagResolver = new TagResolver(commits, allFiles);
+			tagResolver.Resolve();
+
+			if (tagResolver.Errors.Any())
+			{
+				Console.Error.WriteLine("Errors resolving tags:");
+				foreach (var error in tagResolver.Errors)
+					Console.Error.WriteLine("  {0}", error);
+			}
 		}
 
 		private static void Verify(IEnumerable<Commit> commits)

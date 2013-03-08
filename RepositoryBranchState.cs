@@ -45,6 +45,14 @@ namespace CvsGitConverter
 			}
 		}
 
+		/// <summary>
+		/// Gets all currently live files.
+		/// </summary>
+		public IEnumerable<string> LiveFiles
+		{
+			get { return m_files.Keys; }
+		}
+
 		public RepositoryBranchState(string branch)
 		{
 		}
