@@ -1,0 +1,21 @@
+
+RCS file: /cvs/xjtag/dev/src/Project/test/.cvsignore,v
+Working file: .cvsignore
+head: 1.2
+branch:
+locks: strict
+access list:
+symbolic names:
+keyword substitution: kv
+total revisions: 2;	selected revisions: 2
+description:
+----------------------------
+revision 1.2
+date: 2009/03/04 11:54:43;  author: johnb;  state: Exp;  lines: +2 -1;  kopt: kv;  commitid: c0449ae6c023bd1;  filename: .cvsignore;  bugid: 4564;
+ (bug 4564)
+----------------------------
+revision 1.1
+date: 2009/02/03 12:25:27;  author: konstantina;  state: Exp;  kopt: kv;  commitid: 2370498837b6797c;  filename: .cvsignore;
+*** empty log message ***
+=============================================================================
+

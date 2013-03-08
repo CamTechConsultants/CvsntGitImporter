@@ -16,8 +16,12 @@ namespace CvsGitConverter
 	class CvsLogReader : IEnumerable<string>
 	{
 		private readonly string m_filename;
+		private readonly TextReader m_reader;
 		private int m_lineNumber;
 
+		/// <summary>
+		/// Gets the current line number.
+		/// </summary>
 		public int LineNumber
 		{
 			get { return m_lineNumber; }
@@ -28,11 +32,25 @@ namespace CvsGitConverter
 			m_filename = filename;
 		}
 
+		public CvsLogReader(TextReader reader)
+		{
+			m_reader = reader;
+			m_filename = "<stream>";
+		}
+
 		private IEnumerable<string> ReadLines()
 		{
 			m_lineNumber = 0;
 
-			using (var reader = new StreamReader(m_filename, Encoding.UTF8))
+			TextReader reader = m_reader;
+			bool mustDispose = false;
+			if (reader == null)
+			{
+				reader = new StreamReader(m_filename, Encoding.UTF8);
+				mustDispose = true;
+			}
+
+			try
 			{
 				string line;
 				while ((line = reader.ReadLine()) != null)
@@ -40,6 +58,11 @@ namespace CvsGitConverter
 					m_lineNumber++;
 					yield return line;
 				}
+			}
+			finally
+			{
+				if (mustDispose)
+					reader.Dispose();
 			}
 		}
 

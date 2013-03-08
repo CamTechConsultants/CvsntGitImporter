@@ -28,6 +28,12 @@ namespace CvsGitConverter
 			m_startDate = startDate;
 		}
 
+		public CvsLogParser(TextReader reader, DateTime startDate)
+		{
+			m_reader = new CvsLogReader(reader);
+			m_startDate = startDate;
+		}
+
 		/// <summary>
 		/// Gets a list of all the files.
 		/// </summary>
