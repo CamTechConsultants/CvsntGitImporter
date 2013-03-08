@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Text.RegularExpressions;
 
 namespace CvsGitConverter
@@ -17,6 +18,7 @@ namespace CvsGitConverter
 	{
 		private const string LogSeparator = "----------------------------";
 		private const string FileSeparator = "=============================================================================";
+		private static readonly char[] FieldDelimiter = new[] { ';' };
 
 		private readonly CvsLogReader m_reader;
 		private readonly DateTime m_startDate;
@@ -95,38 +97,7 @@ namespace CvsGitConverter
 						}
 						break;
 					case State.ExpectCommitInfo:
-						var infoPattern = @"date: (?<date>\d{4}/\d\d/\d\d \d\d:\d\d:\d\d);  author: (?<author>\S+?);  " +
-										  @"state: (?<state>\S+?);.*  commitid: (?<commitid>\S+?);  " +
-										  @"(?:mergepoint: (?<mergepoint>\S+);)?";
-						var match = Regex.Match(line, infoPattern);
-						if (!match.Success)
-							throw MakeParseException("Invalid commit info line: '{0}'", line);
-
-						var time = DateTime.ParseExact(match.Groups["date"].Value, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
-						var mergepointStr = match.Groups["mergepoint"].Value;
-						var mergepoint = mergepointStr.Length == 0 ? Revision.Empty : Revision.Create(mergepointStr);
-
-						if (time >= m_startDate)
-						{
-							var commitId = match.Groups["commitid"].Value;
-							if (commitId.Length == 0)
-								throw MakeParseException("Commit is missing a commit id: '{0}'", line);
-
-							commit = new FileRevision(
-									file: currentFile,
-									revision: revision,
-									mergepoint: mergepoint,
-									time: time,
-									author: match.Groups["author"].Value,
-									commitId: commitId,
-									isDead: match.Groups["state"].Value == "dead");
-						}
-						else
-						{
-							// too early
-							commit = null;
-						}
-
+						commit = ParseFields(currentFile, revision, line);
 						state = State.ExpectCommitMessage;
 						break;
 					case State.ExpectCommitMessage:
@@ -149,6 +120,61 @@ namespace CvsGitConverter
 						}
 						break;
 				}
+			}
+		}
+
+		/// <summary>
+		/// Parse a line of the CVS log containing data about a commit.
+		/// </summary>
+		/// <returns>The commit, or null if the commit is to be ignored</returns>
+		private FileRevision ParseFields(FileInfo currentFile, Revision revision, string line)
+		{
+			var fields = line.Split(FieldDelimiter, StringSplitOptions.RemoveEmptyEntries);
+			string author = null;
+			string commitId = null;
+			string dateStr = null;
+			string mergepointStr = null;
+			string state = null;
+
+			foreach (var field in fields)
+			{
+				var separator = field.IndexOf(':');
+				if (separator <= 0 || separator >= field.Length - 1)
+					throw MakeParseException("Invalid field: '{0}'", field);
+
+				var key = field.Remove(separator).Trim();
+				var value = field.Substring(separator + 1).Trim();
+				switch (key)
+				{
+					case "author": author = value; break;
+					case "commitid": commitId = value; break;
+					case "date": dateStr = value; break;
+					case "mergepoint": mergepointStr = value; break;
+					case "state": state = value; break;
+				}
+			}
+
+			var time = DateTime.ParseExact(dateStr, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
+			var mergepoint = mergepointStr == null ? Revision.Empty : Revision.Create(mergepointStr);
+
+			if (time >= m_startDate)
+			{
+				if (commitId == null)
+					throw MakeParseException("Commit is missing a commit id: '{0}'", line);
+
+				return new FileRevision(
+						file: currentFile,
+						revision: revision,
+						mergepoint: mergepoint,
+						time: time,
+						author: author,
+						commitId: commitId,
+						isDead: state == "dead");
+			}
+			else
+			{
+				// too early
+				return null;
 			}
 		}
 
