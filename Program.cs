@@ -11,7 +11,7 @@ namespace CvsGitConverter
 {
 	class Program
 	{
-		static readonly DateTime StartDate = new DateTime(2003, 1, 1);
+		static readonly DateTime StartDate = new DateTime(2003, 2, 1);
 
 		static void Main(string[] args)
 		{
