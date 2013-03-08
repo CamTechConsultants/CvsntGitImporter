@@ -13,7 +13,40 @@ namespace CvsGitTest
 	public class RevisionTest
 	{
 		[TestMethod]
-		public void IsBranch_NonBranchRevision()
+		public void Validate_TrunkRevision()
+		{
+			Revision.Create("1.1");
+		}
+
+		[TestMethod]
+		public void Validate_BranchRevision()
+		{
+			Revision.Create("1.1.0.2");
+		}
+
+		[TestMethod]
+		[ExpectedException(typeof(ArgumentException))]
+		public void Validate_Invalid_ZeroPart()
+		{
+			Revision.Create("1.0");
+		}
+
+		[TestMethod]
+		[ExpectedException(typeof(ArgumentException))]
+		public void Validate_Invalid_OddBranchIndex()
+		{
+			Revision.Create("1.1.1.2");
+		}
+
+		[TestMethod]
+		[ExpectedException(typeof(ArgumentException))]
+		public void Validate_Invalid_OddBranchIndex_Branchpoint()
+		{
+			Revision.Create("1.1.0.1");
+		}
+
+		[TestMethod]
+		public void IsBranch_TrunkRevision()
 		{
 			var r = Revision.Create("1.1");
 			Assert.IsFalse(r.IsBranch);

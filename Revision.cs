@@ -27,11 +27,13 @@ namespace CvsGitConverter
 				throw new ArgumentException(String.Format("Invalid revision format: '{0}'", value));
 
 			m_parts = value.Split('.').Select(p => int.Parse(p)).ToArray();
+			Validate(m_parts);
 		}
 
 		private Revision(int[] parts)
 		{
 			m_parts = parts;
+			Validate(m_parts);
 		}
 
 		/// <summary>
@@ -111,34 +113,70 @@ namespace CvsGitConverter
 			return a.ToString() != b;
 		}
 
+		public bool Equals(Revision other)
+		{
+			if (other == null)
+				return false;
+
+			return PartsEqual(this.m_parts, other.m_parts);
+		}
+
 		public override bool Equals(object obj)
 		{
 			if (obj is string)
-			{
 				return this.ToString() == (string)obj;
-			}
 			else
-			{
-				var other = obj as Revision;
-				if (other == null)
-					return false;
-
-				if (this.m_parts.Length != other.m_parts.Length)
-					return false;
-
-				for (int i = 0; i < m_parts.Length; i++)
-				{
-					if (this.m_parts[i] != other.m_parts[i])
-						return false;
-				}
-
-				return true;
-			}
+				return this.Equals(obj as Revision);
 		}
 
 		public override int GetHashCode()
 		{
 			return m_parts.GetHashCode();
+		}
+
+
+		private static bool PartsEqual(int[] a, int[] b)
+		{
+			if (a.Length != b.Length)
+				return false;
+
+			for (int i = 0; i < a.Length; i++)
+			{
+				if (a[i] != b[i])
+					return false;
+			}
+
+			return true;
+		}
+
+		private static void Validate(int[] parts)
+		{
+			for (int i = 0; i < parts.Length; i++)
+			{
+				if (parts[i] < 1 && (parts.Length <= 2 || i != parts.Length - 2))
+				{
+					throw new ArgumentException(String.Format("Invalid revision: '{0}' - a part is 0 or negative",
+							String.Join(".", parts)));
+				}
+			}
+
+			// check branch number is even
+			if (parts.Length > 2)
+			{
+				int branchIndex = (parts.Length % 2 == 1) ? parts.Length - 1 : parts.Length - 2;
+				if (parts[branchIndex] % 2 == 1)
+				{
+					throw new ArgumentException(String.Format("Invalid revision: '{0}' - the branch index must be even",
+							String.Join(".", parts)));
+				}
+
+				// check that a branchpoint (a.b.0.X) is correct - X should be even
+				if (parts.Length % 2 == 0 && parts[parts.Length - 2] == 0 && parts[parts.Length - 1] % 2 == 1)
+				{
+					throw new ArgumentException(String.Format("Invalid revision: '{0}' - the branch index must be even",
+							String.Join(".", parts)));
+				}
+			}
 		}
 	}
 }
