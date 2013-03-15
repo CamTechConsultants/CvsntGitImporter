@@ -53,6 +53,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="CommitListExtensionsTest.cs" />
     <Compile Include="CvsLogParserTest.cs" />
     <Compile Include="FileInfoTest.cs" />
     <Compile Include="RepositoryBranchStateTest.cs" />
