@@ -164,5 +164,60 @@ namespace CvsGitTest
 		}
 
 		#endregion DirectlyPrecedes
+
+
+		#region Precedes
+
+		[TestMethod]
+		public void Precedes_Self()
+		{
+			var r1 = Revision.Create("1.2");
+			var r2 = Revision.Create("1.2");
+
+			Assert.IsTrue(r1.Precedes(r2));
+			Assert.IsTrue(r2.Precedes(r1));
+		}
+
+		[TestMethod]
+		public void Precedes_RevisionsOnMain()
+		{
+			var r1 = Revision.Create("1.2");
+			var r2 = Revision.Create("1.4");
+
+			Assert.IsTrue(r1.Precedes(r2));
+			Assert.IsFalse(r2.Precedes(r1));
+		}
+
+		[TestMethod]
+		public void Precedes_BranchpointPrecedesBranchRevision()
+		{
+			var r1 = Revision.Create("1.2");
+			var r2 = Revision.Create("1.2.4.2");
+
+			Assert.IsTrue(r1.Precedes(r2));
+			Assert.IsFalse(r2.Precedes(r1));
+		}
+
+		[TestMethod]
+		public void Precedes_RevisionOnParentBranchPrecedesRevisionOnBranch()
+		{
+			var r1 = Revision.Create("1.2");
+			var r2 = Revision.Create("1.4.4.2");
+
+			Assert.IsTrue(r1.Precedes(r2));
+			Assert.IsFalse(r2.Precedes(r1));
+		}
+
+		[TestMethod]
+		public void Precedes_RevisionOnGrandParentBranchPrecedesRevisionOnBranch()
+		{
+			var r1 = Revision.Create("1.2");
+			var r2 = Revision.Create("1.4.4.2.6.2");
+
+			Assert.IsTrue(r1.Precedes(r2));
+			Assert.IsFalse(r2.Precedes(r1));
+		}
+
+		#endregion Precedes
 	}
 }

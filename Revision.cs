@@ -118,6 +118,35 @@ namespace CvsGitConverter
 			return PartsEqual(m_parts, precedingParts);
 		}
 
+		/// <summary>
+		/// Is this revision a predecessor of another?
+		/// </summary>
+		public bool Precedes(Revision other)
+		{
+			if (this.m_parts.Length > other.m_parts.Length)
+				return false;
+
+			var truncatedParts = new int[m_parts.Length];
+			Array.Copy(other.m_parts, truncatedParts, truncatedParts.Length);
+
+			int i;
+			for (i = truncatedParts.Length - 1; i >= 0; i--)
+			{
+				if (i % 2 == 1)
+				{
+					if (m_parts[i] > truncatedParts[i])
+						return false;
+				}
+				else
+				{
+					if (m_parts[i] != truncatedParts[i])
+						return false;
+				}
+			}
+
+			return true;
+		}
+
 		public override string ToString()
 		{
 			return String.Join(".", m_parts);

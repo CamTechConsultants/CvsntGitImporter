@@ -16,7 +16,8 @@ namespace CvsGitConverter
 	{
 		private readonly Dictionary<string, Revision> m_revisionForTag = new Dictionary<string, Revision>();
 		private readonly Dictionary<Revision, List<string>> m_tagsForRevision = new Dictionary<Revision, List<string>>();
-		private readonly Dictionary<Revision, string> m_branches = new Dictionary<Revision, string>();
+		private readonly Dictionary<string, Revision> m_revisionForBranch = new Dictionary<string, Revision>();
+		private readonly Dictionary<Revision, string> m_branchForRevision = new Dictionary<Revision, string>();
 
 
 		/// <summary>
@@ -35,7 +36,8 @@ namespace CvsGitConverter
 			// work out whether it's a normal tag or a branch tag
 			if (revision.IsBranch)
 			{
-				m_branches[revision.BranchStem] = name;
+				m_revisionForBranch[name] = revision;
+				m_branchForRevision[revision.BranchStem] = name;
 			}
 			else
 			{
@@ -62,7 +64,7 @@ namespace CvsGitConverter
 			{
 				var branchStem = revision.BranchStem;
 				string branchTag;
-				if (!m_branches.TryGetValue(branchStem, out branchTag))
+				if (!m_branchForRevision.TryGetValue(branchStem, out branchTag))
 				{
 					throw new RepositoryConsistencyException(String.Format(
 							"Branch with stem {0} not found on file {1} when looking for r{2}",
@@ -96,6 +98,21 @@ namespace CvsGitConverter
 				return revision;
 			else
 				return Revision.Empty;
+		}
+
+		/// <summary>
+		/// Is a revision on a branch (or the branch's parent branch)
+		/// </summary>
+		/// <param name="revision"></param>
+		/// <param name="branch"></param>
+		/// <returns></returns>
+		public bool IsRevisionOnBranch(Revision revision, string branch)
+		{
+			if (branch == "MAIN")
+				return revision.Parts.Count() == 2;
+
+			var branchRevision = m_revisionForBranch[branch];
+			return (revision.Parts.Count() > 2 && branchRevision.BranchStem == revision.BranchStem) || revision.Precedes(branchRevision);
 		}
 
 		public override string ToString()
