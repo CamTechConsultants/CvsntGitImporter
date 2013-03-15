@@ -17,6 +17,8 @@ namespace CvsGitTest
 	[TestClass]
 	public class FileInfoTest
 	{
+		#region GetTagsForRevision
+
 		[TestMethod]
 		public void GetTagsForRevision_RevisionTagged()
 		{
@@ -36,6 +38,11 @@ namespace CvsGitTest
 			Assert.IsFalse(file.GetTagsForRevision(Revision.Create("1.2")).Any());
 		}
 
+		#endregion GetTagsForRevision
+
+
+		#region GetRevisionForTag
+
 		[TestMethod]
 		public void GetRevisionForTag_TagExists()
 		{
@@ -54,5 +61,7 @@ namespace CvsGitTest
 			var r = file.GetRevisionForTag("tag");
 			Assert.AreEqual(r, Revision.Empty);
 		}
+
+		#endregion GetRevisionForTag
 	}
 }

@@ -12,6 +12,8 @@ namespace CvsGitTest
 	[TestClass]
 	public class RevisionTest
 	{
+		#region Validate
+
 		[TestMethod]
 		public void Validate_TrunkRevision()
 		{
@@ -45,6 +47,11 @@ namespace CvsGitTest
 			Revision.Create("1.1.0.1");
 		}
 
+		#endregion Validate
+
+
+		#region IsBranch
+
 		[TestMethod]
 		public void IsBranch_TrunkRevision()
 		{
@@ -58,6 +65,11 @@ namespace CvsGitTest
 			var r = Revision.Create("1.1.0.2");
 			Assert.IsTrue(r.IsBranch);
 		}
+
+		#endregion IsBranch
+
+
+		#region BranchStem
 		
 		[TestMethod]
 		[ExpectedException(typeof(InvalidOperationException))]
@@ -82,6 +94,11 @@ namespace CvsGitTest
 			var expected = Revision.Create("1.1.6");
 			Assert.AreEqual(r.BranchStem, expected);
 		}
+
+		#endregion BranchStem
+
+
+		#region DirectlyPrecedes
 		
 		[TestMethod]
 		public void DirectlyPrecedes_ConsecutiveTrunkRevisions()
@@ -145,5 +162,7 @@ namespace CvsGitTest
 			Assert.IsFalse(r1.DirectlyPrecedes(r2));
 			Assert.IsFalse(r2.DirectlyPrecedes(r1));
 		}
+
+		#endregion DirectlyPrecedes
 	}
 }
