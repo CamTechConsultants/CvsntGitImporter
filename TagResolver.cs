@@ -73,7 +73,7 @@ namespace CvsGitConverter
 						foreach (var filename in branchState.LiveFiles)
 						{
 							var file = m_allFiles[filename];
-							if (!file.GetTags(branchState[filename]).Contains(tag))
+							if (!file.GetTagsForRevision(branchState[filename]).Contains(tag))
 							{
 								AddError("No commit found for tag. Tag: {0}  Commit: {1}  File: {2},r{3}",
 										tag, commit.CommitId, filename, branchState[filename]);
@@ -92,7 +92,7 @@ namespace CvsGitConverter
 			{
 				foreach (var file in commit)
 				{
-					foreach (var tag in file.File.GetTags(file.Revision))
+					foreach (var tag in file.File.GetTagsForRevision(file.Revision))
 					{
 						tags[tag] = commit;
 					}

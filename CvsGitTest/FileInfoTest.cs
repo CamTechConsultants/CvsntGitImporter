@@ -18,22 +18,41 @@ namespace CvsGitTest
 	public class FileInfoTest
 	{
 		[TestMethod]
-		public void GetTags_RevisionTagged()
+		public void GetTagsForRevision_RevisionTagged()
 		{
 			var file = new FileInfo("file.txt");
 			file.AddTag("tag", Revision.Create("1.1"));
 
-			var tags = file.GetTags(Revision.Create("1.1"));
+			var tags = file.GetTagsForRevision(Revision.Create("1.1"));
 			Assert.AreEqual(tags.Single(), "tag");
 		}
 
 		[TestMethod]
-		public void GetTags_RevisionUntagged()
+		public void GetTagsForRevision_RevisionUntagged()
 		{
 			var file = new FileInfo("file.txt");
 			file.AddTag("tag", Revision.Create("1.1"));
 
-			Assert.IsFalse(file.GetTags(Revision.Create("1.2")).Any());
+			Assert.IsFalse(file.GetTagsForRevision(Revision.Create("1.2")).Any());
+		}
+
+		[TestMethod]
+		public void GetRevisionForTag_TagExists()
+		{
+			var file = new FileInfo("file.txt");
+			file.AddTag("tag", Revision.Create("1.1"));
+
+			var r = file.GetRevisionForTag("tag");
+			Assert.AreEqual(r, Revision.Create("1.1"));
+		}
+
+		[TestMethod]
+		public void GetRevisionForTag_TagDoesNotExist()
+		{
+			var file = new FileInfo("file.txt");
+
+			var r = file.GetRevisionForTag("tag");
+			Assert.AreEqual(r, Revision.Empty);
 		}
 	}
 }

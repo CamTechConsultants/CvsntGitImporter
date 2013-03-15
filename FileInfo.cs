@@ -14,7 +14,8 @@ namespace CvsGitConverter
 	/// </summary>
 	class FileInfo
 	{
-		private readonly Dictionary<Revision, List<string>> m_tags = new Dictionary<Revision, List<string>>();
+		private readonly Dictionary<string, Revision> m_revisionForTag = new Dictionary<string, Revision>();
+		private readonly Dictionary<Revision, List<string>> m_tagsForRevision = new Dictionary<Revision, List<string>>();
 		private readonly Dictionary<Revision, string> m_branches = new Dictionary<Revision, string>();
 
 
@@ -38,11 +39,13 @@ namespace CvsGitConverter
 			}
 			else
 			{
+				m_revisionForTag[name] = revision;
+
 				List<string> tags;
-				if (m_tags.TryGetValue(revision, out tags))
+				if (m_tagsForRevision.TryGetValue(revision, out tags))
 					tags.Add(name);
 				else
-					m_tags[revision] = new List<string>(1) { name };
+					m_tagsForRevision[revision] = new List<string>(1) { name };
 			}
 		}
 
@@ -73,13 +76,26 @@ namespace CvsGitConverter
 		/// <summary>
 		/// Gets a list of tags applied to a revision.
 		/// </summary>
-		public IEnumerable<string> GetTags(Revision revision)
+		public IEnumerable<string> GetTagsForRevision(Revision revision)
 		{
 			List<string> tags;
-			if (m_tags.TryGetValue(revision, out tags))
+			if (m_tagsForRevision.TryGetValue(revision, out tags))
 				return tags;
 			else
 				return Enumerable.Empty<string>();
+		}
+
+		/// <summary>
+		/// Gets the revision for a tag.
+		/// </summary>
+		/// <returns>the revision that a tag is applied to, or Revision.Empty if the tag does not exist</returns>
+		public Revision GetRevisionForTag(string tag)
+		{
+			Revision revision;
+			if (m_revisionForTag.TryGetValue(tag, out revision))
+				return revision;
+			else
+				return Revision.Empty;
 		}
 
 		public override string ToString()
