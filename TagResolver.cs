@@ -84,9 +84,9 @@ namespace CvsGitConverter
 			}
 		}
 
-		private Dictionary<string, Stack<Commit>> FindCommitsPerTag()
+		private Dictionary<string, Commit> FindCommitsPerTag()
 		{
-			var tags = new Dictionary<string, Stack<Commit>>();
+			var tags = new Dictionary<string, Commit>();
 
 			foreach (var commit in m_commits)
 			{
@@ -94,18 +94,7 @@ namespace CvsGitConverter
 				{
 					foreach (var tag in file.File.GetTags(file.Revision))
 					{
-						Stack<Commit> commitsForTag;
-						if (tags.TryGetValue(tag, out commitsForTag))
-						{
-							if (commitsForTag.Peek().CommitId != commit.CommitId)
-								commitsForTag.Push(commit);
-						}
-						else
-						{
-							commitsForTag = new Stack<Commit>();
-							commitsForTag.Push(commit);
-							tags[tag] = commitsForTag;
-						}
+						tags[tag] = commit;
 					}
 				}
 			}
@@ -116,13 +105,13 @@ namespace CvsGitConverter
 		/// <summary>
 		/// Build the inverse of CommitsPerTag - a lookup of commits to tags that it is supposed to be the commit for.
 		/// </summary>
-		private static Dictionary<Commit, List<string>> FindCandidateCommits(Dictionary<string, Stack<Commit>> tags)
+		private static Dictionary<Commit, List<string>> FindCandidateCommits(Dictionary<string, Commit> tags)
 		{
 			var candidateCommits = new Dictionary<Commit, List<string>>(CommitComparer.ById);
 
 			foreach (var kvp in tags)
 			{
-				var commit = kvp.Value.Peek();
+				var commit = kvp.Value;
 
 				List<string> tagsForCommit;
 				if (candidateCommits.TryGetValue(commit, out tagsForCommit))
