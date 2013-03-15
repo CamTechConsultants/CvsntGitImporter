@@ -17,6 +17,7 @@ namespace CvsGitConverter
 		private readonly IEnumerable<Commit> m_commits;
 		private readonly Dictionary<string, FileInfo> m_allFiles;
 		private List<string> m_errors;
+		private IEnumerable<string> m_allTags;
 
 		public TagResolver(IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles)
 		{
@@ -33,6 +34,19 @@ namespace CvsGitConverter
 		}
 
 		/// <summary>
+		/// Gets a list of all tags being considered.
+		/// </summary>
+		public IEnumerable<string> AllTags
+		{
+			get
+			{
+				if (m_allTags == null)
+					throw new InvalidOperationException("Resolve not yet called");
+				return m_allTags.OrderBy(t => t);
+			}
+		}
+
+		/// <summary>
 		/// Resolve tags. Find what tags each commit contributes to and build a stack for each tag.
 		/// The last commit that contributes to a tag should be the one that we tag.
 		/// </summary>
@@ -41,6 +55,7 @@ namespace CvsGitConverter
 			m_errors = null;
 
 			var tags = FindCommitsPerTag();
+			m_allTags = tags.Keys;
 			var candidateCommits = FindCandidateCommits(tags);
 
 			// now replay commits and check that all files are in the correct state for each tag

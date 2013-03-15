@@ -5,6 +5,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace CvsGitConverter
@@ -38,6 +39,13 @@ namespace CvsGitConverter
 				foreach (var error in tagResolver.Errors)
 					Console.Error.WriteLine("  {0}", error);
 			}
+
+			WriteLogFile("alltags.log", tagResolver.AllTags);
+		}
+
+		private static void WriteLogFile(string filename, IEnumerable<string> lines)
+		{
+			File.WriteAllLines(filename, lines);
 		}
 
 		private static void Verify(IEnumerable<Commit> commits)
