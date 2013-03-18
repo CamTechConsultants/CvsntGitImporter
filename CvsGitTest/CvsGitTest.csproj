@@ -67,6 +67,7 @@
     <Compile Include="SplitMultiBranchCommitsTest.cs" />
     <Compile Include="TagResolverTest.cs" />
     <Compile Include="InclusionMatcherTest.cs" />
+    <Compile Include="FuncExtensionsTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CvsGitConverter.csproj">

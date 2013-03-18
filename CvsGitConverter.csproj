@@ -47,6 +47,7 @@
     <Compile Include="CommitBuilder.cs" />
     <Compile Include="CommitComparer.cs" />
     <Compile Include="CommitListExtensions.cs" />
+    <Compile Include="FuncExtensions.cs" />
     <Compile Include="FileInfo.cs" />
     <Compile Include="FileRevision.cs" />
     <Compile Include="CvsLogParser.cs" />
