@@ -51,7 +51,7 @@ namespace CvsGitImporter.Utils
 				if (attr != null)
 				{
 					if (prop.PropertyType == typeof(bool) || prop.PropertyType == typeof(string) ||
-							prop.PropertyType == typeof(uint?) || prop.PropertyType == typeof(List<string>))
+							prop.PropertyType == typeof(uint?) || prop.PropertyType.Implements<IList<string>>())
 					{
 						var arg = new SwitchInfo(prop);
 						if (attr.ShortSwitch != null)

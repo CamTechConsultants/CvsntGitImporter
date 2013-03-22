@@ -82,7 +82,7 @@ namespace CvsGitImporter.Utils
 				throw new CommandLineArgsException("Unrecognised switch: " + s);
 
 			Type propType = m_dict[s].Type;
-			if (propType == typeof(string) || propType == typeof(List<string>))
+			if (propType == typeof(string) || propType.Implements<IList<string>>())
 				return typeof(string);
 			else if (propType == typeof(uint?))
 				return typeof(uint?);
@@ -98,12 +98,12 @@ namespace CvsGitImporter.Utils
 
 			try
 			{
-				if (arg.Property.PropertyType == typeof(List<string>))
+				if (arg.Property.PropertyType.Implements<IList<string>>())
 				{
-					List<string> list = (List<string>)arg.Property.GetValue(m_def, null);
+					IList<string> list = (IList<string>)arg.Property.GetValue(m_def, null);
 					if (list == null)
 					{
-						list = new List<string>();
+						list = (IList<string>)Activator.CreateInstance(arg.Property.PropertyType);
 						arg.Property.SetValue(m_def, list, null);
 					}
 					list.Add((string)value);

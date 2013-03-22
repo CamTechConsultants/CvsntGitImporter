@@ -48,7 +48,7 @@ namespace CvsGitImporter.Utils
 			int nextArg = parser.Parse(args);
 		
 			// copy any extra arguments
-			if (nextArg <= args.Length)
+			if (nextArg < args.Length)
 			{
 				string[] extraArgs = new string[args.Length - nextArg];
 				Array.Copy(args, nextArg, extraArgs, 0, args.Length - nextArg);
