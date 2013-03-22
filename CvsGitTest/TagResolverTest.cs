@@ -52,7 +52,7 @@ namespace CvsGitTest
 				{ file2.Name, file2 },
 			};
 
-			var resolver = new TagResolver(new[] { commit1, commit2, commit3 }, allFiles);
+			var resolver = new TagResolver(new[] { commit1, commit2, commit3 }, allFiles, new InclusionMatcher());
 			resolver.Resolve();
 
 			Assert.IsTrue(Regex.IsMatch(resolver.Errors.Single(), @"No commit found for tag.*File: file1,r1\.3"));

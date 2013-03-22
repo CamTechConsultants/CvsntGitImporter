@@ -23,17 +23,43 @@ namespace CvsGitConverter
 		[SwitchDef(ShortSwitch="-C", LongSwitch="--config")]
 		public ObservableCollection<string> Config { get; set; }
 
+		[SwitchDef(LongSwitch="--include-tag")]
+		public ObservableCollection<string> IncludeTag { get; set; }
+
+		[SwitchDef(LongSwitch="--exclude-tag")]
+		public ObservableCollection<string> ExcludeTag { get; set; }
+
+		public readonly InclusionMatcher TagMatcher = new InclusionMatcher();
+
 		public Switches()
 		{
-			this.Config = new ObservableCollection<string>();
-			this.Config.CollectionChanged += Config_CollectionChanged;
+			Config = new ObservableCollection<string>();
+			Config.CollectionChanged += Config_CollectionChanged;
+
+			IncludeTag = new ObservableCollection<string>();
+			IncludeTag.CollectionChanged += IncludeTag_CollectionChanged;
+
+			ExcludeTag = new ObservableCollection<string>();
+			ExcludeTag.CollectionChanged += ExcludeTag_CollectionChanged;
 		}
 
-		void Config_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+
+		void AddTagRule(string pattern, bool include)
 		{
-			// Parse config files as they're encountered
-			if (e.Action == NotifyCollectionChangedAction.Add)
-				ParseConfigFile(e.NewItems[0] as string);
+			Regex regex;
+			try
+			{
+				regex = new Regex(pattern);
+			}
+			catch (ArgumentException)
+			{
+				throw new CommandLineArgsException("Invalid regex: {0}", pattern);
+			}
+
+			if (include)
+				TagMatcher.AddIncludeRule(regex);
+			else
+				TagMatcher.AddExcludeRule(regex);
 		}
 
 		void ParseConfigFile(string filename)
@@ -74,6 +100,23 @@ namespace CvsGitConverter
 				yield return String.Format("--{0}", match.Groups[1].Value);
 				yield return match.Groups[2].Value.Trim();
 			}
+		}
+
+		void IncludeTag_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+		{
+			AddTagRule(e.NewItems[0] as string, true);
+		}
+
+		void ExcludeTag_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+		{
+			AddTagRule(e.NewItems[0] as string, false);
+		}
+
+		void Config_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+		{
+			// Parse config files as they're encountered
+			if (e.Action == NotifyCollectionChangedAction.Add)
+				ParseConfigFile(e.NewItems[0] as string);
 		}
 	}
 }

@@ -18,14 +18,16 @@ namespace CvsGitConverter
 	{
 		private readonly IList<Commit> m_commits;
 		private readonly Dictionary<string, FileInfo> m_allFiles;
+		private readonly InclusionMatcher m_tagMatcher;
 		private List<string> m_errors;
 		private IEnumerable<string> m_allTags;
 		private TextWriter m_log;
 
-		public TagResolver(IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles)
+		public TagResolver(IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles, InclusionMatcher tagMatcher)
 		{
 			m_commits = commits.ToListIfNeeded();
 			m_allFiles = allFiles;
+			m_tagMatcher = tagMatcher;
 		}
 
 		/// <summary>
@@ -91,7 +93,8 @@ namespace CvsGitConverter
 				{
 					foreach (var tag in file.File.GetTagsForRevision(file.Revision))
 					{
-						tags[tag] = commit;
+						if (m_tagMatcher.Match(tag))
+							tags[tag] = commit;
 					}
 				}
 			}

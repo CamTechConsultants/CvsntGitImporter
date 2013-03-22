@@ -33,7 +33,7 @@ namespace CvsGitConverter
 			foreach (var f in parser.Files)
 				allFiles.Add(f.Name, f);
 
-			var tagResolver = new TagResolver(commits, allFiles);
+			var tagResolver = new TagResolver(commits, allFiles, switches.TagMatcher);
 			tagResolver.Resolve();
 
 			if (tagResolver.Errors.Any())
