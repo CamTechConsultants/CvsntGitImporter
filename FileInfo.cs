@@ -52,7 +52,7 @@ namespace CvsGitConverter
 		}
 
 		/// <summary>
-		/// Gets the branch for a revision.
+		/// Gets the branch that a revision is on.
 		/// </summary>
 		public string GetBranch(Revision revision)
 		{
@@ -72,6 +72,18 @@ namespace CvsGitConverter
 				}
 
 				return branchTag;
+			}
+		}
+
+		/// <summary>
+		/// Gets the branch for a revision.
+		/// </summary>
+		public IEnumerable<string> GetBranchesAtRevision(Revision revision)
+		{
+			foreach (var kvp in m_branchForRevision)
+			{
+				if (kvp.Key.BranchStem.Equals(revision))
+					yield return kvp.Value;
 			}
 		}
 

@@ -140,5 +140,47 @@ namespace CvsGitTest
 		}
 
 		#endregion
+
+
+		#region GetBranchesAtRevision
+
+		[TestMethod]
+		public void GetBranchesAtRevision_Branchpoint_ReturnsBranch()
+		{
+			var file = new FileInfo("file.txt");
+			file.AddTag("branch", Revision.Create("1.4.0.2"));
+
+			Assert.AreEqual(file.GetBranchesAtRevision(Revision.Create("1.4")).Single(), "branch");
+		}
+
+		[TestMethod]
+		public void GetBranchesAtRevision_Branchpoint_ReturnsMultipleBranch()
+		{
+			var file = new FileInfo("file.txt");
+			file.AddTag("branch1", Revision.Create("1.4.0.2"));
+			file.AddTag("branch2", Revision.Create("1.4.0.4"));
+
+			Assert.IsTrue(file.GetBranchesAtRevision(Revision.Create("1.4")).OrderBy(i => i).SequenceEqual(new[] { "branch1", "branch2" }));
+		}
+
+		[TestMethod]
+		public void GetBranchesAtRevision_PredecessorToBranchpoint_NoBranches()
+		{
+			var file = new FileInfo("file.txt");
+			file.AddTag("branch", Revision.Create("1.4.0.2"));
+
+			Assert.IsFalse(file.GetBranchesAtRevision(Revision.Create("1.3")).Any());
+		}
+
+		[TestMethod]
+		public void GetBranchesAtRevision_RevisionOnTheBranch_NoBranches()
+		{
+			var file = new FileInfo("file.txt");
+			file.AddTag("branch", Revision.Create("1.4.0.2"));
+
+			Assert.IsFalse(file.GetBranchesAtRevision(Revision.Create("1.4.2.1")).Any());
+		}
+
+		#endregion GetBranchesAtRevision
 	}
 }
