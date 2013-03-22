@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 using CvsGitConverter;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -14,7 +15,7 @@ namespace CvsGitTest
 		public void AddIncludeRuleFirst_ExcludesByDefault()
 		{
 			var matcher = new InclusionMatcher();
-			matcher.AddIncludeRule(@"xx");
+			matcher.AddIncludeRule(new Regex(@"xx"));
 
 			var result = matcher.Match("blah");
 			Assert.IsFalse(result);
@@ -24,7 +25,7 @@ namespace CvsGitTest
 		public void AddExcludeRuleFirst_IncludesByDefault()
 		{
 			var matcher = new InclusionMatcher();
-			matcher.AddExcludeRule(@"xx");
+			matcher.AddExcludeRule(new Regex(@"xx"));
 
 			var result = matcher.Match("blah");
 			Assert.IsTrue(result);
@@ -34,8 +35,8 @@ namespace CvsGitTest
 		public void AddExcludeThenInclude_Matches()
 		{
 			var matcher = new InclusionMatcher();
-			matcher.AddExcludeRule(@"xx");
-			matcher.AddIncludeRule(@"yy");
+			matcher.AddExcludeRule(new Regex(@"xx"));
+			matcher.AddIncludeRule(new Regex(@"yy"));
 
 			var result = matcher.Match("aaxx");
 			Assert.IsFalse(result);
@@ -48,8 +49,8 @@ namespace CvsGitTest
 		public void AddIncludeThenExclude_Matches()
 		{
 			var matcher = new InclusionMatcher();
-			matcher.AddIncludeRule(@"xx");
-			matcher.AddExcludeRule(@"yy");
+			matcher.AddIncludeRule(new Regex(@"xx"));
+			matcher.AddExcludeRule(new Regex(@"yy"));
 
 			var result = matcher.Match("aaxx");
 			Assert.IsTrue(result);

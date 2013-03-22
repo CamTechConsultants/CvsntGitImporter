@@ -21,23 +21,23 @@ namespace CvsGitConverter
 		/// <summary>
 		/// Add a rule that includes items if it matches.
 		/// </summary>
-		public void AddIncludeRule(string regex)
+		public void AddIncludeRule(Regex regex)
 		{
 			if (m_rules.Count == 0)
 				m_rules.Add(new Rule(new Regex("."), false));
 
-			m_rules.Add(new Rule(new Regex(regex), true));
+			m_rules.Add(new Rule(regex, true));
 		}
 
 		/// <summary>
 		/// Add a rule that excludes items if it matches.
 		/// </summary>
-		public void AddExcludeRule(string regex)
+		public void AddExcludeRule(Regex regex)
 		{
 			if (m_rules.Count == 0)
 				m_rules.Add(new Rule(new Regex("."), true));
 
-			m_rules.Add(new Rule(new Regex(regex), false));
+			m_rules.Add(new Rule(regex, false));
 		}
 
 		/// <summary>
