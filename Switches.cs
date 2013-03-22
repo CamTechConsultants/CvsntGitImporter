@@ -29,38 +29,27 @@ namespace CvsGitConverter
 		[SwitchDef(LongSwitch="--exclude-tag")]
 		public ObservableCollection<string> ExcludeTag { get; set; }
 
+		[SwitchDef(LongSwitch="--include-branch")]
+		public ObservableCollection<string> IncludeBranch { get; set; }
+
+		[SwitchDef(LongSwitch="--exclude-branch")]
+		public ObservableCollection<string> ExcludeBranch { get; set; }
+
 		public readonly InclusionMatcher TagMatcher = new InclusionMatcher();
+
+		public readonly InclusionMatcher BranchMatcher = new InclusionMatcher();
 
 		public Switches()
 		{
 			Config = new ObservableCollection<string>();
 			Config.CollectionChanged += Config_CollectionChanged;
 
-			IncludeTag = new ObservableCollection<string>();
-			IncludeTag.CollectionChanged += IncludeTag_CollectionChanged;
-
-			ExcludeTag = new ObservableCollection<string>();
-			ExcludeTag.CollectionChanged += ExcludeTag_CollectionChanged;
+			new IncludeExcludeWatcher(IncludeTag = new ObservableCollection<string>(),
+					ExcludeTag = new ObservableCollection<string>(), TagMatcher);
+			new IncludeExcludeWatcher(IncludeBranch = new ObservableCollection<string>(),
+					ExcludeBranch = new ObservableCollection<string>(), BranchMatcher);
 		}
 
-
-		void AddTagRule(string pattern, bool include)
-		{
-			Regex regex;
-			try
-			{
-				regex = new Regex(pattern);
-			}
-			catch (ArgumentException)
-			{
-				throw new CommandLineArgsException("Invalid regex: {0}", pattern);
-			}
-
-			if (include)
-				TagMatcher.AddIncludeRule(regex);
-			else
-				TagMatcher.AddExcludeRule(regex);
-		}
 
 		void ParseConfigFile(string filename)
 		{
@@ -102,21 +91,58 @@ namespace CvsGitConverter
 			}
 		}
 
-		void IncludeTag_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-		{
-			AddTagRule(e.NewItems[0] as string, true);
-		}
-
-		void ExcludeTag_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-		{
-			AddTagRule(e.NewItems[0] as string, false);
-		}
 
 		void Config_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
 		{
 			// Parse config files as they're encountered
 			if (e.Action == NotifyCollectionChangedAction.Add)
 				ParseConfigFile(e.NewItems[0] as string);
+		}
+
+
+		/// <summary>
+		/// Watch two collections of include and exclude rules and update the rules in
+		/// an InclusionMatcher instance. Means that the rules get added in the correct order.
+		/// </summary>
+		private class IncludeExcludeWatcher
+		{
+			private readonly InclusionMatcher m_matcher;
+
+			public IncludeExcludeWatcher(ObservableCollection<string> includes, ObservableCollection<string> excludes,
+					InclusionMatcher matcher)
+			{
+				m_matcher = matcher;
+				includes.CollectionChanged += Include_CollectionChanged;
+				excludes.CollectionChanged += Exclude_CollectionChanged;
+			}
+
+			void AddRule(string pattern, bool include)
+			{
+				Regex regex;
+				try
+				{
+					regex = new Regex(pattern);
+				}
+				catch (ArgumentException)
+				{
+					throw new CommandLineArgsException("Invalid regex: {0}", pattern);
+				}
+
+				if (include)
+					m_matcher.AddIncludeRule(regex);
+				else
+					m_matcher.AddExcludeRule(regex);
+			}
+
+			void Include_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+			{
+				AddRule(e.NewItems[0] as string, true);
+			}
+
+			void Exclude_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+			{
+				AddRule(e.NewItems[0] as string, false);
+			}
 		}
 	}
 }

@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BranchResolver.cs" />
     <Compile Include="Commit.cs" />
     <Compile Include="CommitBuilder.cs" />
     <Compile Include="CommitComparer.cs" />
@@ -59,6 +60,7 @@
     <Compile Include="RepositoryConsistencyException.cs" />
     <Compile Include="RepositoryBranchState.cs" />
     <Compile Include="RepositoryState.cs" />
+    <Compile Include="Resolver.cs" />
     <Compile Include="Revision.cs" />
     <Compile Include="SplitMultiBranchCommits.cs" />
     <Compile Include="Switches.cs" />

@@ -33,6 +33,9 @@ namespace CvsGitConverter
 			foreach (var f in parser.Files)
 				allFiles.Add(f.Name, f);
 
+			var branchResolver = new BranchResolver(commits, allFiles, switches.BranchMatcher);
+			branchResolver.Resolve();
+
 			var tagResolver = new TagResolver(commits, allFiles, switches.TagMatcher);
 			tagResolver.Resolve();
 
@@ -43,6 +46,7 @@ namespace CvsGitConverter
 					Console.Error.WriteLine("  {0}", error);
 			}
 
+			WriteLogFile("allbranches.log", branchResolver.AllTags);
 			WriteLogFile("alltags.log", tagResolver.AllTags);
 		}
 
