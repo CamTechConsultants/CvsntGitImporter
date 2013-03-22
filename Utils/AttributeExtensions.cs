@@ -13,7 +13,7 @@ namespace CvsGitImporter.Utils
 	/// <summary>
 	/// Extension methods to query attributes.
 	/// </summary>
-	public static class AttributeExtensions
+	static class AttributeExtensions
 	{
 		/// <summary>
 		/// Get the first custom attribute of a specified type attached to a member. The member's inheritance chain is searched.

@@ -12,7 +12,7 @@ namespace CvsGitImporter.Utils
 	/// <summary>
 	/// Description of a command line switch.
 	/// </summary>
-	internal class SwitchInfo
+	class SwitchInfo
 	{
 		#region Private fields
 		#endregion

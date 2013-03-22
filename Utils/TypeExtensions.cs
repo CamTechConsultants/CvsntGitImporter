@@ -11,7 +11,7 @@ namespace CvsGitImporter.Utils
 	/// <summary>
 	/// Extension methods for Type.
 	/// </summary>
-	public static class TypeExtensions
+	static class TypeExtensions
 	{
 		/// <summary>
 		/// Is a given type derived from a specific open generic type?

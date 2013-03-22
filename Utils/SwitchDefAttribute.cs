@@ -13,7 +13,7 @@ namespace CvsGitImporter.Utils
 	/// Applies to properties in classes derived from CommandLineParamsBase.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Property, AllowMultiple=false, Inherited=true)]
-	public class SwitchDefAttribute : Attribute
+	class SwitchDefAttribute : Attribute
 	{
 		#region Public members
 

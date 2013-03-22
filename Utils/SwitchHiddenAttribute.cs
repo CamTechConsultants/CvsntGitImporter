@@ -11,7 +11,7 @@ namespace CvsGitImporter.Utils
 	/// Mark a switch as hidden, i.e. one that is undocumented.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Property, AllowMultiple=false, Inherited=true)]
-	public class SwitchHiddenAttribute : Attribute
+	class SwitchHiddenAttribute : Attribute
 	{
 		public SwitchHiddenAttribute()
 		{

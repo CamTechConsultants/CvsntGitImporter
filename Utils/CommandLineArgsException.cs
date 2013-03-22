@@ -10,7 +10,7 @@ namespace CvsGitImporter.Utils
 	/// <summary>
 	/// Exception thrown when the arguments passed to an application are invalid.
 	/// </summary>
-	public class CommandLineArgsException : Exception
+	class CommandLineArgsException : Exception
 	{
 		#region Constructors
 

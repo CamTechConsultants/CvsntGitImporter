@@ -13,7 +13,7 @@ namespace CvsGitImporter.Utils
 	/// <summary>
 	/// Collection of switch properties.
 	/// </summary>
-	internal class SwitchCollection
+	class SwitchCollection
 	{
 		#region Private data
 		private SwitchesDefBase m_def;

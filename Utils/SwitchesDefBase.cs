@@ -15,7 +15,7 @@ namespace CvsGitImporter.Utils
 	/// typically define all the possible switches available as properties decorated with the
 	/// <seealso cref="SwitchDefAttribute"/> attribute.
 	/// </summary>
-	public abstract class SwitchesDefBase
+	abstract class SwitchesDefBase
 	{
 		private string[] m_extra = new string[0];
 
