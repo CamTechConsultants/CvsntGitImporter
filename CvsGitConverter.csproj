@@ -62,6 +62,14 @@
     <Compile Include="Revision.cs" />
     <Compile Include="SplitMultiBranchCommits.cs" />
     <Compile Include="TagResolver.cs" />
+    <Compile Include="Utils\AttributeExtensions.cs" />
+    <Compile Include="Utils\CommandLineArgsException.cs" />
+    <Compile Include="Utils\SwitchCollection.cs" />
+    <Compile Include="Utils\SwitchDefAttribute.cs" />
+    <Compile Include="Utils\SwitchesDefBase.cs" />
+    <Compile Include="Utils\SwitchesParser.cs" />
+    <Compile Include="Utils\SwitchHiddenAttribute.cs" />
+    <Compile Include="Utils\SwitchInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
