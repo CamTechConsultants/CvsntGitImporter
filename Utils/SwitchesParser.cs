@@ -75,48 +75,19 @@ namespace CvsGitImporter.Utils
 
 				i++;
 
-				if (arg.StartsWith("--"))
+				if (m_def.Args.GetSwitchType(arg) == typeof(bool))
 				{
-					int idx = arg.IndexOf('=');
-					if (idx == -1)
-					{
-						// long boolean switch
-						if (m_def.Args.GetSwitchType(arg) == typeof(bool))
-							m_def.Args.Set(arg, true);
-						else
-							throw new CommandLineArgsException("Missing argument to {0} switch", arg);
-					}
-					else
-					{
-						// long switch with value
-						string value = arg.Substring(idx + 1);
-						arg = arg.Substring(0, idx);
-
-						if (m_def.Args.GetSwitchType(arg) == typeof(string))
-							m_def.Args.Set(arg, value);
-						else if (m_def.Args.GetSwitchType(arg) == typeof(uint?))
-							m_def.Args.Set(arg, ParseIntValue(value));
-						else
-							throw new CommandLineArgsException("The {0} switch does not take an argument", arg);
-					}
+					m_def.Args.Set(arg, true);
 				}
 				else
 				{
-					// short form
-					if (m_def.Args.GetSwitchType(arg) == typeof(bool))
-					{
-						m_def.Args.Set(arg, true);
-					}
-					else
-					{
-						if (i >= args.Length)
-							throw new CommandLineArgsException("Missing argument to the {0} switch", arg);
+					if (i >= args.Length)
+						throw new CommandLineArgsException("Missing argument to the {0} switch", arg);
 
-						if (m_def.Args.GetSwitchType(arg) == typeof(string))
-							m_def.Args.Set(arg, args[i++]);
-						else if (m_def.Args.GetSwitchType(arg) == typeof(uint?))
-							m_def.Args.Set(arg, ParseIntValue(args[i++]));
-					}
+					if (m_def.Args.GetSwitchType(arg) == typeof(string))
+						m_def.Args.Set(arg, args[i++]);
+					else if (m_def.Args.GetSwitchType(arg) == typeof(uint?))
+						m_def.Args.Set(arg, ParseIntValue(args[i++]));
 				}
 			}
 
