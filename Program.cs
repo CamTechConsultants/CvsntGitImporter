@@ -16,10 +16,13 @@ namespace CvsGitConverter
 
 		static void Main(string[] args)
 		{
-			if (args.Length != 1)
+			var switches = new Switches();
+			switches.Parse(args);
+
+			if (switches.ExtraArguments.Count != 1)
 				throw new ArgumentException("Need a cvs.log file");
 
-			var parser = new CvsLogParser(args[0], startDate: StartDate);
+			var parser = new CvsLogParser(switches.ExtraArguments[0], startDate: StartDate);
 			var builder = new CommitBuilder(parser);
 			var commits = builder.GetCommits().SplitMultiBranchCommits().ToList();
 
