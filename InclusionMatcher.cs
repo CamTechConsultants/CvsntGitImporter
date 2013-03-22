@@ -45,7 +45,7 @@ namespace CvsGitConverter
 		/// </summary>
 		public bool Match(string item)
 		{
-			return m_rules.Aggregate(false, (isMatched, rule) => rule.Match(item, isMatched));
+			return m_rules.Aggregate(true, (isMatched, rule) => rule.Match(item, isMatched));
 		}
 
 
