@@ -1,6 +1,6 @@
 ﻿/*
- * John Hall <john.hall@xjtag.com>
- * Copyright (c) Midas Yellow Ltd. All rights reserved.
+ * John Hall <john.hall@camtechconsultants.com>
+ * Copyright (c) Cambridge Technology Consultants Ltd. All rights reserved.
  */
 
 using System;

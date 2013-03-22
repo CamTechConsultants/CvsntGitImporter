@@ -1,4 +1,9 @@
-﻿using System;
+﻿/*
+ * John Hall <john.hall@camtechconsultants.com>
+ * Copyright (c) Cambridge Technology Consultants Ltd. All rights reserved.
+ */
+
+using System;
 using System.Text.RegularExpressions;
 using CvsGitConverter;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
