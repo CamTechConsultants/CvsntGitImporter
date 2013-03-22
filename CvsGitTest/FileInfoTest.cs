@@ -139,6 +139,15 @@ namespace CvsGitTest
 			Assert.IsFalse(file.IsRevisionOnBranch(Revision.Create("1.4.2.3.2.1.2.1"), "branch3"));
 		}
 
+		[TestMethod]
+		public void IsRevisionOnBranch_BranchNotPresent()
+		{
+			var file = new FileInfo("file.txt");
+			file.AddTag("branch1", Revision.Create("1.4.0.2"));
+
+			Assert.IsFalse(file.IsRevisionOnBranch(Revision.Create("1.1"), "branch2"));
+		}
+
 		#endregion
 
 

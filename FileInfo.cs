@@ -123,8 +123,11 @@ namespace CvsGitConverter
 			if (branch == "MAIN")
 				return revision.Parts.Count() == 2;
 
-			var branchRevision = m_revisionForBranch[branch];
-			return (revision.Parts.Count() > 2 && branchRevision.BranchStem == revision.BranchStem) || revision.Precedes(branchRevision);
+			Revision branchRevision;
+			if (m_revisionForBranch.TryGetValue(branch, out branchRevision))
+				return (revision.Parts.Count() > 2 && branchRevision.BranchStem == revision.BranchStem) || revision.Precedes(branchRevision);
+			else
+				return false;
 		}
 
 		public override string ToString()
