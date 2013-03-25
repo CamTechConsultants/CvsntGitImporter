@@ -17,9 +17,14 @@ namespace CvsGitConverter
 		{
 		}
 
-		protected override IEnumerable<string> GetTagsForFileRevision(FileRevision fileRevision)
+		protected override IEnumerable<string> GetTagsForFileRevision(FileInfo file, Revision revision)
 		{
-			return fileRevision.File.GetTagsForRevision(fileRevision.Revision);
+			return file.GetTagsForRevision(revision);
+		}
+
+		protected override Revision GetRevisionForTag(FileInfo file, string tag)
+		{
+			return file.GetRevisionForTag(tag);
 		}
 	}
 }

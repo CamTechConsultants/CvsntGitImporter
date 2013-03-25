@@ -84,7 +84,15 @@ namespace CvsGitConverter
 			}
 		}
 
-		protected abstract IEnumerable<string> GetTagsForFileRevision(FileRevision fileRevision);
+		/// <summary>
+		/// Get the tags or branches for a specific revision of a file.
+		/// </summary>
+		protected abstract IEnumerable<string> GetTagsForFileRevision(FileInfo file, Revision revision);
+
+		/// <summary>
+		/// Get the revision for a specific tag or branch.
+		/// </summary>
+		protected abstract Revision GetRevisionForTag(FileInfo file, string tag);
 
 		/// <summary>
 		/// Find the last commit for each tag.
@@ -97,7 +105,7 @@ namespace CvsGitConverter
 			{
 				foreach (var file in commit)
 				{
-					foreach (var tag in GetTagsForFileRevision(file))
+					foreach (var tag in GetTagsForFileRevision(file.File, file.Revision))
 					{
 						if (m_tagMatcher.Match(tag))
 							tags[tag] = commit;
@@ -156,7 +164,7 @@ namespace CvsGitConverter
 						foreach (var filename in branchState.LiveFiles)
 						{
 							var file = m_allFiles[filename];
-							if (!file.GetTagsForRevision(branchState[filename]).Contains(tag))
+							if (!GetTagsForFileRevision(file, branchState[filename]).Contains(tag))
 							{
 								m_log.WriteLine("No commit found for tag {0}  Commit: {1}  File: {2},r{3}",
 										tag, commit.CommitId, filename, branchState[filename]);
@@ -199,7 +207,7 @@ namespace CvsGitConverter
 						var file = fileRevision.File;
 						if (file.IsRevisionOnBranch(fileRevision.Revision, branch))
 						{
-							if (fileRevision.Revision == file.GetRevisionForTag(tag))
+							if (fileRevision.Revision == GetRevisionForTag(file, tag))
 							{
 								filesAtTagRevision[file.Name] = commit;
 							}

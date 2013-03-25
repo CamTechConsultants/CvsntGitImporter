@@ -88,6 +88,20 @@ namespace CvsGitConverter
 		}
 
 		/// <summary>
+		/// Get the revision for the branchpoint for a branch.
+		/// </summary>
+		/// <param name="tag"></param>
+		/// <returns></returns>
+		public Revision GetBranchpointForBranch(string branch)
+		{
+			Revision branchRevision;
+			if (m_revisionForBranch.TryGetValue(branch, out branchRevision))
+				return branchRevision.GetBranchpoint();
+			else
+				return Revision.Empty;
+		}
+
+		/// <summary>
 		/// Gets a list of tags applied to a revision.
 		/// </summary>
 		public IEnumerable<string> GetTagsForRevision(Revision revision)

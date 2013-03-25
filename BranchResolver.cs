@@ -21,9 +21,14 @@ namespace CvsGitConverter
 		{
 		}
 
-		protected override IEnumerable<string> GetTagsForFileRevision(FileRevision fileRevision)
+		protected override IEnumerable<string> GetTagsForFileRevision(FileInfo file, Revision revision)
 		{
-			return fileRevision.File.GetBranchesAtRevision(fileRevision.Revision);
+			return file.GetBranchesAtRevision(revision);
+		}
+
+		protected override Revision GetRevisionForTag(FileInfo file, string tag)
+		{
+			return file.GetBranchpointForBranch(tag);
 		}
 	}
 }

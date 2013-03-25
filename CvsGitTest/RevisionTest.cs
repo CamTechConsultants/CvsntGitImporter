@@ -98,8 +98,53 @@ namespace CvsGitTest
 		#endregion BranchStem
 
 
-		#region DirectlyPrecedes
+		#region GetBranchpoint
+
+		[TestMethod]
+		[ExpectedException(typeof(InvalidOperationException))]
+		public void GetBranchpoint_MainRevision()
+		{
+			var r = Revision.Create("1.1");
+			var stem = r.GetBranchpoint();
+		}
 		
+		[TestMethod]
+		public void GetBranchpoint_RevisionOnBranch()
+		{
+			var r = Revision.Create("1.1.2.5");
+			var expected = Revision.Create("1.1");
+			Assert.AreEqual(r.GetBranchpoint(), expected);
+		}
+
+		[TestMethod]
+		public void GetBranchpoint_BranchRevision()
+		{
+			var r = Revision.Create("1.1.0.6");
+			var expected = Revision.Create("1.1");
+			Assert.AreEqual(r.GetBranchpoint(), expected);
+		}
+
+		[TestMethod]
+		public void GetBranchpoint_BranchStem()
+		{
+			var r = Revision.Create("1.1.6");
+			var expected = Revision.Create("1.1");
+			Assert.AreEqual(r.GetBranchpoint(), expected);
+		}
+
+		[TestMethod]
+		public void GetBranchpoint_NestedBranchRevision()
+		{
+			var r = Revision.Create("1.1.2.6.4.1");
+			var expected = Revision.Create("1.1.2.6");
+			Assert.AreEqual(r.GetBranchpoint(), expected);
+		}
+
+		#endregion GetBranchpoint
+
+
+		#region DirectlyPrecedes
+
 		[TestMethod]
 		public void DirectlyPrecedes_ConsecutiveTrunkRevisions()
 		{

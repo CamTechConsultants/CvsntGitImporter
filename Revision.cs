@@ -99,6 +99,21 @@ namespace CvsGitConverter
 		}
 
 		/// <summary>
+		/// Get the version that the branch containing the current version branches from.
+		/// </summary>
+		public Revision GetBranchpoint()
+		{
+			if (m_parts.Length <= 2)
+				throw new InvalidOperationException("Cannot get branch stem for revisions on MAIN");
+
+			// round the number of parts down to the next multiple of 2
+			var newPartsLength = (m_parts.Length - 1) / 2 * 2;
+			var newParts = new int[newPartsLength];
+			Array.Copy(m_parts, newParts, newPartsLength);
+			return Revision.Create(String.Join(".", newParts));
+		}
+
+		/// <summary>
 		/// Does this revision directly precede another?
 		/// </summary>
 		public bool DirectlyPrecedes(Revision other)
