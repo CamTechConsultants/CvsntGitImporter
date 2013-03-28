@@ -9,7 +9,7 @@ using System.Runtime.Serialization;
 namespace CvsGitConverter
 {
 	/// <summary>
-	///
+	/// Thrown when the CVS repository is inconsistent.
 	/// </summary>
 	class RepositoryConsistencyException : Exception
 	{
