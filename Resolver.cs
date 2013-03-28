@@ -16,22 +16,23 @@ namespace CvsGitConverter
 	/// </summary>
 	abstract class Resolver
 	{
+		private readonly Logger m_log;
 		private readonly IList<Commit> m_commits;
 		private readonly Dictionary<string, FileInfo> m_allFiles;
 		private readonly InclusionMatcher m_tagMatcher;
-		private readonly string m_problemLog;
+		private readonly bool m_branches;
 
 		private List<string> m_errors;
 		private IEnumerable<string> m_allTags;
-		private TextWriter m_log;
 
-		protected Resolver(IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles,
-				InclusionMatcher tagMatcher, string problemLog)
+		protected Resolver(Logger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles,
+				InclusionMatcher tagMatcher, bool branches = false)
 		{
+			m_log = log;
 			m_commits = commits.ToListIfNeeded();
 			m_allFiles = allFiles;
 			m_tagMatcher = tagMatcher;
-			m_problemLog = problemLog;
+			m_branches = branches;
 		}
 
 		/// <summary>
@@ -63,24 +64,21 @@ namespace CvsGitConverter
 		{
 			m_errors = null;
 
-			using (m_log = new StreamWriter(m_problemLog, false, Encoding.UTF8))
+			var tags = FindCommitsPerTag();
+			m_allTags = tags.Keys;
+
+			var candidateCommits = FindCandidateCommits(tags);
+			var problematicTags = FindProblematicTags(candidateCommits);
+
+			if (problematicTags.Any())
 			{
-				var tags = FindCommitsPerTag();
-				m_allTags = tags.Keys;
+				AnalyseProblematicTags(problematicTags, tags);
 
-				var candidateCommits = FindCandidateCommits(tags);
-				var problematicTags = FindProblematicTags(candidateCommits);
-
-				if (problematicTags.Any())
-				{
-					AnalyseProblematicTags(problematicTags, tags);
-
-					var newTags = FindCommitsPerTag();
-					var newCandidateCommits = FindCandidateCommits(newTags);
-					var newProblematicTags = FindProblematicTags(newCandidateCommits);
-					if (newProblematicTags.Any())
-						AnalyseProblematicTags(newProblematicTags, newTags);
-				}
+				var newTags = FindCommitsPerTag();
+				var newCandidateCommits = FindCandidateCommits(newTags);
+				var newProblematicTags = FindProblematicTags(newCandidateCommits);
+				if (newProblematicTags.Any())
+					AnalyseProblematicTags(newProblematicTags, newTags);
 			}
 		}
 
@@ -148,8 +146,9 @@ namespace CvsGitConverter
 			var state = new RepositoryState();
 			var problematicTags = new HashSet<string>();
 
-			m_log.WriteLine("===============================================================================");
-			m_log.WriteLine("Finding problematic tags...");
+			m_log.DoubleRuleOff();
+			m_log.WriteLine("Finding problematic {0}...", m_branches ? "branches" : "tags");
+			m_log.Indent();
 
 			foreach (var commit in m_commits)
 			{
@@ -175,6 +174,10 @@ namespace CvsGitConverter
 				}
 			}
 
+			if (!problematicTags.Any())
+				m_log.WriteLine("None found");
+			m_log.Outdent();
+
 			return problematicTags;
 		}
 
@@ -182,8 +185,9 @@ namespace CvsGitConverter
 		{
 			var moveRecords = new List<CommitMoveRecord>();
 
-			m_log.WriteLine("===============================================================================");
-			m_log.WriteLine("Analysing problematic tags...");
+			m_log.DoubleRuleOff();
+			m_log.WriteLine("Analysing problematic {0}...", m_branches ? "branches" : "tags");
+			m_log.Indent();
 
 			foreach (var tag in tags)
 			{
@@ -231,7 +235,7 @@ namespace CvsGitConverter
 					}
 				}
 
-				m_log.WriteLine("-------------------------------------------------------------------------------");
+				m_log.RuleOff();
 			}
 
 			if (moveRecords.Count > 0)
@@ -240,6 +244,8 @@ namespace CvsGitConverter
 				foreach (var record in moveRecords)
 					MoveCommits(record);
 			}
+
+			m_log.Outdent();
 		}
 
 		private void MoveCommits(CommitMoveRecord moveRecord)
@@ -248,6 +254,7 @@ namespace CvsGitConverter
 			int searchStart = destLocation;
 
 			m_log.WriteLine("Final commit: {0}", moveRecord.FinalCommit.CommitId);
+			m_log.Indent();
 
 			// handle in reverse order
 			for (int i = moveRecord.Commits.Count - 1; i >= 0; i--)
@@ -256,15 +263,17 @@ namespace CvsGitConverter
 				if (location < 0)
 				{
 					// assume already moved
-					m_log.WriteLine("  Skip moving {0} after {1}", moveRecord.Commits[i].CommitId, moveRecord.FinalCommit.CommitId);
+					m_log.WriteLine("Skip moving {0} after {1}", moveRecord.Commits[i].CommitId, moveRecord.FinalCommit.CommitId);
 					continue;
 				}
 
-				m_log.WriteLine("  Move {0}({1}) after {2}({3})", moveRecord.Commits[i].CommitId, location,
+				m_log.WriteLine("Move {0}({1}) after {2}({3})", moveRecord.Commits[i].CommitId, location,
 							moveRecord.FinalCommit.CommitId, destLocation);
 				m_commits.Move(location, destLocation);
 				destLocation--;
 			}
+
+			m_log.Outdent();
 		}
 
 		private class CommitMoveRecord

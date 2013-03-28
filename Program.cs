@@ -22,32 +22,35 @@ namespace CvsGitConverter
 			if (switches.ExtraArguments.Count != 1)
 				throw new ArgumentException("Need a cvs.log file");
 
-			var parser = new CvsLogParser(switches.ExtraArguments[0], startDate: StartDate);
-			var builder = new CommitBuilder(parser);
-			var commits = builder.GetCommits().SplitMultiBranchCommits().ToList();
-
-			Verify(commits);
-
-			// build lookup of all files
-			var allFiles = new Dictionary<string, FileInfo>();
-			foreach (var f in parser.Files)
-				allFiles.Add(f.Name, f);
-
-			var branchResolver = new BranchResolver(commits, allFiles, switches.BranchMatcher);
-			branchResolver.Resolve();
-
-			var tagResolver = new TagResolver(commits, allFiles, switches.TagMatcher);
-			tagResolver.Resolve();
-
-			if (tagResolver.Errors.Any())
+			using (var log = new Logger("gitconvert.log"))
 			{
-				Console.Error.WriteLine("Errors resolving tags:");
-				foreach (var error in tagResolver.Errors)
-					Console.Error.WriteLine("  {0}", error);
-			}
+				var parser = new CvsLogParser(switches.ExtraArguments[0], startDate: StartDate);
+				var builder = new CommitBuilder(parser);
+				var commits = builder.GetCommits().SplitMultiBranchCommits().ToList();
 
-			WriteLogFile("allbranches.log", branchResolver.AllTags);
-			WriteLogFile("alltags.log", tagResolver.AllTags);
+				Verify(commits);
+
+				// build lookup of all files
+				var allFiles = new Dictionary<string, FileInfo>();
+				foreach (var f in parser.Files)
+					allFiles.Add(f.Name, f);
+
+				var branchResolver = new BranchResolver(log, commits, allFiles, switches.BranchMatcher);
+				branchResolver.Resolve();
+
+				var tagResolver = new TagResolver(log, commits, allFiles, switches.TagMatcher);
+				tagResolver.Resolve();
+
+				if (tagResolver.Errors.Any())
+				{
+					Console.Error.WriteLine("Errors resolving tags:");
+					foreach (var error in tagResolver.Errors)
+						Console.Error.WriteLine("  {0}", error);
+				}
+
+				WriteLogFile("allbranches.log", branchResolver.AllTags);
+				WriteLogFile("alltags.log", tagResolver.AllTags);
+			}
 		}
 
 		private static void WriteLogFile(string filename, IEnumerable<string> lines)

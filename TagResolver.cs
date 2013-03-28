@@ -12,8 +12,8 @@ namespace CvsGitConverter
 	/// </summary>
 	class TagResolver : Resolver
 	{
-		public TagResolver(IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles, InclusionMatcher tagMatcher) :
-				base(commits: commits, allFiles: allFiles, tagMatcher: tagMatcher, problemLog: "problemtags.log")
+		public TagResolver(Logger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles, InclusionMatcher tagMatcher) :
+				base(log: log, commits: commits, allFiles: allFiles, tagMatcher: tagMatcher)
 		{
 		}
 
