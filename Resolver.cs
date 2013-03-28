@@ -25,6 +25,9 @@ namespace CvsGitConverter
 		private List<string> m_errors;
 		private IEnumerable<string> m_allTags;
 
+		private Dictionary<string, Commit> m_finalCommits;
+		private IEnumerable<string> m_problematicTags;
+
 		protected Resolver(Logger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles,
 				InclusionMatcher tagMatcher, bool branches = false)
 		{
@@ -60,26 +63,36 @@ namespace CvsGitConverter
 		/// Resolve tags. Find what tags each commit contributes to and build a stack for each tag.
 		/// The last commit that contributes to a tag should be the one that we tag.
 		/// </summary>
-		public void Resolve()
+		/// <returns>true if all tags are resolvable, otherwise false</returns>
+		public bool Resolve()
 		{
 			m_errors = null;
 
-			var tags = FindCommitsPerTag();
-			m_allTags = tags.Keys;
+			m_finalCommits = FindCommitsPerTag();
+			m_allTags = m_finalCommits.Keys;
 
-			var candidateCommits = FindCandidateCommits(tags);
-			var problematicTags = FindProblematicTags(candidateCommits);
+			var candidateCommits = FindCandidateCommits(m_finalCommits);
+			m_problematicTags = FindProblematicTags(candidateCommits);
+			return !m_problematicTags.Any();
+		}
 
-			if (problematicTags.Any())
-			{
-				AnalyseProblematicTags(problematicTags, tags);
+		/// <summary>
+		/// Resolve tags and try and fix those that don't immediately resolve.
+		/// </summary>
+		/// <returns>true if all tags were resolved (potentially after being fixed), or false
+		/// if fixing tags failed</returns>
+		public bool ResolveAndFix()
+		{
+			if (Resolve())
+				return true;
 
-				var newTags = FindCommitsPerTag();
-				var newCandidateCommits = FindCandidateCommits(newTags);
-				var newProblematicTags = FindProblematicTags(newCandidateCommits);
-				if (newProblematicTags.Any())
-					AnalyseProblematicTags(newProblematicTags, newTags);
-			}
+			// analyse and hopefully fix
+			AnalyseProblematicTags(m_problematicTags, m_finalCommits);
+
+			var newFinalCommits = FindCommitsPerTag();
+			var newCandidateCommits = FindCandidateCommits(newFinalCommits);
+			var newProblematicTags = FindProblematicTags(newCandidateCommits);
+			return !newProblematicTags.Any();
 		}
 
 		/// <summary>

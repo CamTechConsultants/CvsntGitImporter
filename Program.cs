@@ -36,10 +36,16 @@ namespace CvsGitConverter
 					allFiles.Add(f.Name, f);
 
 				var branchResolver = new BranchResolver(log, commits, allFiles, switches.BranchMatcher);
-				branchResolver.Resolve();
+				if (!branchResolver.ResolveAndFix())
+					throw new ImportFailedException("Unable to resolve all branches to a single commit");
 
 				var tagResolver = new TagResolver(log, commits, allFiles, switches.TagMatcher);
-				tagResolver.Resolve();
+				if (!tagResolver.ResolveAndFix())
+					throw new ImportFailedException("Unable to resolve all tags to a single commit");
+
+				// recheck branches
+				if (!branchResolver.Resolve())
+					throw new ImportFailedException("Resolving tags broke branch resolution");
 
 				if (tagResolver.Errors.Any())
 				{
