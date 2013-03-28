@@ -71,6 +71,7 @@
     <Compile Include="TagResolver.cs" />
     <Compile Include="Utils\AttributeExtensions.cs" />
     <Compile Include="Utils\CommandLineArgsException.cs" />
+    <Compile Include="Utils\IEnumerableExtensions.cs" />
     <Compile Include="Utils\SwitchCollection.cs" />
     <Compile Include="Utils\SwitchDefAttribute.cs" />
     <Compile Include="Utils\SwitchesDefBase.cs" />

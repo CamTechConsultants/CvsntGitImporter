@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using CvsGitConverter.Utils;
 
 namespace CvsGitConverter
 {
@@ -26,7 +27,7 @@ namespace CvsGitConverter
 			{
 				var parser = new CvsLogParser(switches.ExtraArguments[0], startDate: StartDate);
 				var builder = new CommitBuilder(parser);
-				var commits = builder.GetCommits().SplitMultiBranchCommits().ToList();
+				IEnumerable<Commit> commits = builder.GetCommits().SplitMultiBranchCommits().ToList();
 
 				Verify(commits);
 
@@ -37,21 +38,25 @@ namespace CvsGitConverter
 
 				var branchResolver = new BranchResolver(log, commits, allFiles, switches.BranchMatcher);
 				if (!branchResolver.ResolveAndFix())
-					throw new ImportFailedException("Unable to resolve all branches to a single commit");
+				{
+					throw new ImportFailedException(String.Format("Unable to resolve all branches to a single commit: {0}",
+							branchResolver.UnresolvedTags.StringJoin(", ")));
+				}
+				commits = branchResolver.Commits;
 
 				var tagResolver = new TagResolver(log, commits, allFiles, switches.TagMatcher);
 				if (!tagResolver.ResolveAndFix())
-					throw new ImportFailedException("Unable to resolve all tags to a single commit");
+				{
+					throw new ImportFailedException(String.Format("Unable to resolve all tags to a single commit: {0}",
+							tagResolver.UnresolvedTags.StringJoin(", ")));
+				}
+				commits = tagResolver.Commits;
 
 				// recheck branches
 				if (!branchResolver.Resolve())
-					throw new ImportFailedException("Resolving tags broke branch resolution");
-
-				if (tagResolver.Errors.Any())
 				{
-					Console.Error.WriteLine("Errors resolving tags:");
-					foreach (var error in tagResolver.Errors)
-						Console.Error.WriteLine("  {0}", error);
+					throw new ImportFailedException(String.Format("Resolving tags broke branch resolution: {0}",
+							branchResolver.UnresolvedTags.StringJoin(", ")));
 				}
 
 				WriteLogFile("allbranches.log", branchResolver.AllTags);

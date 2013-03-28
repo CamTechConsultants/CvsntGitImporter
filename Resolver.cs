@@ -22,7 +22,6 @@ namespace CvsGitConverter
 		private readonly InclusionMatcher m_tagMatcher;
 		private readonly bool m_branches;
 
-		private List<string> m_errors;
 		private IEnumerable<string> m_allTags;
 
 		private Dictionary<string, Commit> m_finalCommits;
@@ -39,14 +38,6 @@ namespace CvsGitConverter
 		}
 
 		/// <summary>
-		/// Gets any errors encountered resolving tags.
-		/// </summary>
-		public IEnumerable<string> Errors
-		{
-			get { return (m_errors == null) ? Enumerable.Empty<string>() : m_errors; }
-		}
-
-		/// <summary>
 		/// Gets a list of all tags being considered.
 		/// </summary>
 		public IEnumerable<string> AllTags
@@ -60,14 +51,28 @@ namespace CvsGitConverter
 		}
 
 		/// <summary>
+		/// Gets a list of any unresolved tags.
+		/// </summary>
+		public IEnumerable<string> UnresolvedTags
+		{
+			get { return m_problematicTags ?? Enumerable.Empty<string>(); }
+		}
+
+		/// <summary>
+		/// Gets the (possibly re-ordered) list of commits.
+		/// </summary>
+		public IEnumerable<Commit> Commits
+		{
+			get { return m_commits; }
+		} 
+
+		/// <summary>
 		/// Resolve tags. Find what tags each commit contributes to and build a stack for each tag.
 		/// The last commit that contributes to a tag should be the one that we tag.
 		/// </summary>
 		/// <returns>true if all tags are resolvable, otherwise false</returns>
 		public bool Resolve()
 		{
-			m_errors = null;
-
 			m_finalCommits = FindCommitsPerTag();
 			m_allTags = m_finalCommits.Keys;
 
@@ -299,13 +304,6 @@ namespace CvsGitConverter
 			{
 				this.FinalCommit = finalCommit;
 			}
-		}
-
-		private void AddError(string format, params object[] args)
-		{
-			if (m_errors == null)
-				m_errors = new List<string>();
-			m_errors.Add(String.Format(format, args));
 		}
 	}
 }
