@@ -16,7 +16,7 @@ namespace CvsGitConverter
 	/// </summary>
 	class BranchResolver : Resolver
 	{
-		public BranchResolver(Logger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles, InclusionMatcher tagMatcher) :
+		public BranchResolver(ILogger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles, InclusionMatcher tagMatcher) :
 				base(log: log, commits: commits, allFiles: allFiles, tagMatcher: tagMatcher, branches: true)
 		{
 		}

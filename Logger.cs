@@ -12,7 +12,7 @@ namespace CvsGitConverter
 	/// <summary>
 	/// Logging.
 	/// </summary>
-	class Logger : IDisposable
+	class Logger : ILogger, IDisposable
 	{
 		private bool m_isDisposed = false;
 		private readonly TextWriter m_writer;

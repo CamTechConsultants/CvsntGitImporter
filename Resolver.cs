@@ -16,7 +16,7 @@ namespace CvsGitConverter
 	/// </summary>
 	abstract class Resolver
 	{
-		private readonly Logger m_log;
+		private readonly ILogger m_log;
 		private readonly IList<Commit> m_commits;
 		private readonly Dictionary<string, FileInfo> m_allFiles;
 		private readonly InclusionMatcher m_tagMatcher;
@@ -28,7 +28,7 @@ namespace CvsGitConverter
 		private Dictionary<string, Commit> m_finalCommits;
 		private IEnumerable<string> m_problematicTags;
 
-		protected Resolver(Logger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles,
+		protected Resolver(ILogger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles,
 				InclusionMatcher tagMatcher, bool branches = false)
 		{
 			m_log = log;
