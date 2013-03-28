@@ -10,6 +10,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using CvsGitConverter;
 using System.Text.RegularExpressions;
+using Rhino.Mocks;
 
 namespace CvsGitTest
 {
@@ -19,6 +20,14 @@ namespace CvsGitTest
 	[TestClass]
 	public class TagResolverTest
 	{
+		private ILogger m_logger;
+
+		[TestInitialize]
+		public void Setup()
+		{
+			m_logger = MockRepository.GenerateStub<ILogger>();
+		}
+
 		[TestMethod]
 		public void TagSplitAcrossCommits()
 		{
@@ -52,7 +61,7 @@ namespace CvsGitTest
 				{ file2.Name, file2 },
 			};
 
-			var resolver = new TagResolver(new[] { commit1, commit2, commit3 }, allFiles, new InclusionMatcher());
+			var resolver = new TagResolver(m_logger, new[] { commit1, commit2, commit3 }, allFiles, new InclusionMatcher());
 			resolver.Resolve();
 
 			Assert.IsTrue(Regex.IsMatch(resolver.Errors.Single(), @"No commit found for tag.*File: file1,r1\.3"));
