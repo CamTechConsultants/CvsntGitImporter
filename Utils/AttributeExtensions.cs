@@ -8,7 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Collections.Generic;
 
-namespace CvsGitImporter.Utils
+namespace CvsGitConverter.Utils
 {
 	/// <summary>
 	/// Extension methods to query attributes.

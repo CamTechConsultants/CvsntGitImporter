@@ -5,7 +5,7 @@
 
 using System;
 
-namespace CvsGitImporter.Utils
+namespace CvsGitConverter.Utils
 {
 	/// <summary>
 	/// Mark a switch as hidden, i.e. one that is undocumented.

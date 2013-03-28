@@ -11,7 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using CvsGitImporter.Utils;
+using CvsGitConverter.Utils;
 
 namespace CvsGitConverter
 {

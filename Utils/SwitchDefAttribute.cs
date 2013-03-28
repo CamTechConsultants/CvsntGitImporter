@@ -6,7 +6,7 @@
 using System;
 using System.Diagnostics;
 
-namespace CvsGitImporter.Utils
+namespace CvsGitConverter.Utils
 {
 	/// <summary>
 	/// Mark a property as a commandline argument, and specifies what switches apply.
