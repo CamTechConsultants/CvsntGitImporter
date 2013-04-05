@@ -52,6 +52,37 @@ namespace CvsGitTest
 			Assert.IsTrue(resolver.Commits.SequenceEqual(new[] { orderBefore[0], orderBefore[2], orderBefore[1] }), "Commits reordered");
 		}
 
+		[TestMethod]
+		public void Resolve_SplitCommit()
+		{
+			var commits = CreateCommitThatNeedsSplitting().ToList();
+			var allFiles = CreateAllFiles(commits);
+
+			var resolver = new TagResolver(m_logger, commits, allFiles, new InclusionMatcher());
+			var result = resolver.Resolve();
+
+			Assert.IsFalse(result, "Failed");
+		}
+
+		[TestMethod]
+		public void ResolveAndFix_SplitCommit()
+		{
+			var commits = CreateCommitThatNeedsSplitting().ToList();
+			var orderBefore = commits.ToList();
+			var allFiles = CreateAllFiles(commits);
+
+			var resolver = new TagResolver(m_logger, commits, allFiles, new InclusionMatcher());
+			var result = resolver.ResolveAndFix();
+
+			Assert.IsTrue(result, "Succeeded");
+			var newCommits = resolver.Commits.ToList();
+			Assert.AreEqual(newCommits.Count, 4);
+			Assert.AreEqual(newCommits[0], orderBefore[0]);
+			Assert.AreEqual(newCommits[1], orderBefore[1]);
+			Assert.IsTrue(newCommits[2].Single().File.Name == "file2" && newCommits[2].Single().Revision.Equals(Revision.Create("1.2")));
+			Assert.IsTrue(newCommits[3].Single().File.Name == "file1" && newCommits[3].Single().Revision.Equals(Revision.Create("1.3")));
+		}
+
 
 		private static IEnumerable<Commit> CreateCommitThatNeedsReordering()
 		{

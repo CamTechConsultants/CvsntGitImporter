@@ -220,10 +220,8 @@ namespace CvsGitConverter
 				foreach (var commit in m_commits)
 				{
 					state.Apply(commit);
-					if (commit == finalCommit)
-						break;
 
-					bool moveCommit = false;
+					List<FileRevision> filesToMove = null;
 					foreach (var fileRevision in commit)
 					{
 						var file = fileRevision.File;
@@ -237,20 +235,27 @@ namespace CvsGitConverter
 							{
 								m_log.WriteLine("  File {0} updated to r{1} in commit {2} but tagged in commit {3}",
 										file.Name, fileRevision.Revision, commit.CommitId, filesAtTagRevision[file.Name].CommitId);
-								moveCommit = true;
+
+								if (filesToMove == null)
+									filesToMove = new List<FileRevision>() { fileRevision };
+								else
+									filesToMove.Add(fileRevision);
 							}
 						}
 					}
 
-					if (moveCommit)
+					if (filesToMove != null)
 					{
 						if (moveRecord == null)
 						{
-							moveRecord = new CommitMoveRecord(finalCommit);
+							moveRecord = new CommitMoveRecord(finalCommit, m_log);
 							moveRecords.Add(moveRecord);
 						}
-						moveRecord.Commits.Add(commit);
+						moveRecord.AddCommit(commit, filesToMove);
 					}
+
+					if (commit == finalCommit)
+						break;
 				}
 
 				m_log.RuleOff();
@@ -260,50 +265,10 @@ namespace CvsGitConverter
 			{
 				m_log.WriteLine("Moving commits...");
 				foreach (var record in moveRecords)
-					MoveCommits(record);
+					record.Apply(m_commits);
 			}
 
 			m_log.Outdent();
-		}
-
-		private void MoveCommits(CommitMoveRecord moveRecord)
-		{
-			int destLocation = m_commits.IndexOf(moveRecord.FinalCommit);
-			int searchStart = destLocation;
-
-			m_log.WriteLine("Final commit: {0}", moveRecord.FinalCommit.CommitId);
-			m_log.Indent();
-
-			// handle in reverse order
-			for (int i = moveRecord.Commits.Count - 1; i >= 0; i--)
-			{
-				int location = m_commits.IndexOfFromEnd(moveRecord.Commits[i], searchStart);
-				if (location < 0)
-				{
-					// assume already moved
-					m_log.WriteLine("Skip moving {0} after {1}", moveRecord.Commits[i].CommitId, moveRecord.FinalCommit.CommitId);
-					continue;
-				}
-
-				m_log.WriteLine("Move {0}({1}) after {2}({3})", moveRecord.Commits[i].CommitId, location,
-							moveRecord.FinalCommit.CommitId, destLocation);
-				m_commits.Move(location, destLocation);
-				destLocation--;
-			}
-
-			m_log.Outdent();
-		}
-
-		private class CommitMoveRecord
-		{
-			public readonly Commit FinalCommit;
-
-			public readonly List<Commit> Commits = new List<Commit>();
-
-			public CommitMoveRecord(Commit finalCommit)
-			{
-				this.FinalCommit = finalCommit;
-			}
 		}
 	}
 }
