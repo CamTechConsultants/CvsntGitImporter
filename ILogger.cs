@@ -13,15 +13,11 @@ namespace CvsGitConverter
 	interface ILogger
 	{
 		/// <summary>
-		/// Increase the indent for any following entries.
+		/// Increase the indent for any following entries. When the returned object is disposed, the indent
+		/// is removed.
 		/// </summary>
-		void Indent();
+		IDisposable Indent();
 
-		/// <summary>
-		/// Decrease the indent for any following entries.
-		/// </summary>
-		void Outdent();
-		
 		/// <summary>
 		/// Draw a double line in the log file
 		/// </summary>

@@ -166,35 +166,36 @@ namespace CvsGitConverter
 
 			m_log.DoubleRuleOff();
 			m_log.WriteLine("Finding problematic {0}...", m_branches ? "branches" : "tags");
-			m_log.Indent();
 
-			foreach (var commit in m_commits)
+			using (m_log.Indent())
 			{
-				state.Apply(commit);
-
-				// if the commit is a candidate for being tagged, then check that all files are at the correct version
-				if (candidateCommits.ContainsKey(commit))
+				foreach (var commit in m_commits)
 				{
-					foreach (var tag in candidateCommits[commit])
+					state.Apply(commit);
+
+					// if the commit is a candidate for being tagged, then check that all files are at the correct version
+					if (candidateCommits.ContainsKey(commit))
 					{
-						var branchState = state[commit.Branch];
-						foreach (var filename in branchState.LiveFiles)
+						foreach (var tag in candidateCommits[commit])
 						{
-							var file = m_allFiles[filename];
-							if (!GetTagsForFileRevision(file, branchState[filename]).Contains(tag))
+							var branchState = state[commit.Branch];
+							foreach (var filename in branchState.LiveFiles)
 							{
-								m_log.WriteLine("No commit found for tag {0}  Commit: {1}  File: {2},r{3}",
-										tag, commit.CommitId, filename, branchState[filename]);
-								problematicTags.Add(tag);
+								var file = m_allFiles[filename];
+								if (!GetTagsForFileRevision(file, branchState[filename]).Contains(tag))
+								{
+									m_log.WriteLine("No commit found for tag {0}  Commit: {1}  File: {2},r{3}",
+											tag, commit.CommitId, filename, branchState[filename]);
+									problematicTags.Add(tag);
+								}
 							}
 						}
 					}
 				}
-			}
 
-			if (!problematicTags.Any())
-				m_log.WriteLine("None found");
-			m_log.Outdent();
+				if (!problematicTags.Any())
+					m_log.WriteLine("None found");
+			}
 
 			return problematicTags;
 		}
@@ -205,70 +206,70 @@ namespace CvsGitConverter
 
 			m_log.DoubleRuleOff();
 			m_log.WriteLine("Analysing problematic {0}...", m_branches ? "branches" : "tags");
-			m_log.Indent();
 
-			foreach (var tag in tags)
+			using (m_log.Indent())
 			{
-				m_log.WriteLine("Tag {0}:", tag);
-				var state = new RepositoryState();
-				var filesAtTagRevision = new Dictionary<string, Commit>();
-				var finalCommit = finalCommits[tag];
-				CommitMoveRecord moveRecord = null;
-				var branch = finalCommit.Branch;
-				var commitsToMove = new List<Commit>();
-
-				foreach (var commit in m_commits)
+				foreach (var tag in tags)
 				{
-					state.Apply(commit);
+					m_log.WriteLine("Tag {0}:", tag);
+					var state = new RepositoryState();
+					var filesAtTagRevision = new Dictionary<string, Commit>();
+					var finalCommit = finalCommits[tag];
+					CommitMoveRecord moveRecord = null;
+					var branch = finalCommit.Branch;
+					var commitsToMove = new List<Commit>();
 
-					List<FileRevision> filesToMove = null;
-					foreach (var fileRevision in commit)
+					foreach (var commit in m_commits)
 					{
-						var file = fileRevision.File;
-						if (file.IsRevisionOnBranch(fileRevision.Revision, branch))
-						{
-							if (fileRevision.Revision == GetRevisionForTag(file, tag))
-							{
-								filesAtTagRevision[file.Name] = commit;
-							}
-							else if (filesAtTagRevision.ContainsKey(file.Name))
-							{
-								m_log.WriteLine("  File {0} updated to r{1} in commit {2} but tagged in commit {3}",
-										file.Name, fileRevision.Revision, commit.CommitId, filesAtTagRevision[file.Name].CommitId);
+						state.Apply(commit);
 
-								if (filesToMove == null)
-									filesToMove = new List<FileRevision>() { fileRevision };
-								else
-									filesToMove.Add(fileRevision);
+						List<FileRevision> filesToMove = null;
+						foreach (var fileRevision in commit)
+						{
+							var file = fileRevision.File;
+							if (file.IsRevisionOnBranch(fileRevision.Revision, branch))
+							{
+								if (fileRevision.Revision == GetRevisionForTag(file, tag))
+								{
+									filesAtTagRevision[file.Name] = commit;
+								}
+								else if (filesAtTagRevision.ContainsKey(file.Name))
+								{
+									m_log.WriteLine("  File {0} updated to r{1} in commit {2} but tagged in commit {3}",
+											file.Name, fileRevision.Revision, commit.CommitId, filesAtTagRevision[file.Name].CommitId);
+
+									if (filesToMove == null)
+										filesToMove = new List<FileRevision>() { fileRevision };
+									else
+										filesToMove.Add(fileRevision);
+								}
 							}
 						}
-					}
 
-					if (filesToMove != null)
-					{
-						if (moveRecord == null)
+						if (filesToMove != null)
 						{
-							moveRecord = new CommitMoveRecord(finalCommit, m_log);
-							moveRecords.Add(moveRecord);
+							if (moveRecord == null)
+							{
+								moveRecord = new CommitMoveRecord(finalCommit, m_log);
+								moveRecords.Add(moveRecord);
+							}
+							moveRecord.AddCommit(commit, filesToMove);
 						}
-						moveRecord.AddCommit(commit, filesToMove);
+
+						if (commit == finalCommit)
+							break;
 					}
 
-					if (commit == finalCommit)
-						break;
+					m_log.RuleOff();
 				}
 
-				m_log.RuleOff();
+				if (moveRecords.Count > 0)
+				{
+					m_log.WriteLine("Moving commits...");
+					foreach (var record in moveRecords)
+						record.Apply(m_commits);
+				}
 			}
-
-			if (moveRecords.Count > 0)
-			{
-				m_log.WriteLine("Moving commits...");
-				foreach (var record in moveRecords)
-					record.Apply(m_commits);
-			}
-
-			m_log.Outdent();
 		}
 	}
 }

@@ -58,12 +58,13 @@ namespace CvsGitConverter
 		}
 
 
-		public void Indent()
+		public IDisposable Indent()
 		{
 			m_currentIndent += m_singleIndent;
+			return new Indenter(this);
 		}
 
-		public void Outdent()
+		private void Outdent()
 		{
 			if (m_currentIndent.Length > 0)
 				m_currentIndent = m_currentIndent.Substring(0, m_currentIndent.Length - 2);
@@ -94,6 +95,33 @@ namespace CvsGitConverter
 		public void DoubleRuleOff()
 		{
 			m_writer.WriteLine("===============================================================================");
+		}
+
+
+		private class Indenter : IDisposable
+		{
+			private bool m_isDisposed = false;
+			private readonly Logger m_logger;
+
+			public Indenter(Logger logger)
+			{
+				m_logger = logger;
+			}
+
+			public void Dispose()
+			{
+				Dispose(true);
+			}
+
+			protected virtual void Dispose(bool disposing)
+			{
+				if (!m_isDisposed && disposing)
+				{
+					m_logger.Outdent();
+				}
+
+				m_isDisposed = true;
+			}
 		}
 	}
 }
