@@ -26,18 +26,12 @@ namespace CvsGitTest
 			var file1 = new FileInfo("file1");
 			var file2 = new FileInfo("file2");
 
-			var id1 = "id1";
-			var commit1 = new Commit(id1)
-			{
-				CreateFileRevision(file1, "1.1", id1),
-				CreateFileRevision(file2, "1.1", id1),
-			};
+			var commit1 = new Commit("id1")
+					.WithRevision(file1, "1.1")
+					.WithRevision(file2, "1.1");
 
-			var id2 = "id2";
-			var commit2 = new Commit(id2)
-			{
-				CreateFileRevision(file2, "1.2", id2),
-			};
+			var commit2 = new Commit("id2")
+					.WithRevision(file2, "1.2");
 
 			repoState.Apply(commit1);
 			repoState.Apply(commit2);
@@ -54,31 +48,18 @@ namespace CvsGitTest
 			var file1 = new FileInfo("file1");
 			var file2 = new FileInfo("file2");
 
-			var id1 = "id1";
-			var commit1 = new Commit(id1)
-			{
-				CreateFileRevision(file1, "1.1", id1),
-				CreateFileRevision(file2, "1.1", id1),
-			};
+			var commit1 = new Commit("id1")
+					.WithRevision(file1, "1.1")
+					.WithRevision(file2, "1.1");
 
-			var id2 = "id2";
-			var commit2 = new Commit(id2)
-			{
-				CreateFileRevision(file2, "1.2", id2, isDead: true),
-			};
+			var commit2 = new Commit("id2")
+					.WithRevision(file2, "1.2", isDead: true);
 
 			repoState.Apply(commit1);
 			repoState.Apply(commit2);
 
 			Assert.AreEqual(repoState[file1.Name], Revision.Create("1.1"));
 			Assert.AreEqual(repoState[file2.Name], Revision.Empty);
-		}
-
-
-		private FileRevision CreateFileRevision(FileInfo file, string revision, string commitId, bool isDead = false)
-		{
-			return new FileRevision(file, Revision.Create(revision), Revision.Empty, DateTime.Now,
-					"fred", commitId, isDead: isDead);
 		}
 	}
 }
