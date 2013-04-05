@@ -193,6 +193,9 @@ namespace CvsGitConverter
 								var file = m_allFiles[filename];
 								if (!GetTagsForFileRevision(file, branchState[filename]).Contains(tag))
 								{
+									if (GetRevisionForTag(file, tag) == Revision.Empty)
+										m_log.WriteLine("File {0} not tagged with tag {1}!", filename, tag);
+
 									m_log.WriteLine("No commit found for tag {0}  Commit: {1}  File: {2},r{3}",
 											tag, commit.CommitId, filename, branchState[filename]);
 									problematicTags.Add(tag);
