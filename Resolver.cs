@@ -25,6 +25,7 @@ namespace CvsGitConverter
 		private IEnumerable<string> m_allTags;
 
 		private Dictionary<string, Commit> m_finalCommits;
+
 		private IEnumerable<string> m_problematicTags;
 
 		protected Resolver(ILogger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles,
@@ -48,6 +49,14 @@ namespace CvsGitConverter
 					throw new InvalidOperationException("Resolve not yet called");
 				return m_allTags.OrderBy(t => t);
 			}
+		}
+
+		/// <summary>
+		/// Gets a lookup that returns the resolved commits for each tag.
+		/// </summary>
+		public IDictionary<string, Commit> ResolvedCommits
+		{
+			get { return m_finalCommits; }
 		}
 
 		/// <summary>

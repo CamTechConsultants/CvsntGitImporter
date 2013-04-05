@@ -49,6 +49,7 @@
     <Compile Include="CommitComparer.cs" />
     <Compile Include="CommitListExtensions.cs" />
     <Compile Include="CommitMoveRecord.cs" />
+    <Compile Include="CommitPlayer.cs" />
     <Compile Include="FuncExtensions.cs" />
     <Compile Include="FileInfo.cs" />
     <Compile Include="FileRevision.cs" />

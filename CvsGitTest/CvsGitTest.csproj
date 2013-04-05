@@ -73,6 +73,7 @@
     <Compile Include="TagResolverTest.cs" />
     <Compile Include="InclusionMatcherTest.cs" />
     <Compile Include="FuncExtensionsTest.cs" />
+    <Compile Include="CommitPlayerTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CvsGitConverter.csproj">
