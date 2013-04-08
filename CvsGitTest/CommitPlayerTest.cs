@@ -3,7 +3,6 @@
  * Copyright (c) Cambridge Technology Consultants Ltd. All rights reserved.
  */
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using CvsGitConverter;
@@ -35,8 +34,9 @@ namespace CvsGitTest
 					.WithRevision(file2, "1.2");
 
 			var commits = new[] { commit0, commit1, commit2 };
+			var branches = new BranchStreamCollection(commits, new Dictionary<string, Commit>());
 
-			var player = new CommitPlayer(MockRepository.GenerateStub<ILogger>(), commits, new Dictionary<string, Commit>());
+			var player = new CommitPlayer(MockRepository.GenerateStub<ILogger>(), branches);
 			var result = player.Play().ToList();
 
 			Assert.IsTrue(result.SequenceEqual(commits));
@@ -63,8 +63,9 @@ namespace CvsGitTest
 			{
 				{ "branch", commit0 }
 			};
+			var branches = new BranchStreamCollection(commits, branchpoints);
 
-			var player = new CommitPlayer(MockRepository.GenerateStub<ILogger>(), commits, branchpoints);
+			var player = new CommitPlayer(MockRepository.GenerateStub<ILogger>(), branches);
 			var result = player.Play().Select(c => c.CommitId).ToList();
 
 			Assert.IsTrue(result.SequenceEqual("id0", "branch0", "id1"));
@@ -72,6 +73,23 @@ namespace CvsGitTest
 
 		[TestMethod]
 		public void NestedBranches_PlaysInSequence()
+		{
+			var commits = CreateNestedBranches();
+			var branchpoints = new Dictionary<string, Commit>()
+			{
+				{ "branch0", commits[0] },
+				{ "branch1", commits[2] }
+			};
+			var branches = new BranchStreamCollection(commits, branchpoints);
+
+			var player = new CommitPlayer(MockRepository.GenerateStub<ILogger>(), branches);
+			var result = player.Play().Select(c => c.CommitId).ToList();
+
+			Assert.IsTrue(result.SequenceEqual(new[] { "id0", "branch0_0", "branch1_0", "branch0_1", "id1" }));
+		}
+
+
+		private static Commit[] CreateNestedBranches()
 		{
 			var file1 = new FileInfo("file1");
 			var file2 = new FileInfo("file2").WithBranch("branch0", "1.1.0.2").WithBranch("branch1", "1.1.2.1.0.2");
@@ -92,17 +110,7 @@ namespace CvsGitTest
 			var commit4 = new Commit("branch1_0")
 					.WithRevision(file2, "1.1.2.1.2.1");
 
-			var commits = new[] { commit0, commit1, commit2, commit3, commit4 };
-			var branchpoints = new Dictionary<string, Commit>()
-			{
-				{ "branch0", commit0 },
-				{ "branch1", commit2 }
-			};
-
-			var player = new CommitPlayer(MockRepository.GenerateStub<ILogger>(), commits, branchpoints);
-			var result = player.Play().Select(c => c.CommitId).ToList();
-
-			Assert.IsTrue(result.SequenceEqual("id0", "branch0_0", "branch1_0", "branch0_1", "id1"));
+			return new[] { commit0, commit1, commit2, commit3, commit4 };
 		}
 	}
 }

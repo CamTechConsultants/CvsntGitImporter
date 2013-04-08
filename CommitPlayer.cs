@@ -10,26 +10,17 @@ namespace CvsGitConverter
 {
 	/// <summary>
 	/// Playback commits in an appropriate order for importing them.
-	/// Does a depth first search, returning branches in the entirety as they're encountered.
+	/// Does a depth first search, returning branches in their entirety as they're encountered.
 	/// </summary>
 	class CommitPlayer
 	{
 		private readonly ILogger m_log;
-		private readonly IList<Commit> m_commits;
-		private readonly Dictionary<string, string> m_branchpoints;
+		private readonly BranchStreamCollection m_branches;
 
-		public CommitPlayer(ILogger log, IEnumerable<Commit> commits, IDictionary<string, Commit> branches)
+		public CommitPlayer(ILogger log, BranchStreamCollection branches)
 		{
 			m_log = log;
-			m_commits = commits.ToListIfNeeded();
-
-			var firstCommit = commits.FirstOrDefault();
-			if (firstCommit != null && firstCommit.Branch != "MAIN")
-				throw new ImportFailedException("First commit in the sequence is not on the trunk");
-
-			m_branchpoints = new Dictionary<string, string>(branches.Count);
-			foreach (var x in branches)
-				m_branchpoints[x.Value.CommitId] = x.Key;
+			m_branches = branches;
 		}
 
 		/// <summary>
@@ -37,21 +28,27 @@ namespace CvsGitConverter
 		/// </summary>
 		public IEnumerable<Commit> Play()
 		{
-			return EnumerateBranch(m_commits, 0, "MAIN");
+			return EnumerateBranch("MAIN");
 		}
 
-		private IEnumerable<Commit> EnumerateBranch(IList<Commit> commits, int start, string branch)
+		private IEnumerable<Commit> EnumerateBranch(string branch)
 		{
-			for (int i = start; i < commits.Count; i++)
+			var commits = m_branches[branch];
+
+			for (int i = 0; i < commits.Count; i++)
 			{
 				var commit = commits[i];
 				if (commit.Branch == branch)
 				{
 					yield return commit;
 
-					if (m_branchpoints.ContainsKey(commit.CommitId))
+					if (commit.IsBranchpoint)
 					{
-						foreach (var branchCommit in EnumerateBranch(commits, i + 1, m_branchpoints[commit.CommitId]))
+						var branchCommits = from branchpoint in commit.Branches
+											from c in EnumerateBranch(branchpoint.Branch)
+											select c;
+
+						foreach (var branchCommit in branchCommits)
 							yield return branchCommit;
 					}
 				}

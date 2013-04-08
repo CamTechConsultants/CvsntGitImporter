@@ -19,12 +19,13 @@ namespace CvsGitConverter
 		private readonly List<FileRevision> m_files = new List<FileRevision>();
 		private DateTime? m_time;
 		private string m_message;
+		private string m_author;
 		private string m_branch;
 		private List<string> m_errors;
 		private List<Commit> m_branches;
 
 		/// <summary>
-		/// The CVS unique id.
+		/// The CVS commit ID.
 		/// </summary>
 		public readonly string CommitId;
 
@@ -72,6 +73,9 @@ namespace CvsGitConverter
 			}
 		}
 
+		/// <summary>
+		/// Gets the commit message for this commit.
+		/// </summary>
 		public string Message
 		{
 			get
@@ -82,6 +86,23 @@ namespace CvsGitConverter
 			}
 		}
 
+		/// <summary>
+		/// Gets the author of the commit.
+		/// </summary>
+		public string Author
+		{
+			get
+			{
+				if (m_author == null)
+					m_author = m_files.First().Author;
+
+				return m_author;
+			}
+		}
+
+		/// <summary>
+		/// Gets the name of the branch this commit is on.
+		/// </summary>
 		public string Branch
 		{
 			get
