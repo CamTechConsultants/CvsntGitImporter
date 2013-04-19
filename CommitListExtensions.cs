@@ -73,5 +73,38 @@ namespace CvsGitConverter
 
 			list[destIndex] = moveItem;
 		}
+
+		/// <summary>
+		/// Assign unique incrementing ids to commits. The ids won't necessarily be sequential, but they should
+		/// rise monotonically along each branch.
+		/// </summary>
+		public static IList<Commit> AssignNumbers(this IEnumerable<Commit> commits)
+		{
+			var list = commits.ToListIfNeeded();
+			for (int i = 0; i < list.Count; i++)
+			{
+				list[i].Index = i + 1;
+			}
+
+			return list;
+		}
+
+		/// <summary>
+		/// Add commits to files, creating lookups of file revisions to their commits.
+		/// </summary>
+		public static IEnumerable<Commit> AddCommitsToFiles(this IEnumerable<Commit> commits)
+		{
+			var list = commits.ToListIfNeeded();
+
+			foreach (var commit in commits)
+			{
+				foreach (var f in commit)
+				{
+					f.File.AddCommit(commit, f.Revision);
+				}
+			}
+
+			return list;
+		}
 	}
 }

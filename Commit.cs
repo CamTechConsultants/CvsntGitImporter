@@ -22,7 +22,15 @@ namespace CvsGitConverter
 		private string m_branch;
 		private List<string> m_errors;
 
+		/// <summary>
+		/// The CVS unique id.
+		/// </summary>
 		public readonly string CommitId;
+
+		/// <summary>
+		/// A unique numeric id for the commit.
+		/// </summary>
+		public int Index;
 
 		public DateTime Time
 		{
@@ -57,6 +65,19 @@ namespace CvsGitConverter
 				return m_branch;
 			}
 		}
+
+		/// <summary>
+		/// Is this commit a merge?
+		/// </summary>
+		public IEnumerable<FileRevision> MergedFiles
+		{
+			get { return m_files.Where(f => f.Mergepoint != Revision.Empty); }
+		}
+
+		/// <summary>
+		/// A commit that this commit is a merge from.
+		/// </summary>
+		public Commit MergeFrom;
 
 		public IEnumerable<string> Errors
 		{
@@ -95,18 +116,13 @@ namespace CvsGitConverter
 					AddError("Multiple branches found: {0}", String.Join(", ", branches));
 			}
 
-			bool isMerge = m_files.First().Mergepoint != Revision.Empty;
-			if (isMerge)
+			var mergedFromBranches = MergedFiles.Select(f => f.BranchMergedFrom).Distinct();
+			if (mergedFromBranches.Count() > 1)
 			{
-				// deleted files have no mergepoints, so ignore; also ignore those with no mergepoint
-				var mergedFromBranches = m_files.Where(f => !f.IsDead && f.Mergepoint != Revision.Empty).Select(f => f.BranchMergedFrom).Distinct();
-				if (mergedFromBranches.Count() > 1)
-				{
-					var buf = new StringBuilder();
-					buf.AppendFormat("Multiple branches merged from found: {0}\r\n", String.Join(", ", mergedFromBranches));
-					m_files.Aggregate(buf, (sb, f) => sb.AppendFormat("    {0}: {1}\r\n", f, f.BranchMergedFrom));
-					AddError(buf.ToString());
-				}
+				var buf = new StringBuilder();
+				buf.AppendFormat("Multiple branches merged from found: {0}\r\n", String.Join(", ", mergedFromBranches));
+				m_files.Aggregate(buf, (sb, f) => sb.AppendFormat("    {0}: {1}\r\n", f, f.BranchMergedFrom));
+				AddError(buf.ToString());
 			}
 
 			return !Errors.Any();
@@ -114,7 +130,10 @@ namespace CvsGitConverter
 
 		public override string ToString()
 		{
-			return String.Join(", ", m_files);
+			return String.Format("{0} {1}({2})",
+					CommitId,
+					(Index == 0) ? "" : String.Format("Index={0} ", Index),
+					String.Join(", ", m_files));
 		}
 
 

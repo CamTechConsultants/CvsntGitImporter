@@ -18,6 +18,7 @@ namespace CvsGitConverter
 		private readonly Dictionary<Revision, List<string>> m_tagsForRevision = new Dictionary<Revision, List<string>>();
 		private readonly Dictionary<string, Revision> m_revisionForBranch = new Dictionary<string, Revision>();
 		private readonly Dictionary<Revision, string> m_branchForRevision = new Dictionary<Revision, string>();
+		private readonly Dictionary<Revision, Commit> m_commits = new Dictionary<Revision, Commit>();
 
 
 		/// <summary>
@@ -129,9 +130,6 @@ namespace CvsGitConverter
 		/// <summary>
 		/// Is a revision on a branch (or the branch's parent branch)
 		/// </summary>
-		/// <param name="revision"></param>
-		/// <param name="branch"></param>
-		/// <returns></returns>
 		public bool IsRevisionOnBranch(Revision revision, string branch)
 		{
 			if (branch == "MAIN")
@@ -142,6 +140,24 @@ namespace CvsGitConverter
 				return (revision.Parts.Count() > 2 && branchRevision.BranchStem == revision.BranchStem) || revision.Precedes(branchRevision);
 			else
 				return false;
+		}
+
+		/// <summary>
+		/// Add a commit that references this file.
+		/// </summary>
+		public void AddCommit(Commit commit, Revision r)
+		{
+			m_commits.Add(r, commit);
+		}
+
+		/// <summary>
+		/// Get a commit for a specific revision.
+		/// </summary>
+		/// <returns>the commit that created that revision or null if not found</returns>
+		public Commit GetCommit(Revision r)
+		{
+			Commit commit;
+			return m_commits.TryGetValue(r, out commit) ? commit : null;
 		}
 
 		public override string ToString()

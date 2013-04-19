@@ -191,5 +191,28 @@ namespace CvsGitTest
 		}
 
 		#endregion GetBranchesAtRevision
+
+
+		#region GetCommit
+
+		[TestMethod]
+		public void GetCommit_RevisionExists()
+		{
+			var file = new FileInfo("file.txt");
+			var commit = new Commit("abc").WithRevision(file, "1.1");
+
+			var result = file.GetCommit(Revision.Create("1.1"));
+			Assert.AreSame(result, commit);
+		}
+
+		[TestMethod]
+		public void GetCommit_RevisionDoesNotExist()
+		{
+			var file = new FileInfo("file.txt");
+			var result = file.GetCommit(Revision.Create("1.5"));
+			Assert.AreSame(result, null);
+		}
+
+		#endregion
 	}
 }

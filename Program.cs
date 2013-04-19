@@ -27,7 +27,10 @@ namespace CvsGitConverter
 			{
 				var parser = new CvsLogParser(switches.ExtraArguments[0], startDate: StartDate);
 				var builder = new CommitBuilder(parser);
-				IEnumerable<Commit> commits = builder.GetCommits().SplitMultiBranchCommits().ToList();
+				IEnumerable<Commit> commits = builder.GetCommits()
+						.SplitMultiBranchCommits()
+						.AddCommitsToFiles()
+						.ToListIfNeeded();
 
 				Verify(commits);
 
@@ -61,6 +64,12 @@ namespace CvsGitConverter
 
 				WriteLogFile("allbranches.log", branchResolver.AllTags);
 				WriteLogFile("alltags.log", tagResolver.AllTags);
+
+				commits = commits.AssignNumbers();
+
+				var mergeResolver = new MergeResolver(log, commits, branchResolver.ResolvedCommits);
+				mergeResolver.Resolve();
+				commits = mergeResolver.Commits;
 			}
 		}
 
