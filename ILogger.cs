@@ -8,7 +8,7 @@ using System;
 namespace CvsGitConverter
 {
 	/// <summary>
-	/// Applicatio logging.
+	/// Application logging.
 	/// </summary>
 	interface ILogger
 	{
