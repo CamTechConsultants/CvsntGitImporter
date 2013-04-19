@@ -14,7 +14,7 @@ namespace CvsGitConverter
 	/// <summary>
 	/// Resolves tags to specific commits.
 	/// </summary>
-	class BranchResolver : Resolver
+	class BranchResolver : TagResolverBase
 	{
 		public BranchResolver(ILogger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles, InclusionMatcher tagMatcher) :
 				base(log: log, commits: commits, allFiles: allFiles, tagMatcher: tagMatcher, branches: true)

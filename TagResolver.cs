@@ -10,7 +10,7 @@ namespace CvsGitConverter
 	/// <summary>
 	/// Resolves tags to specific commits.
 	/// </summary>
-	class TagResolver : Resolver
+	class TagResolver : TagResolverBase
 	{
 		public TagResolver(ILogger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles, InclusionMatcher tagMatcher) :
 				base(log: log, commits: commits, allFiles: allFiles, tagMatcher: tagMatcher)

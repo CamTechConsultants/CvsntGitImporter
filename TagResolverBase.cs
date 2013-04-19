@@ -14,7 +14,7 @@ namespace CvsGitConverter
 	/// <summary>
 	/// Abstract base class for TagResolver and BranchResolver.
 	/// </summary>
-	abstract class Resolver
+	abstract class TagResolverBase
 	{
 		private readonly ILogger m_log;
 		private readonly IList<Commit> m_commits;
@@ -28,7 +28,7 @@ namespace CvsGitConverter
 
 		private IEnumerable<string> m_problematicTags;
 
-		protected Resolver(ILogger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles,
+		protected TagResolverBase(ILogger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles,
 				InclusionMatcher tagMatcher, bool branches = false)
 		{
 			m_log = log;
