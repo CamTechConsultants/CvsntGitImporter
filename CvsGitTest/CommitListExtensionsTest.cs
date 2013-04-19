@@ -20,7 +20,7 @@ namespace CvsGitTest
 		#region Move
 
 		[TestMethod]
-		public void Move_FirstItem()
+		public void Move_Forwards_FirstItem()
 		{
 			var list = new List<int>() { 1, 2, 3, 4, 5 };
 			list.Move(0, 3);
@@ -29,7 +29,7 @@ namespace CvsGitTest
 		}
 
 		[TestMethod]
-		public void Move_ToEnd()
+		public void Move_Forwards_ToEnd()
 		{
 			var list = new List<int>() { 1, 2, 3, 4, 5 };
 			list.Move(2, 4);
@@ -38,7 +38,34 @@ namespace CvsGitTest
 		}
 
 		[TestMethod]
-		public void Move_ToSelf()
+		public void Move_Forwards_ToSelf()
+		{
+			var list = new List<int>() { 1, 2, 3, 4, 5 };
+			list.Move(2, 2);
+
+			Assert.IsTrue(list.SequenceEqual(new[] { 1, 2, 3, 4, 5 }));
+		}
+
+		[TestMethod]
+		public void Move_Backwards_LastItem()
+		{
+			var list = new List<int>() { 1, 2, 3, 4, 5 };
+			list.Move(4, 2);
+
+			Assert.IsTrue(list.SequenceEqual(new[] { 1, 2, 5, 3, 4 }));
+		}
+
+		[TestMethod]
+		public void Move_Backwards_ToStart()
+		{
+			var list = new List<int>() { 1, 2, 3, 4, 5 };
+			list.Move(2, 0);
+
+			Assert.IsTrue(list.SequenceEqual(new[] { 3, 1, 2, 4, 5 }));
+		}
+
+		[TestMethod]
+		public void Move_Backwards_ToSelf()
 		{
 			var list = new List<int>() { 1, 2, 3, 4, 5 };
 			list.Move(2, 2);

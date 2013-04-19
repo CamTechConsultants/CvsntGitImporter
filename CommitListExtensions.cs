@@ -51,16 +51,24 @@ namespace CvsGitConverter
 				throw new ArgumentOutOfRangeException("sourceIndex");
 			if (destIndex < 0 || destIndex >= list.Count)
 				throw new ArgumentOutOfRangeException("destIndex");
-			if (destIndex < sourceIndex)
-				throw new ArgumentException("destIndex must be after sourceIndex");
 
 			if (destIndex == sourceIndex)
 				return;
 
 			var moveItem = list[sourceIndex];
-			for (int i = sourceIndex; i < destIndex; i++)
+			if (destIndex > sourceIndex)
 			{
-				list[i] = list[i + 1];
+				for (int i = sourceIndex; i < destIndex; i++)
+				{
+					list[i] = list[i + 1];
+				}
+			}
+			else
+			{
+				for (int i = sourceIndex; i > destIndex; i--)
+				{
+					list[i] = list[i - 1];
+				}
 			}
 
 			list[destIndex] = moveItem;
