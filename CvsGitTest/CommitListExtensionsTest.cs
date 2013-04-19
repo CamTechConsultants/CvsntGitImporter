@@ -17,6 +17,8 @@ namespace CvsGitTest
 	[TestClass]
 	public class CommitListExtensionsTest
 	{
+		#region Move
+
 		[TestMethod]
 		public void Move_FirstItem()
 		{
@@ -44,6 +46,11 @@ namespace CvsGitTest
 			Assert.IsTrue(list.SequenceEqual(new[] { 1, 2, 3, 4, 5 }));
 		}
 
+		#endregion Move
+
+
+		#region IndexOfFromEnd
+
 		[TestMethod]
 		public void IndexOfFromEnd_NotFound()
 		{
@@ -60,6 +67,11 @@ namespace CvsGitTest
 			Assert.AreEqual(result, 1);
 		}
 
+		#endregion IndexOfFromEnd
+
+
+		#region ToListIfNeeded
+
 		[TestMethod]
 		public void ToListIfNeeded_NotAList()
 		{
@@ -75,5 +87,7 @@ namespace CvsGitTest
 			var ilist = list.ToListIfNeeded();
 			Assert.AreSame(list, ilist);
 		}
+
+		#endregion ToListIfNeeded
 	}
 }
