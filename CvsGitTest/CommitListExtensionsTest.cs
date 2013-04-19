@@ -73,6 +73,22 @@ namespace CvsGitTest
 			Assert.IsTrue(list.SequenceEqual(new[] { 1, 2, 3, 4, 5 }));
 		}
 
+		[TestMethod]
+		[ExpectedException(typeof(ArgumentOutOfRangeException))]
+		public void Move_SourceOutOfRange()
+		{
+			var list = new List<int>() { 1, 2, 3, 4, 5 };
+			list.Move(6, 2);
+		}
+
+		[TestMethod]
+		[ExpectedException(typeof(ArgumentOutOfRangeException))]
+		public void Move_DestOutOfRange()
+		{
+			var list = new List<int>() { 1, 2, 3, 4, 5 };
+			list.Move(3, 6);
+		}
+
 		#endregion Move
 
 
