@@ -63,8 +63,8 @@ namespace CvsGitTest
 		[TestMethod]
 		public void Verify_MergeFromTwoBranches()
 		{
-			m_f1.AddTag("branch1", Revision.Create("1.1.0.2"));
-			m_f2.AddTag("branch2", Revision.Create("1.1.0.2"));
+			m_f1.WithBranch("branch1", "1.1.0.2");
+			m_f2.WithBranch("branch2", "1.1.0.2");
 
 			var commit = new Commit("abc")
 				.WithRevision(m_f1, "1.2", mergepoint: "1.1.2.1")
@@ -77,8 +77,8 @@ namespace CvsGitTest
 		[TestMethod]
 		public void Verify_MergeFromTwoBranchesAndNonMerge()
 		{
-			m_f1.AddTag("branch1", Revision.Create("1.1.0.2"));
-			m_f2.AddTag("branch2", Revision.Create("1.1.0.2"));
+			m_f1.WithBranch("branch1", "1.1.0.2");
+			m_f2.WithBranch("branch2", "1.1.0.2");
 
 			var commit = new Commit("abc")
 				.WithRevision(m_f3, "1.1")

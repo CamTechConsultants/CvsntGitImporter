@@ -37,7 +37,7 @@ namespace CvsGitTest
 				new Commit("branch").WithRevision(m_file, "1.1.2.1"),
 				new Commit("merge").WithRevision(m_file, "1.2", mergepoint: "1.1.2.1"),
 			};
-			m_file.AddTag("branch", Revision.Create("1.1.0.2"));
+			m_file.WithBranch("branch", "1.1.0.2");
 
 			var branchpoints = new Dictionary<string, Commit>()
 			{
@@ -62,7 +62,7 @@ namespace CvsGitTest
 				new Commit("merge1").WithRevision(m_file, "1.2", mergepoint: "1.1.2.1"),
 				new Commit("merge2").WithRevision(m_file, "1.3", mergepoint: "1.1.2.2"),
 			};
-			m_file.AddTag("branch", Revision.Create("1.1.0.2"));
+			m_file.WithBranch("branch", "1.1.0.2");
 
 			var branchpoints = new Dictionary<string, Commit>()
 			{
@@ -87,7 +87,7 @@ namespace CvsGitTest
 				new Commit("merge1").WithRevision(m_file, "1.2", mergepoint: "1.1.2.2"),
 				new Commit("merge2").WithRevision(m_file, "1.3", mergepoint: "1.1.2.1"),
 			};
-			m_file.AddTag("branch", Revision.Create("1.1.0.2"));
+			m_file.WithBranch("branch", "1.1.0.2");
 
 			var branchpoints = new Dictionary<string, Commit>()
 			{

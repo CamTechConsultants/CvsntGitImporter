@@ -46,8 +46,7 @@ namespace CvsGitTest
 		public void SingleBranch_PlaysInSequence()
 		{
 			var file1 = new FileInfo("file1");
-			var file2 = new FileInfo("file2");
-			file2.AddTag("branch", Revision.Create("1.1.0.2"));
+			var file2 = new FileInfo("file2").WithBranch("branch", "1.1.0.2");
 
 			var commit0 = new Commit("id0")
 					.WithRevision(file1, "1.1")
@@ -75,9 +74,7 @@ namespace CvsGitTest
 		public void NestedBranches_PlaysInSequence()
 		{
 			var file1 = new FileInfo("file1");
-			var file2 = new FileInfo("file2");
-			file2.AddTag("branch0", Revision.Create("1.1.0.2"));
-			file2.AddTag("branch1", Revision.Create("1.1.2.1.0.2"));
+			var file2 = new FileInfo("file2").WithBranch("branch0", "1.1.0.2").WithBranch("branch1", "1.1.2.1.0.2");
 
 			var commit0 = new Commit("id0")
 					.WithRevision(file1, "1.1")

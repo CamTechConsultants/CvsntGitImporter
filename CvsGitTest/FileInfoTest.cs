@@ -22,8 +22,7 @@ namespace CvsGitTest
 		[TestMethod]
 		public void GetTagsForRevision_RevisionTagged()
 		{
-			var file = new FileInfo("file.txt");
-			file.AddTag("tag", Revision.Create("1.1"));
+			var file = new FileInfo("file.txt").WithTag("tag", "1.1");
 
 			var tags = file.GetTagsForRevision(Revision.Create("1.1"));
 			Assert.AreEqual(tags.Single(), "tag");
@@ -32,8 +31,7 @@ namespace CvsGitTest
 		[TestMethod]
 		public void GetTagsForRevision_RevisionUntagged()
 		{
-			var file = new FileInfo("file.txt");
-			file.AddTag("tag", Revision.Create("1.1"));
+			var file = new FileInfo("file.txt").WithTag("tag", "1.1");
 
 			Assert.IsFalse(file.GetTagsForRevision(Revision.Create("1.2")).Any());
 		}
@@ -46,8 +44,7 @@ namespace CvsGitTest
 		[TestMethod]
 		public void GetRevisionForTag_TagExists()
 		{
-			var file = new FileInfo("file.txt");
-			file.AddTag("tag", Revision.Create("1.1"));
+			var file = new FileInfo("file.txt").WithTag("tag", "1.1");
 
 			var r = file.GetRevisionForTag("tag");
 			Assert.AreEqual(r, Revision.Create("1.1"));
@@ -86,8 +83,7 @@ namespace CvsGitTest
 		[TestMethod]
 		public void IsRevisionOnBranch_RevisionIsBranchpoint()
 		{
-			var file = new FileInfo("file.txt");
-			file.AddTag("branch", Revision.Create("1.4.0.2"));
+			var file = new FileInfo("file.txt").WithBranch("branch", "1.4.0.2");
 
 			Assert.IsTrue(file.IsRevisionOnBranch(Revision.Create("1.4"), "branch"));
 		}
@@ -95,8 +91,7 @@ namespace CvsGitTest
 		[TestMethod]
 		public void IsRevisionOnBranch_RevisionIsDirectlyOnTheBranch()
 		{
-			var file = new FileInfo("file.txt");
-			file.AddTag("branch", Revision.Create("1.4.0.2"));
+			var file = new FileInfo("file.txt").WithBranch("branch", "1.4.0.2");
 
 			Assert.IsTrue(file.IsRevisionOnBranch(Revision.Create("1.4.2.5"), "branch"));
 		}
@@ -104,8 +99,7 @@ namespace CvsGitTest
 		[TestMethod]
 		public void IsRevisionOnBranch_RevisionIsPredecessorOnMain()
 		{
-			var file = new FileInfo("file.txt");
-			file.AddTag("branch", Revision.Create("1.4.0.2"));
+			var file = new FileInfo("file.txt").WithBranch("branch", "1.4.0.2");
 
 			Assert.IsTrue(file.IsRevisionOnBranch(Revision.Create("1.3"), "branch"));
 		}
@@ -113,8 +107,7 @@ namespace CvsGitTest
 		[TestMethod]
 		public void IsRevisionOnBranch_RevisionIsSuccessorToBranchpoint()
 		{
-			var file = new FileInfo("file.txt");
-			file.AddTag("branch", Revision.Create("1.4.0.2"));
+			var file = new FileInfo("file.txt").WithBranch("branch", "1.4.0.2");
 
 			Assert.IsFalse(file.IsRevisionOnBranch(Revision.Create("1.5"), "branch"));
 		}
@@ -122,10 +115,10 @@ namespace CvsGitTest
 		[TestMethod]
 		public void IsRevisionOnBranch_ManyBranches()
 		{
-			var file = new FileInfo("file.txt");
-			file.AddTag("branch1", Revision.Create("1.4.0.2"));
-			file.AddTag("branch2", Revision.Create("1.4.2.3.0.2"));
-			file.AddTag("branch3", Revision.Create("1.4.2.3.2.1.0.6"));
+			var file = new FileInfo("file.txt")
+					.WithBranch("branch1", "1.4.0.2")
+					.WithBranch("branch2", "1.4.2.3.0.2")
+					.WithBranch("branch3", "1.4.2.3.2.1.0.6");
 
 			Assert.IsTrue(file.IsRevisionOnBranch( Revision.Create("1.3"), "branch3"));
 			Assert.IsTrue(file.IsRevisionOnBranch( Revision.Create("1.4"), "branch3"));
@@ -142,8 +135,7 @@ namespace CvsGitTest
 		[TestMethod]
 		public void IsRevisionOnBranch_BranchNotPresent()
 		{
-			var file = new FileInfo("file.txt");
-			file.AddTag("branch1", Revision.Create("1.4.0.2"));
+			var file = new FileInfo("file.txt").WithBranch("branch1", "1.4.0.2");
 
 			Assert.IsFalse(file.IsRevisionOnBranch(Revision.Create("1.1"), "branch2"));
 		}
@@ -156,8 +148,7 @@ namespace CvsGitTest
 		[TestMethod]
 		public void GetBranchesAtRevision_Branchpoint_ReturnsBranch()
 		{
-			var file = new FileInfo("file.txt");
-			file.AddTag("branch", Revision.Create("1.4.0.2"));
+			var file = new FileInfo("file.txt").WithBranch("branch", "1.4.0.2");
 
 			Assert.AreEqual(file.GetBranchesAtRevision(Revision.Create("1.4")).Single(), "branch");
 		}
@@ -165,9 +156,9 @@ namespace CvsGitTest
 		[TestMethod]
 		public void GetBranchesAtRevision_Branchpoint_ReturnsMultipleBranch()
 		{
-			var file = new FileInfo("file.txt");
-			file.AddTag("branch1", Revision.Create("1.4.0.2"));
-			file.AddTag("branch2", Revision.Create("1.4.0.4"));
+			var file = new FileInfo("file.txt")
+					.WithBranch("branch1", "1.4.0.2")
+					.WithBranch("branch2", "1.4.0.4");
 
 			Assert.IsTrue(file.GetBranchesAtRevision(Revision.Create("1.4")).OrderBy(i => i).SequenceEqual(new[] { "branch1", "branch2" }));
 		}
@@ -175,8 +166,7 @@ namespace CvsGitTest
 		[TestMethod]
 		public void GetBranchesAtRevision_PredecessorToBranchpoint_NoBranches()
 		{
-			var file = new FileInfo("file.txt");
-			file.AddTag("branch", Revision.Create("1.4.0.2"));
+			var file = new FileInfo("file.txt").WithBranch("branch", "1.4.0.2");
 
 			Assert.IsFalse(file.GetBranchesAtRevision(Revision.Create("1.3")).Any());
 		}
@@ -184,8 +174,7 @@ namespace CvsGitTest
 		[TestMethod]
 		public void GetBranchesAtRevision_RevisionOnTheBranch_NoBranches()
 		{
-			var file = new FileInfo("file.txt");
-			file.AddTag("branch", Revision.Create("1.4.0.2"));
+			var file = new FileInfo("file.txt").WithBranch("branch", "1.4.0.2");
 
 			Assert.IsFalse(file.GetBranchesAtRevision(Revision.Create("1.4.2.1")).Any());
 		}

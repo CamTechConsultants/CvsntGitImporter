@@ -86,11 +86,8 @@ namespace CvsGitTest
 
 		private static IEnumerable<Commit> CreateCommitThatNeedsReordering()
 		{
-			var file1 = new FileInfo("file1");
-			file1.AddTag("tag", Revision.Create("1.1"));
-
-			var file2 = new FileInfo("file2");
-			file2.AddTag("tag", Revision.Create("1.2"));
+			var file1 = new FileInfo("file1").WithTag("tag", "1.1");
+			var file2 = new FileInfo("file2").WithTag("tag", "1.2");
 
 			var commit0 = new Commit("id0")
 					.WithRevision(file1, "1.1")
@@ -107,11 +104,8 @@ namespace CvsGitTest
 
 		private static IEnumerable<Commit> CreateCommitThatNeedsSplitting()
 		{
-			var file1 = new FileInfo("file1");
-			file1.AddTag("tag", Revision.Create("1.2"));
-
-			var file2 = new FileInfo("file2");
-			file2.AddTag("tag", Revision.Create("1.2"));
+			var file1 = new FileInfo("file1").WithTag("tag", "1.2");
+			var file2 = new FileInfo("file2").WithTag("tag", "1.2");
 
 			var commit0 = new Commit("id0")
 					.WithRevision(file1, "1.1")

@@ -37,6 +37,15 @@ namespace CvsGitConverter
 		}
 
 		/// <summary>
+		/// Implicit string conversion operator.
+		/// </summary>
+		/// <exception cref="ArgumentException">string is not a valid CVS revision number</exception>
+		public static implicit operator Revision(string revision)
+		{
+			return Revision.Create(revision);
+		}
+
+		/// <summary>
 		/// Returns an instance of the <see cref="Revision"/> class.
 		/// </summary>
 		/// <exception cref="ArgumentException">if the revision string is invalid</exception>

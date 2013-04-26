@@ -17,8 +17,7 @@ namespace CvsGitTest
 		public void SplitsCommitWithTwoBranches()
 		{
 			var file1 = new FileInfo("file1");
-			var file2 = new FileInfo("file2");
-			file2.AddTag("branch1", Revision.Create("1.1.0.2"));
+			var file2 = new FileInfo("file2").WithBranch("branch1", "1.1.0.2");
 
 			var id = "id1";
 			var commit = new Commit(id)
