@@ -49,7 +49,7 @@ namespace CvsGitTest
 			var result = resolver.ResolveAndFix();
 
 			Assert.IsTrue(result, "Succeeded");
-			Assert.IsTrue(resolver.Commits.SequenceEqual(new[] { orderBefore[0], orderBefore[2], orderBefore[1] }), "Commits reordered");
+			Assert.IsTrue(resolver.Commits.SequenceEqual(orderBefore[0], orderBefore[2], orderBefore[1]), "Commits reordered");
 		}
 
 		[TestMethod]

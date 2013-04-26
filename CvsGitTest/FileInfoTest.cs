@@ -160,7 +160,7 @@ namespace CvsGitTest
 					.WithBranch("branch1", "1.4.0.2")
 					.WithBranch("branch2", "1.4.0.4");
 
-			Assert.IsTrue(file.GetBranchesAtRevision(Revision.Create("1.4")).OrderBy(i => i).SequenceEqual(new[] { "branch1", "branch2" }));
+			Assert.IsTrue(file.GetBranchesAtRevision(Revision.Create("1.4")).OrderBy(i => i).SequenceEqual("branch1", "branch2"));
 		}
 
 		[TestMethod]

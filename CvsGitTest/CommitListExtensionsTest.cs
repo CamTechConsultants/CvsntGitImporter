@@ -25,7 +25,7 @@ namespace CvsGitTest
 			var list = new List<int>() { 1, 2, 3, 4, 5 };
 			list.Move(0, 3);
 
-			Assert.IsTrue(list.SequenceEqual(new[] { 2, 3, 4, 1, 5 }));
+			Assert.IsTrue(list.SequenceEqual(2, 3, 4, 1, 5));
 		}
 
 		[TestMethod]
@@ -34,7 +34,7 @@ namespace CvsGitTest
 			var list = new List<int>() { 1, 2, 3, 4, 5 };
 			list.Move(2, 4);
 
-			Assert.IsTrue(list.SequenceEqual(new[] { 1, 2, 4, 5, 3 }));
+			Assert.IsTrue(list.SequenceEqual(1, 2, 4, 5, 3));
 		}
 
 		[TestMethod]
@@ -43,7 +43,7 @@ namespace CvsGitTest
 			var list = new List<int>() { 1, 2, 3, 4, 5 };
 			list.Move(2, 2);
 
-			Assert.IsTrue(list.SequenceEqual(new[] { 1, 2, 3, 4, 5 }));
+			Assert.IsTrue(list.SequenceEqual(1, 2, 3, 4, 5));
 		}
 
 		[TestMethod]
@@ -52,7 +52,7 @@ namespace CvsGitTest
 			var list = new List<int>() { 1, 2, 3, 4, 5 };
 			list.Move(4, 2);
 
-			Assert.IsTrue(list.SequenceEqual(new[] { 1, 2, 5, 3, 4 }));
+			Assert.IsTrue(list.SequenceEqual(1, 2, 5, 3, 4));
 		}
 
 		[TestMethod]
@@ -61,7 +61,7 @@ namespace CvsGitTest
 			var list = new List<int>() { 1, 2, 3, 4, 5 };
 			list.Move(2, 0);
 
-			Assert.IsTrue(list.SequenceEqual(new[] { 3, 1, 2, 4, 5 }));
+			Assert.IsTrue(list.SequenceEqual(3, 1, 2, 4, 5));
 		}
 
 		[TestMethod]
@@ -70,7 +70,7 @@ namespace CvsGitTest
 			var list = new List<int>() { 1, 2, 3, 4, 5 };
 			list.Move(2, 2);
 
-			Assert.IsTrue(list.SequenceEqual(new[] { 1, 2, 3, 4, 5 }));
+			Assert.IsTrue(list.SequenceEqual(1, 2, 3, 4, 5));
 		}
 
 		[TestMethod]

@@ -67,7 +67,7 @@ namespace CvsGitTest
 			var player = new CommitPlayer(MockRepository.GenerateStub<ILogger>(), commits, branchpoints);
 			var result = player.Play().Select(c => c.CommitId).ToList();
 
-			Assert.IsTrue(result.SequenceEqual(new[] { "id0", "branch0", "id1" }));
+			Assert.IsTrue(result.SequenceEqual("id0", "branch0", "id1"));
 		}
 
 		[TestMethod]
@@ -102,7 +102,7 @@ namespace CvsGitTest
 			var player = new CommitPlayer(MockRepository.GenerateStub<ILogger>(), commits, branchpoints);
 			var result = player.Play().Select(c => c.CommitId).ToList();
 
-			Assert.IsTrue(result.SequenceEqual(new[] { "id0", "branch0_0", "branch1_0", "branch0_1", "id1" }));
+			Assert.IsTrue(result.SequenceEqual("id0", "branch0_0", "branch1_0", "branch0_1", "id1"));
 		}
 	}
 }

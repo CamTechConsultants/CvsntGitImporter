@@ -60,6 +60,7 @@
     <Compile Include="CommitListExtensions.cs" />
     <Compile Include="CommitListExtensionsTest.cs" />
     <Compile Include="CvsLogParserTest.cs" />
+    <Compile Include="EnumerableExtensions.cs" />
     <Compile Include="FileInfoExtensions.cs" />
     <Compile Include="FileInfoTest.cs" />
     <Compile Include="RepositoryBranchStateTest.cs" />

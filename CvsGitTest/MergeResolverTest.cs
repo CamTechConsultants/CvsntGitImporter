@@ -48,8 +48,8 @@ namespace CvsGitTest
 			var resolver = new MergeResolver(m_logger, streams);
 			resolver.Resolve();
 
-			Assert.IsTrue(streams["MAIN"].Select(c => c.CommitId).SequenceEqual(new[] { "initial", "merge" }));
-			Assert.IsTrue(streams["branch"].Select(c => c.CommitId).SequenceEqual(new[] { "branch" }));
+			Assert.IsTrue(streams["MAIN"].Select(c => c.CommitId).SequenceEqual("initial", "merge"));
+			Assert.IsTrue(streams["branch"].Select(c => c.CommitId).SequenceEqual("branch"));
 		}
 
 		[TestMethod]
@@ -74,8 +74,8 @@ namespace CvsGitTest
 			var resolver = new MergeResolver(m_logger, streams);
 			resolver.Resolve();
 
-			Assert.IsTrue(streams["MAIN"].Select(c => c.CommitId).SequenceEqual(new[] { "initial", "merge1", "merge2" }));
-			Assert.IsTrue(streams["branch"].Select(c => c.CommitId).SequenceEqual(new[] { "branch1", "branch2" }));
+			Assert.IsTrue(streams["MAIN"].Select(c => c.CommitId).SequenceEqual("initial", "merge1", "merge2"));
+			Assert.IsTrue(streams["branch"].Select(c => c.CommitId).SequenceEqual("branch1", "branch2"));
 		}
 
 		[TestMethod]
@@ -100,8 +100,8 @@ namespace CvsGitTest
 			var resolver = new MergeResolver(m_logger, streams);
 			resolver.Resolve();
 
-			Assert.IsTrue(streams["MAIN"].Select(c => c.CommitId).SequenceEqual(new[] { "initial", "merge1", "merge2" }));
-			Assert.IsTrue(streams["branch"].Select(c => c.CommitId).SequenceEqual(new[] { "branch2", "branch1" }));
+			Assert.IsTrue(streams["MAIN"].Select(c => c.CommitId).SequenceEqual("initial", "merge1", "merge2"));
+			Assert.IsTrue(streams["branch"].Select(c => c.CommitId).SequenceEqual("branch2", "branch1"));
 		}
 	}
 }

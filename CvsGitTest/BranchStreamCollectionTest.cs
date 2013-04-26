@@ -40,7 +40,7 @@ namespace CvsGitTest
 		{
 			var streams = new BranchStreamCollection(m_commits, m_branchpoints);
 
-			Assert.IsTrue(streams["MAIN"].Select(c => c.CommitId).SequenceEqual(new[] { "1", "3" }));
+			Assert.IsTrue(streams["MAIN"].Select(c => c.CommitId).SequenceEqual("1", "3"));
 			Assert.IsTrue(streams["branch"].Single().CommitId == "2");
 		}
 
@@ -49,7 +49,7 @@ namespace CvsGitTest
 		{
 			var streams = new BranchStreamCollection(m_commits, m_branchpoints);
 
-			Assert.IsTrue(streams["MAIN"].Select(c => c.Index).SequenceEqual(new[] { 1, 2 }));
+			Assert.IsTrue(streams["MAIN"].Select(c => c.Index).SequenceEqual(1, 2));
 			Assert.IsTrue(streams["branch"].Single().Index == 1);
 		}
 
@@ -58,7 +58,7 @@ namespace CvsGitTest
 		{
 			var streams = new BranchStreamCollection(m_commits, m_branchpoints);
 
-			Assert.IsTrue(streams.Branches.OrderBy(x => x, StringComparer.OrdinalIgnoreCase).SequenceEqual(new[] { "branch", "MAIN" }));
+			Assert.IsTrue(streams.Branches.OrderBy(x => x, StringComparer.OrdinalIgnoreCase).SequenceEqual("branch", "MAIN"));
 		}
 	}
 }
