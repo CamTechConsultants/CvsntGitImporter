@@ -81,11 +81,10 @@ namespace CvsGitConverter
 			WriteLogFile("allbranches.log", branchResolver.AllTags);
 			WriteLogFile("alltags.log", tagResolver.AllTags);
 
-			commits = commits.AssignNumbers();
+			var streams = commits.SplitBranchStreams(branchResolver.ResolvedCommits);
 
-			var mergeResolver = new MergeResolver(log, commits, branchResolver.ResolvedCommits);
+			var mergeResolver = new MergeResolver(log, streams);
 			mergeResolver.Resolve();
-			commits = mergeResolver.Commits;
 		}
 
 		private static void WriteLogFile(string filename, IEnumerable<string> lines)

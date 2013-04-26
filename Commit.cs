@@ -21,6 +21,7 @@ namespace CvsGitConverter
 		private string m_message;
 		private string m_branch;
 		private List<string> m_errors;
+		private List<Commit> m_branches;
 
 		/// <summary>
 		/// The CVS unique id.
@@ -31,6 +32,32 @@ namespace CvsGitConverter
 		/// A unique numeric id for the commit.
 		/// </summary>
 		public int Index;
+
+		/// <summary>
+		/// The Commit's direct predecessor.
+		/// </summary>
+		public Commit Predecessor;
+
+		/// <summary>
+		/// The Commit's direct predecessor.
+		/// </summary>
+		public Commit Successor;
+
+		/// <summary>
+		/// Gets a list of branches that this Commit is a branchpoint for.
+		/// </summary>
+		public IEnumerable<Commit> Branches
+		{
+			get { return m_branches ?? Enumerable.Empty<Commit>(); }
+		}
+
+		/// <summary>
+		/// Is this a commit a branchpoint for any other branches?
+		/// </summary>
+		public bool IsBranchpoint
+		{
+			get { return m_branches != null && m_branches.Any(); }
+		}
 
 		public DateTime Time
 		{
@@ -95,6 +122,14 @@ namespace CvsGitConverter
 			m_time = null;
 			m_message = null;
 			m_files.Add(commit);
+		}
+
+		public void AddBranch(Commit commit)
+		{
+			if (m_branches == null)
+				m_branches = new List<Commit>(1) { commit };
+			else
+				m_branches.Add(commit);
 		}
 
 		public bool Verify(bool fussy = false)

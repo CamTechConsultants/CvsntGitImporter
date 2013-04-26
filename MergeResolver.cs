@@ -16,36 +16,12 @@ namespace CvsGitConverter
 	class MergeResolver
 	{
 		private readonly ILogger m_log;
-		private readonly IList<Commit> m_commits;
-		private readonly IDictionary<string, Commit> m_branchpoints;
-		private HashSet<string> m_branchpointCommits;
+		private readonly BranchStreamCollection m_streams;
 
-		public MergeResolver(ILogger log, IEnumerable<Commit> commits, IDictionary<string, Commit> branchpoints)
+		public MergeResolver(ILogger log, BranchStreamCollection streams)
 		{
 			m_log = log;
-			m_commits = commits.ToListIfNeeded();
-			m_branchpoints = branchpoints;
-		}
-
-		/// <summary>
-		/// Gets the list of commits after merge resolution.
-		/// </summary>
-		public IEnumerable<Commit> Commits
-		{
-			get { return m_commits; }
-		}
-
-		/// <summary>
-		/// Generate a set of commits that are branchpoints on demand.
-		/// </summary>
-		private HashSet<string> BranchpointCommits
-		{
-			get
-			{
-				if (m_branchpointCommits == null)
-					m_branchpointCommits = new HashSet<string>(m_branchpoints.Values.Select(c => c.CommitId));
-				return m_branchpointCommits;
-			}
+			m_streams = streams;
 		}
 
 		public void Resolve()
@@ -61,19 +37,34 @@ namespace CvsGitConverter
 
 		private void ResolveMerges()
 		{
+			int failures = 0;
+			foreach (var branch in m_streams.Branches)
+			{
+				var branchCommits = m_streams[branch];
+				failures += ProcessBranch(branchCommits);
+			}
+
+			if (failures > 0)
+				throw new ImportFailedException("Failed to resolve all merges");
+		}
+
+		/// <summary>
+		/// Process merges to a single branch.
+		/// </summary>
+		/// <returns>Number of failures</returns>
+		private int ProcessBranch(IList<Commit> branchToCommits)
+		{
+			int failures = 0;
 			var lastMerges = new Dictionary<string, int>();
-			Func<string, string, string> makeKey = (branchFrom, branchTo) => String.Format("{0}->{1}", branchFrom, branchTo);
-			Func<string, string, int> getLastMerge = (branchFrom, branchTo) =>
+			Func<string, int> getLastMerge = branchFrom =>
 			{
 				int result;
-				return lastMerges.TryGetValue(makeKey(branchFrom, branchTo), out result) ? result : 0;
+				return lastMerges.TryGetValue(branchFrom, out result) ? result : 0;
 			};
-			Action<string, string, int> setLastMerge = (branchFrom, branchTo, index) => lastMerges[makeKey(branchFrom, branchTo)] = index;
 
-			int failures = 0;
-			for (int i = 0; i < m_commits.Count; i++)
+			for (int i = 0; i < branchToCommits.Count; i++)
 			{
-				var commitTo = m_commits[i];
+				var commitTo = branchToCommits[i];
 				if (!commitTo.MergedFiles.Any())
 					continue;
 
@@ -83,7 +74,7 @@ namespace CvsGitConverter
 						.OrderByDescending(c => c.Index)
 						.First();
 
-				int lastMerge = getLastMerge(commitFrom.Branch, commitTo.Branch);
+				int lastMerge = getLastMerge(commitFrom.Branch);
 				if (commitFrom.Index < lastMerge)
 				{
 					m_log.WriteLine("Merges from {0} to {1} are crossed ({2}->{3})",
@@ -92,7 +83,8 @@ namespace CvsGitConverter
 					using (m_log.Indent())
 					{
 						// go back and find the previous merge
-						var commitFromPosition = m_commits.IndexOfFromEnd(commitFrom, i - 1);
+						var branchFromCommits = m_streams[commitFrom.Branch];
+						var commitFromPosition = branchFromCommits.IndexOfFromEnd(commitFrom, i - 1);
 						if (commitFromPosition < 0)
 						{
 							m_log.WriteLine("Failed to find commit {0} in commit list - perhaps the merged commit appears in the list after the commit to which it is merged to ({1})?",
@@ -101,10 +93,10 @@ namespace CvsGitConverter
 							continue;
 						}
 
-						int lastMergePosition = FindCommitToReorder(i, lastMerge, commitFrom);
+						int lastMergePosition = FindCommitToReorder(branchFromCommits, i, lastMerge, commitFrom);
 						if (lastMergePosition >= 0)
 						{
-							m_commits.Move(commitFromPosition, lastMergePosition);
+							branchFromCommits.Move(commitFromPosition, lastMergePosition);
 						}
 						else
 						{
@@ -117,28 +109,27 @@ namespace CvsGitConverter
 				}
 				else
 				{
-					setLastMerge(commitFrom.Branch, commitTo.Branch, commitFrom.Index);
+					lastMerges[commitFrom.Branch] = commitFrom.Index;
 				}
 			}
 
-			if (failures > 0)
-				throw new ImportFailedException("Failed to resolve all merges");
+			return failures;
 		}
 
-		private int FindCommitToReorder(int startPosition, int indexToFind, Commit commitFrom)
+		private int FindCommitToReorder(IList<Commit> branchFromCommits, int startPosition, int indexToFind, Commit commitFrom)
 		{
 			int lastMergePosition;
 			for (lastMergePosition = startPosition - 1; lastMergePosition >= 0; lastMergePosition--)
 			{
-				var commit = m_commits[lastMergePosition];
-				if (commit.Branch == commitFrom.Branch && BranchpointCommits.Contains(commit.CommitId))
+				var commit = branchFromCommits[lastMergePosition];
+				if (commit.Branch == commitFrom.Branch && commit.IsBranchpoint)
 				{
 					m_log.WriteLine("Commit {0} is a branchpoint for branch {1} so can't reorder commits on branch {1}",
-							commit.CommitId, commitFrom.Branch, m_branchpoints.Where(kvp => kvp.Value == commit).Select(kvp => kvp.Key));
+							commit.CommitId, commitFrom.Branch, commit.Branches.First());
 					return -1;
 				}
 
-				if (m_commits[lastMergePosition].Index == indexToFind)
+				if (branchFromCommits[lastMergePosition].Index == indexToFind)
 					break;
 			}
 

@@ -88,5 +88,24 @@ namespace CvsGitTest
 
 			Assert.IsTrue(commit.Errors.Single().Contains("Multiple branches merged from"));
 		}
+
+		[TestMethod]
+		public void IsBranchpoint_NoBranches()
+		{
+			var commit = new Commit("abc").WithRevision(m_f1, "1.1");
+
+			Assert.IsFalse(commit.IsBranchpoint);
+		}
+
+		[TestMethod]
+		public void IsBranchpoint_WithBranches()
+		{
+			m_f1.WithBranch("branch", "1.1.0.2");
+			var commit = new Commit("main1").WithRevision(m_f1, "1.1");
+			var branchCommit = new Commit("branch1").WithRevision(m_f1, "1.1.2.1");
+			commit.AddBranch(branchCommit);
+
+			Assert.IsTrue(commit.IsBranchpoint);
+		}
 	}
 }

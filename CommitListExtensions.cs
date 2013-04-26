@@ -75,18 +75,11 @@ namespace CvsGitConverter
 		}
 
 		/// <summary>
-		/// Assign unique incrementing ids to commits. The ids won't necessarily be sequential, but they should
-		/// rise monotonically along each branch.
+		/// Split a flat list of commits into a set of streams per branch.
 		/// </summary>
-		public static IList<Commit> AssignNumbers(this IEnumerable<Commit> commits)
+		public static BranchStreamCollection SplitBranchStreams(this IEnumerable<Commit> commits, IDictionary<string, Commit> branchpoints)
 		{
-			var list = commits.ToListIfNeeded();
-			for (int i = 0; i < list.Count; i++)
-			{
-				list[i].Index = i + 1;
-			}
-
-			return list;
+			return new BranchStreamCollection(commits, branchpoints);
 		}
 
 		/// <summary>

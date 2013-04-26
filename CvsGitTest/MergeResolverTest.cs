@@ -44,11 +44,12 @@ namespace CvsGitTest
 				{ "branch", commits[0] }
 			};
 
-			var originalCommits = commits.ToList();
-			var resolver = new MergeResolver(m_logger, commits.AssignNumbers(), branchpoints);
+			var streams = new BranchStreamCollection(commits, branchpoints);
+			var resolver = new MergeResolver(m_logger, streams);
 			resolver.Resolve();
 
-			Assert.IsTrue(resolver.Commits.SequenceEqual(originalCommits));
+			Assert.IsTrue(streams["MAIN"].Select(c => c.CommitId).SequenceEqual(new[] { "initial", "merge" }));
+			Assert.IsTrue(streams["branch"].Select(c => c.CommitId).SequenceEqual(new[] { "branch" }));
 		}
 
 		[TestMethod]
@@ -69,11 +70,12 @@ namespace CvsGitTest
 				{ "branch", commits[0] }
 			};
 
-			var originalCommits = commits.ToList();
-			var resolver = new MergeResolver(m_logger, commits.AssignNumbers(), branchpoints);
+			var streams = new BranchStreamCollection(commits, branchpoints);
+			var resolver = new MergeResolver(m_logger, streams);
 			resolver.Resolve();
 
-			Assert.IsTrue(resolver.Commits.SequenceEqual(originalCommits));
+			Assert.IsTrue(streams["MAIN"].Select(c => c.CommitId).SequenceEqual(new[] { "initial", "merge1", "merge2" }));
+			Assert.IsTrue(streams["branch"].Select(c => c.CommitId).SequenceEqual(new[] { "branch1", "branch2" }));
 		}
 
 		[TestMethod]
@@ -94,13 +96,12 @@ namespace CvsGitTest
 				{ "branch", commits[0] }
 			};
 
-			var originalCommits = commits.ToList();
-			var resolver = new MergeResolver(m_logger, commits.AssignNumbers(), branchpoints);
+			var streams = new BranchStreamCollection(commits, branchpoints);
+			var resolver = new MergeResolver(m_logger, streams);
 			resolver.Resolve();
 
-			Assert.IsTrue(resolver.Commits.SequenceEqual(new[] {
-					originalCommits[0], originalCommits[2], originalCommits[1], originalCommits[3], originalCommits[4]
-			}));
+			Assert.IsTrue(streams["MAIN"].Select(c => c.CommitId).SequenceEqual(new[] { "initial", "merge1", "merge2" }));
+			Assert.IsTrue(streams["branch"].Select(c => c.CommitId).SequenceEqual(new[] { "branch2", "branch1" }));
 		}
 	}
 }
