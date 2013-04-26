@@ -32,7 +32,8 @@ namespace CvsGitConverter
 			foreach (var kvp in m_branches)
 			{
 				if (kvp.Key == "MAIN")
-					return;
+					continue;
+
 				var branchpoint = branchpoints[kvp.Key];
 				branchpoint.AddBranch(kvp.Value.First());
 			}
