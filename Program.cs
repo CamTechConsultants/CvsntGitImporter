@@ -42,44 +42,44 @@ namespace CvsGitConverter
 		private static void Import(Logger log)
 		{
 			var parser = new CvsLogParser(m_switches.ExtraArguments[0], startDate: StartDate);
-				var builder = new CommitBuilder(parser);
-				IEnumerable<Commit> commits = builder.GetCommits()
-						.SplitMultiBranchCommits()
-						.AddCommitsToFiles()
-						.ToListIfNeeded();
+			var builder = new CommitBuilder(parser);
+			IEnumerable<Commit> commits = builder.GetCommits()
+					.SplitMultiBranchCommits()
+					.AddCommitsToFiles()
+					.ToListIfNeeded();
 
-				Verify(commits);
+			Verify(commits);
 
-				// build lookup of all files
-				var allFiles = new Dictionary<string, FileInfo>();
-				foreach (var f in parser.Files)
-					allFiles.Add(f.Name, f);
+			// build lookup of all files
+			var allFiles = new Dictionary<string, FileInfo>();
+			foreach (var f in parser.Files)
+				allFiles.Add(f.Name, f);
 
 			var branchResolver = new BranchResolver(log, commits, allFiles, m_switches.BranchMatcher);
-				if (!branchResolver.ResolveAndFix())
-				{
-					throw new ImportFailedException(String.Format("Unable to resolve all branches to a single commit: {0}",
-							branchResolver.UnresolvedTags.StringJoin(", ")));
-				}
-				commits = branchResolver.Commits;
+			if (!branchResolver.ResolveAndFix())
+			{
+				throw new ImportFailedException(String.Format("Unable to resolve all branches to a single commit: {0}",
+						branchResolver.UnresolvedTags.StringJoin(", ")));
+			}
+			commits = branchResolver.Commits;
 
 			var tagResolver = new TagResolver(log, commits, allFiles, m_switches.TagMatcher);
-				if (!tagResolver.ResolveAndFix())
-				{
-					throw new ImportFailedException(String.Format("Unable to resolve all tags to a single commit: {0}",
-							tagResolver.UnresolvedTags.StringJoin(", ")));
-				}
-				commits = tagResolver.Commits;
+			if (!tagResolver.ResolveAndFix())
+			{
+				throw new ImportFailedException(String.Format("Unable to resolve all tags to a single commit: {0}",
+						tagResolver.UnresolvedTags.StringJoin(", ")));
+			}
+			commits = tagResolver.Commits;
 
-				// recheck branches
-				if (!branchResolver.Resolve())
-				{
-					throw new ImportFailedException(String.Format("Resolving tags broke branch resolution: {0}",
-							branchResolver.UnresolvedTags.StringJoin(", ")));
-				}
+			// recheck branches
+			if (!branchResolver.Resolve())
+			{
+				throw new ImportFailedException(String.Format("Resolving tags broke branch resolution: {0}",
+						branchResolver.UnresolvedTags.StringJoin(", ")));
+			}
 
-				WriteLogFile("allbranches.log", branchResolver.AllTags);
-				WriteLogFile("alltags.log", tagResolver.AllTags);
+			WriteLogFile("allbranches.log", branchResolver.AllTags);
+			WriteLogFile("alltags.log", tagResolver.AllTags);
 
 			var streams = commits.SplitBranchStreams(branchResolver.ResolvedCommits);
 
