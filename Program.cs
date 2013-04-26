@@ -14,63 +14,78 @@ namespace CvsGitConverter
 	class Program
 	{
 		static readonly DateTime StartDate = new DateTime(2003, 2, 1);
+		private static readonly Switches m_switches = new Switches();
 
-		static void Main(string[] args)
+		static int Main(string[] args)
 		{
-			var switches = new Switches();
-			switches.Parse(args);
-
-			if (switches.ExtraArguments.Count != 1)
-				throw new ArgumentException("Need a cvs.log file");
-
-			using (var log = new Logger("gitconvert.log"))
+			try
 			{
-				var parser = new CvsLogParser(switches.ExtraArguments[0], startDate: StartDate);
-				var builder = new CommitBuilder(parser);
-				IEnumerable<Commit> commits = builder.GetCommits()
-						.SplitMultiBranchCommits()
-						.AddCommitsToFiles()
-						.ToListIfNeeded();
+				m_switches.Parse(args);
 
-				Verify(commits);
+				if (m_switches.ExtraArguments.Count != 1)
+					throw new ArgumentException("Need a cvs.log file");
 
-				// build lookup of all files
-				var allFiles = new Dictionary<string, FileInfo>();
-				foreach (var f in parser.Files)
-					allFiles.Add(f.Name, f);
-
-				var branchResolver = new BranchResolver(log, commits, allFiles, switches.BranchMatcher);
-				if (!branchResolver.ResolveAndFix())
+				using (var log = new Logger("gitconvert.log"))
 				{
-					throw new ImportFailedException(String.Format("Unable to resolve all branches to a single commit: {0}",
-							branchResolver.UnresolvedTags.StringJoin(", ")));
+					Import(log);
 				}
-				commits = branchResolver.Commits;
-
-				var tagResolver = new TagResolver(log, commits, allFiles, switches.TagMatcher);
-				if (!tagResolver.ResolveAndFix())
-				{
-					throw new ImportFailedException(String.Format("Unable to resolve all tags to a single commit: {0}",
-							tagResolver.UnresolvedTags.StringJoin(", ")));
-				}
-				commits = tagResolver.Commits;
-
-				// recheck branches
-				if (!branchResolver.Resolve())
-				{
-					throw new ImportFailedException(String.Format("Resolving tags broke branch resolution: {0}",
-							branchResolver.UnresolvedTags.StringJoin(", ")));
-				}
-
-				WriteLogFile("allbranches.log", branchResolver.AllTags);
-				WriteLogFile("alltags.log", tagResolver.AllTags);
-
-				commits = commits.AssignNumbers();
-
-				var mergeResolver = new MergeResolver(log, commits, branchResolver.ResolvedCommits);
-				mergeResolver.Resolve();
-				commits = mergeResolver.Commits;
 			}
+			catch (Exception e)
+			{
+				Console.Error.WriteLine(e);
+				return 1;
+			}
+
+			return 0;
+		}
+
+		private static void Import(Logger log)
+		{
+			var parser = new CvsLogParser(m_switches.ExtraArguments[0], startDate: StartDate);
+			var builder = new CommitBuilder(parser);
+			IEnumerable<Commit> commits = builder.GetCommits()
+					.SplitMultiBranchCommits()
+					.AddCommitsToFiles()
+					.ToListIfNeeded();
+
+			Verify(commits);
+
+			// build lookup of all files
+			var allFiles = new Dictionary<string, FileInfo>();
+			foreach (var f in parser.Files)
+				allFiles.Add(f.Name, f);
+
+			var branchResolver = new BranchResolver(log, commits, allFiles, m_switches.BranchMatcher);
+			if (!branchResolver.ResolveAndFix())
+			{
+				throw new ImportFailedException(String.Format("Unable to resolve all branches to a single commit: {0}",
+						branchResolver.UnresolvedTags.StringJoin(", ")));
+			}
+			commits = branchResolver.Commits;
+
+			var tagResolver = new TagResolver(log, commits, allFiles, m_switches.TagMatcher);
+			if (!tagResolver.ResolveAndFix())
+			{
+				throw new ImportFailedException(String.Format("Unable to resolve all tags to a single commit: {0}",
+						tagResolver.UnresolvedTags.StringJoin(", ")));
+			}
+			commits = tagResolver.Commits;
+
+			// recheck branches
+			if (!branchResolver.Resolve())
+			{
+				throw new ImportFailedException(String.Format("Resolving tags broke branch resolution: {0}",
+						branchResolver.UnresolvedTags.StringJoin(", ")));
+			}
+
+			WriteLogFile("allbranches.log", branchResolver.AllTags);
+			WriteLogFile("alltags.log", tagResolver.AllTags);
+
+			commits = commits.AssignNumbers();
+
+			var mergeResolver = new MergeResolver(log, commits, branchResolver.ResolvedCommits);
+			mergeResolver.Resolve();
+			commits = mergeResolver.Commits;
 		}
 
 		private static void WriteLogFile(string filename, IEnumerable<string> lines)
