@@ -54,6 +54,16 @@ namespace CvsGitTest
 		}
 
 		[TestMethod]
+		public void Construct_IgnoredBranch()
+		{
+			// remove 'branch' from the list of branchpoints, simulating an ignored branch
+			m_branchpoints.Remove("branch");
+			var streams = new BranchStreamCollection(m_commits, m_branchpoints);
+
+			Assert.IsFalse(streams["branch"].Any());
+		}
+
+		[TestMethod]
 		public void Branches()
 		{
 			var streams = new BranchStreamCollection(m_commits, m_branchpoints);

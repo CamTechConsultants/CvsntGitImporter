@@ -25,7 +25,8 @@ namespace CvsGitConverter
 		{
 			foreach (var commit in commits)
 			{
-				AddCommit(commit);
+				if (branchpoints.ContainsKey(commit.Branch))
+					AddCommit(commit);
 			}
 
 			// join branches to their branchpoints
