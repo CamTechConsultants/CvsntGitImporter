@@ -31,6 +31,14 @@ namespace CvsGitConverter
 		/// <summary>
 		/// Find the index of an item working backwards starting from an index.
 		/// </summary>
+		public static int IndexOfFromEnd<T>(this IList<T> list, T item)
+		{
+			return IndexOfFromEnd(list, item, list.Count - 1);
+		}
+
+		/// <summary>
+		/// Find the index of an item working backwards starting from an index.
+		/// </summary>
 		public static int IndexOfFromEnd<T>(this IList<T> list, T item, int start)
 		{
 			for (int i = start; i >= 0; i--)

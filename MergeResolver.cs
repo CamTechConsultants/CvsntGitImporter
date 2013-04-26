@@ -84,7 +84,7 @@ namespace CvsGitConverter
 					{
 						// go back and find the previous merge
 						var branchFromCommits = m_streams[commitFrom.Branch];
-						var commitFromPosition = branchFromCommits.IndexOfFromEnd(commitFrom, i - 1);
+						var commitFromPosition = branchFromCommits.IndexOfFromEnd(commitFrom);
 						if (commitFromPosition < 0)
 						{
 							m_log.WriteLine("Failed to find commit {0} in commit list - perhaps the merged commit appears in the list after the commit to which it is merged to ({1})?",
@@ -93,7 +93,7 @@ namespace CvsGitConverter
 							continue;
 						}
 
-						int lastMergePosition = FindCommitToReorder(branchFromCommits, i, lastMerge, commitFrom);
+						int lastMergePosition = FindCommitToReorder(branchFromCommits, lastMerge, commitFrom);
 						if (lastMergePosition >= 0)
 						{
 							branchFromCommits.Move(commitFromPosition, lastMergePosition);
@@ -116,10 +116,10 @@ namespace CvsGitConverter
 			return failures;
 		}
 
-		private int FindCommitToReorder(IList<Commit> branchFromCommits, int startPosition, int indexToFind, Commit commitFrom)
+		private int FindCommitToReorder(IList<Commit> branchFromCommits, int indexToFind, Commit commitFrom)
 		{
 			int lastMergePosition;
-			for (lastMergePosition = startPosition - 1; lastMergePosition >= 0; lastMergePosition--)
+			for (lastMergePosition = branchFromCommits.Count - 1; lastMergePosition >= 0; lastMergePosition--)
 			{
 				var commit = branchFromCommits[lastMergePosition];
 				if (commit.Branch == commitFrom.Branch && commit.IsBranchpoint)

@@ -103,5 +103,33 @@ namespace CvsGitTest
 			Assert.IsTrue(streams["MAIN"].Select(c => c.CommitId).SequenceEqual("initial", "merge1", "merge2"));
 			Assert.IsTrue(streams["branch"].Select(c => c.CommitId).SequenceEqual("branch2", "branch1"));
 		}
+
+		[TestMethod]
+		public void CrossedMerge_LongerHistoryOnMergeDestination()
+		{
+			var commits = new List<Commit>()
+			{
+				new Commit("initial1").WithRevision(m_file, "1.1"),
+				new Commit("initial2").WithRevision(m_file, "1.2"),
+				new Commit("initial3").WithRevision(m_file, "1.3"),
+				new Commit("branch1").WithRevision(m_file, "1.3.2.1"),
+				new Commit("branch2").WithRevision(m_file, "1.3.2.2"),
+				new Commit("merge1").WithRevision(m_file, "1.4", mergepoint: "1.3.2.2"),
+				new Commit("merge2").WithRevision(m_file, "1.5", mergepoint: "1.3.2.1"),
+			};
+			m_file.WithBranch("branch", "1.3.0.2");
+
+			var branchpoints = new Dictionary<string, Commit>()
+			{
+				{ "branch", commits[0] }
+			};
+
+			var streams = new BranchStreamCollection(commits, branchpoints);
+			var resolver = new MergeResolver(m_logger, streams);
+			resolver.Resolve();
+
+			Assert.IsTrue(streams["MAIN"].Select(c => c.CommitId).SequenceEqual("initial1", "initial2", "initial3", "merge1", "merge2"));
+			Assert.IsTrue(streams["branch"].Select(c => c.CommitId).SequenceEqual("branch2", "branch1"));
+		}
 	}
 }
