@@ -111,6 +111,8 @@ namespace CvsGitConverter
 				{
 					lastMerges[commitFrom.Branch] = commitFrom.Index;
 				}
+
+				commitTo.MergeFrom = commitFrom;
 			}
 
 			return failures;
