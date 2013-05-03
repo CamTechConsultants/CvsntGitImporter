@@ -107,5 +107,31 @@ namespace CvsGitTest
 
 			Assert.IsTrue(commit.IsBranchpoint);
 		}
+
+		[TestMethod]
+		[ExpectedException(typeof(ArgumentException))]
+		public void ReplaceBranch_NonExistent()
+		{
+			var commit = new Commit("main1").WithRevision(m_f1, "1.1");
+			var branchCommit1 = new Commit("branch1").WithRevision(m_f1, "1.1.2.1");
+			var branchCommit2 = new Commit("branch2").WithRevision(m_f1, "1.1.2.2");
+
+			commit.ReplaceBranch(branchCommit1, branchCommit2);
+		}
+
+		[TestMethod]
+		public void ReplaceBranch()
+		{
+			m_f1.WithBranch("branch", "1.1.0.2");
+			var commit = new Commit("main1").WithRevision(m_f1, "1.1");
+			var branchCommit1 = new Commit("branch1").WithRevision(m_f1, "1.1.2.1");
+			var branchCommit2 = new Commit("branch2").WithRevision(m_f1, "1.1.2.2");
+			commit.AddBranch(branchCommit1);
+
+			commit.ReplaceBranch(branchCommit1, branchCommit2);
+
+			Assert.IsTrue(commit.IsBranchpoint);
+			Assert.IsTrue(commit.Branches.Single() == branchCommit2);
+		}
 	}
 }

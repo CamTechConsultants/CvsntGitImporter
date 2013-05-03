@@ -132,6 +132,21 @@ namespace CvsGitConverter
 				m_branches.Add(commit);
 		}
 
+		public void ReplaceBranch(Commit existing, Commit replacement)
+		{
+			if (existing == null || replacement == null)
+				throw new ArgumentNullException();
+
+			int index = -1;
+			if (m_branches != null)
+				index = m_branches.IndexOf(existing);
+
+			if (index < 0)
+				throw new ArgumentException(String.Format("Commit {0} does not exist as a branch from this commit", existing.CommitId));
+
+			m_branches[index] = replacement;
+		}
+
 		public bool Verify(bool fussy = false)
 		{
 			m_errors = null;

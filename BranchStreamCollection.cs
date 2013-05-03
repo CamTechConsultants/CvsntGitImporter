@@ -100,7 +100,22 @@ namespace CvsGitConverter
 				{
 					var branch = commitToMove.Branch;
 					if (m_roots[branch] == commitToMove)
+					{
 						m_roots[branch] = commitToMove.Successor;
+
+						if (branch != "MAIN")
+						{
+							// need to adjust the branchpoint Commit on the parent branch too
+							var branchpoint = commitToMove.Predecessor;
+							if (!branchpoint.Branches.Contains(commitToMove))
+							{
+								throw new ImportFailedException(String.Format("Expected to find commit {0} as a branch from branchpoint {1}",
+											commitToMove.CommitId, branchpoint.CommitId));
+							}
+
+							branchpoint.ReplaceBranch(commitToMove, commitToMove.Successor);
+						}
+					}
 
 					if (commit.Successor != null)
 						commit.Successor.Predecessor = commitToMove;
