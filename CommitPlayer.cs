@@ -33,24 +33,20 @@ namespace CvsGitConverter
 
 		private IEnumerable<Commit> EnumerateBranch(string branch)
 		{
-			var commits = m_branches[branch];
+			var root = m_branches[branch];
 
-			for (int i = 0; i < commits.Count; i++)
+			for (var commit = root; commit != null; commit = commit.Successor)
 			{
-				var commit = commits[i];
-				if (commit.Branch == branch)
+				yield return commit;
+
+				if (commit.IsBranchpoint)
 				{
-					yield return commit;
+					var branchCommits = from branchpoint in commit.Branches
+										from c in EnumerateBranch(branchpoint.Branch)
+										select c;
 
-					if (commit.IsBranchpoint)
-					{
-						var branchCommits = from branchpoint in commit.Branches
-											from c in EnumerateBranch(branchpoint.Branch)
-											select c;
-
-						foreach (var branchCommit in branchCommits)
-							yield return branchCommit;
-					}
+					foreach (var branchCommit in branchCommits)
+						yield return branchCommit;
 				}
 			}
 		}
