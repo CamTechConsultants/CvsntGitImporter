@@ -4,6 +4,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using CvsGitConverter;
 
 namespace CvsGitTest
@@ -28,6 +29,12 @@ namespace CvsGitTest
 			commit.Add(fileRevision);
 			file.AddCommit(commit, fileRevision.Revision);
 			return commit;
+		}
+
+		public static IEnumerable<Commit> ToList(this Commit commit)
+		{
+			for (var c = commit; c != null; c = c.Successor)
+				yield return c;
 		}
 	}
 }

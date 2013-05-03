@@ -15,11 +15,11 @@ namespace CvsGitConverter
 	/// </summary>
 	class BranchStreamCollection
 	{
-		private readonly Dictionary<string, IList<Commit>> m_branches = new Dictionary<string, IList<Commit>>();
+		private readonly Dictionary<string, Commit> m_roots = new Dictionary<string, Commit>();
+		private readonly Dictionary<string, Commit> m_heads = new Dictionary<string, Commit>();
 
 		private string m_lastBranch;
-		private IList<Commit> m_lastBranchList;
-		private Commit m_lastBranchCommit;
+		private Commit m_lastBranchHead;
 
 		public BranchStreamCollection(IEnumerable<Commit> commits, IDictionary<string, Commit> branchpoints)
 		{
@@ -30,26 +30,27 @@ namespace CvsGitConverter
 			}
 
 			// join branches to their branchpoints
-			foreach (var kvp in m_branches)
+			foreach (var kvp in m_roots)
 			{
 				if (kvp.Key == "MAIN")
 					continue;
 
 				var branchpoint = branchpoints[kvp.Key];
-				branchpoint.AddBranch(kvp.Value.First());
+				branchpoint.AddBranch(kvp.Value);
+				kvp.Value.Predecessor = branchpoint;
 			}
 		}
 
 		/// <summary>
-		/// Get the stream of commits for a branch.
+		/// Get the head commit for a branch.
 		/// </summary>
-		/// <returns>the stream of commits, or an empty list if the branch does not exist</returns>
-		public IList<Commit> this[string branch]
+		/// <returns>the first commit on the branch, or null if the branch does not exist</returns>
+		public Commit this[string branch]
 		{
 			get
 			{
-				IList<Commit> list;
-				return m_branches.TryGetValue(branch, out list) ? list : new List<Commit>(0);
+				Commit root;
+				return m_roots.TryGetValue(branch, out root) ? root : null;
 			}
 		}
 
@@ -58,47 +59,96 @@ namespace CvsGitConverter
 		/// </summary>
 		public IEnumerable<string> Branches
 		{
-			get { return m_branches.Keys; }
+			get { return m_roots.Keys.ToList(); }
+		}
+
+		/// <summary>
+		/// Get the head (the last commit) for a branch.
+		/// </summary>
+		/// <returns>the last Commit for the branch or null if the branch does not exist</returns>
+		public Commit Head(string branch)
+		{
+			Commit head;
+			return m_heads.TryGetValue(branch, out head) ? head : null;
+		}
+
+		public void MoveCommit(Commit commitToMove, Commit commitToReplace)
+		{
+			// only support moving forwards at the moment
+			if (commitToMove.Index > commitToReplace.Index)
+				throw new NotSupportedException();
+			else if (commitToMove.Index == commitToReplace.Index)
+				return;
+
+			// extricate the commit from the list
+			if (commitToMove.Predecessor != null && commitToMove.Predecessor.Successor == commitToMove)
+				commitToMove.Predecessor.Successor = commitToMove.Successor;
+			if (commitToMove.Successor != null)
+				commitToMove.Successor.Predecessor = commitToMove.Predecessor;
+
+			for (Commit commit = commitToMove.Successor; commit != null; commit = commit.Successor)
+			{
+				// swap Index values so they remain in order
+				var tmp = commitToMove.Index;
+				commitToMove.Index = commit.Index;
+				commit.Index = tmp;
+
+				if (commit == commitToReplace)
+				{
+					var branch = commitToMove.Branch;
+					if (m_roots[branch] == commitToMove)
+						m_roots[branch] = commitToMove.Successor;
+
+					if (commit.Successor != null)
+						commit.Successor.Predecessor = commitToMove;
+					commitToMove.Successor = commit.Successor;
+					commitToMove.Predecessor = commit;
+					commit.Successor = commitToMove;
+
+					if (m_heads[branch] == commitToReplace)
+						m_heads[branch] = commitToMove;
+
+					return;
+				}
+			}
+
+			throw new ImportFailedException(String.Format(
+					"Failed to find commit with index {0} moving forward from {1} on branch {2}",
+					commitToReplace.Index, commitToMove.Index, commitToMove.Branch));
 		}
 
 		private void AddCommit(Commit commit)
 		{
-			IList<Commit> list;
+			Commit head;
 			var branch = commit.Branch;
 
 			if (branch == m_lastBranch)
 			{
 				// optimisation - assume last commit was on the same branch
-				list = m_lastBranchList;
-				list.Add(commit);
-
-				if (m_lastBranchCommit != null)
-				{
-					m_lastBranchCommit.Successor = commit;
-					commit.Predecessor = m_lastBranchCommit;
-				}
+				head = m_lastBranchHead;
+				head.Successor = commit;
+				commit.Predecessor = head;
+				commit.Index = head.Index + 1;
 			}
 			else
 			{
-				if (m_branches.TryGetValue(branch, out list))
+				if (m_heads.TryGetValue(branch, out head))
 				{
-					var prevCommit = list.Last();
-					list.Add(commit);
-					prevCommit.Successor = commit;
-					commit.Predecessor = prevCommit;
+					head.Successor = commit;
+					commit.Predecessor = head;
+					commit.Index = head.Index + 1;
 				}
 				else
 				{
-					list = new List<Commit>() { commit };
-					m_branches.Add(branch, list);
+					m_roots.Add(branch, commit);
+					commit.Index = 1;
 				}
 
 				m_lastBranch = commit.Branch;
-				m_lastBranchList = list;
 			}
 
-			commit.Index = list.Count;
-			m_lastBranchCommit = commit;
+			m_lastBranchHead = commit;
+			m_heads[branch] = commit;
 		}
 	}
 }
