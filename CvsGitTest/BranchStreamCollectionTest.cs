@@ -49,15 +49,6 @@ namespace CvsGitTest
 		}
 
 		[TestMethod]
-		public void Construct_SetIndexValues()
-		{
-			var streams = new BranchStreamCollection(m_commits, m_branchpoints);
-
-			Assert.IsTrue(streams["MAIN"].ToList().Select(c => c.Index).SequenceEqual(1, 2));
-			Assert.IsTrue(streams["branch"].ToList().Single().Index == 1);
-		}
-
-		[TestMethod]
 		public void Construct_IgnoredBranch()
 		{
 			// remove 'branch' from the list of branchpoints, simulating an ignored branch

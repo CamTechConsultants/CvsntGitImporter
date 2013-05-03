@@ -20,6 +20,7 @@ namespace CvsGitConverter
 
 		private string m_lastBranch;
 		private Commit m_lastBranchHead;
+		private int m_nextIndex = 1;
 
 		public BranchStreamCollection(IEnumerable<Commit> commits, IDictionary<string, Commit> branchpoints)
 		{
@@ -174,7 +175,6 @@ namespace CvsGitConverter
 				head = m_lastBranchHead;
 				head.Successor = commit;
 				commit.Predecessor = head;
-				commit.Index = head.Index + 1;
 			}
 			else
 			{
@@ -182,17 +182,16 @@ namespace CvsGitConverter
 				{
 					head.Successor = commit;
 					commit.Predecessor = head;
-					commit.Index = head.Index + 1;
 				}
 				else
 				{
 					m_roots.Add(branch, commit);
-					commit.Index = 1;
 				}
 
 				m_lastBranch = commit.Branch;
 			}
 
+			commit.Index = m_nextIndex++;
 			m_lastBranchHead = commit;
 			m_heads[branch] = commit;
 		}

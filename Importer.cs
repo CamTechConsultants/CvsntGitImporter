@@ -22,15 +22,12 @@ namespace CvsGitConverter
 		private static readonly Encoding m_encoding = Encoding.UTF8;
 		private static readonly byte[] m_newLine = m_encoding.GetBytes("\n");
 
-		private int nextMark = 1;
-		private Dictionary<string, int> m_marks;
 		private bool m_isDisposed = false;
 
 		public Importer(ILogger log, BranchStreamCollection branches)
 		{
 			m_log = log;
 			m_player = new CommitPlayer(log, branches);
-			m_marks = new Dictionary<string, int>();
 
 			m_stream = Console.OpenStandardOutput();
 		}
@@ -63,12 +60,10 @@ namespace CvsGitConverter
 
 		private void Import(Commit commit)
 		{
-			var mark = nextMark++;
-			m_marks[commit.CommitId] = mark;
 			m_log.WriteLine("Commit {0}  branch={1} author={2} when={3}", commit.CommitId, commit.Branch, commit.Author, commit.Time);
 
 			WriteLine("commit refs/heads/{0}", (commit.Branch == "MAIN") ? "master" : commit.Branch);
-			WriteLine("mark :{0}", mark);
+			WriteLine("mark :{0}", commit.Index);
 			WriteLine("committer {0} <{0}@ctg.local> {1}", commit.Author, commit.Time.ToString("r"));
 
 			var msgBytes = GetBytes(commit.Message);
@@ -76,10 +71,10 @@ namespace CvsGitConverter
 			WriteLine(msgBytes);
 
 			if (commit.Predecessor != null)
-				WriteLine("from :{0}", m_marks[commit.Predecessor.CommitId]);
+				WriteLine("from :{0}", commit.Predecessor.Index);
 
 			WriteLine("M 644 inline file.txt");
-			var content = GetBytes(String.Format("mark {0}\r\nblah\r\n", mark));
+			var content = GetBytes(String.Format("mark {0}\r\nblah\r\n", commit.Index));
 			WriteLine("data {0}", content.Length);
 			WriteLine(content);
 
