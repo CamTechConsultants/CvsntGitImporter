@@ -23,6 +23,9 @@ namespace CvsGitConverter
 		[SwitchDef(ShortSwitch="-C", LongSwitch="--config")]
 		public ObservableCollection<string> Config { get; set; }
 
+		[SwitchDef(ShortSwitch="-s", LongSwitch="--sandbox")]
+		public string Sandbox { get; set; }
+
 		[SwitchDef(LongSwitch="--include-tag")]
 		public ObservableCollection<string> IncludeTag { get; set; }
 
@@ -50,6 +53,13 @@ namespace CvsGitConverter
 					ExcludeBranch = new ObservableCollection<string>(), BranchMatcher);
 		}
 
+		public override void Verify()
+		{
+			base.Verify();
+
+			if (this.Sandbox == null)
+				throw new CommandLineArgsException("No CVS repository specified");
+		}
 
 		void ParseConfigFile(string filename)
 		{

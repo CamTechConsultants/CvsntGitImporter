@@ -20,20 +20,28 @@ namespace CvsGitConverter
 		private const string FileSeparator = "=============================================================================";
 		private static readonly char[] FieldDelimiter = new[] { ';' };
 
+		private readonly string m_sandboxPath;
 		private readonly CvsLogReader m_reader;
 		private readonly DateTime m_startDate;
 		private readonly List<FileInfo> m_files = new List<FileInfo>();
+		private string m_repo;
+		private string m_fullRepoPath;
 
-		public CvsLogParser(string logFile, DateTime startDate)
+		private CvsLogParser(string sandboxPath, CvsLogReader reader, DateTime startDate)
 		{
-			m_reader = new CvsLogReader(logFile);
+			m_sandboxPath = sandboxPath;
+			m_reader = reader;
 			m_startDate = startDate;
 		}
 
-		public CvsLogParser(TextReader reader, DateTime startDate)
+		public CvsLogParser(string sandboxPath, string logFile, DateTime startDate)
+			: this(sandboxPath, new CvsLogReader(logFile), startDate)
 		{
-			m_reader = new CvsLogReader(reader);
-			m_startDate = startDate;
+		}
+
+		public CvsLogParser(string sandboxPath, TextReader reader, DateTime startDate)
+			: this(sandboxPath, new CvsLogReader(reader), startDate)
+		{
 		}
 
 		/// <summary>
@@ -54,14 +62,16 @@ namespace CvsGitConverter
 			Revision revision = Revision.Empty;
 			FileRevision commit = null;
 
+			m_repo = GetCvsRepo();
+
 			foreach (var line in m_reader)
 			{
 				switch (state)
 				{
 					case State.Start:
-						if (line.StartsWith("Working file: "))
+						if (line.StartsWith("RCS file: "))
 						{
-							currentFile = new FileInfo(line.Substring(14));
+							currentFile = new FileInfo(ExtractFileName(line));
 							m_files.Add(currentFile);
 							state = State.InFileHeader;
 						}
@@ -121,6 +131,49 @@ namespace CvsGitConverter
 						break;
 				}
 			}
+		}
+
+		private string GetCvsRepo()
+		{
+			try
+			{
+				var repositoryFile = Path.Combine(m_sandboxPath, @"CVS\Repository");
+				return File.ReadAllText(repositoryFile).Trim() + "/";
+			}
+			catch (FileNotFoundException)
+			{
+				throw new ImportFailedException(String.Format("Unable to find CVS sandbox: {0}", m_sandboxPath));
+			}
+			catch (UnauthorizedAccessException uae)
+			{
+				throw new IOException(uae.Message, uae);
+			}
+			catch (System.Security.SecurityException se)
+			{
+				throw new IOException(se.Message, se);
+			}
+		}
+
+		private string ExtractFileName(string line)
+		{
+			var match = Regex.Match(line, @"^RCS file: (.*),v");
+			if (!match.Success)
+				throw MakeParseException("Invalid RCS file line: '{0}'", line);
+
+			var filepath = match.Groups[1].Value;
+
+			if (m_fullRepoPath == null)
+			{
+				var i = filepath.IndexOf(m_repo);
+				if (i < 0)
+					throw MakeParseException("CVS rlog file does not seem to match the repository");
+				m_fullRepoPath = filepath.Remove(i + m_repo.Length);
+			}
+
+			if (!filepath.StartsWith(m_fullRepoPath))
+				throw MakeParseException("File path does not seem to match the repository: {0}", filepath);
+
+			return filepath.Substring(m_fullRepoPath.Length);
 		}
 
 		/// <summary>

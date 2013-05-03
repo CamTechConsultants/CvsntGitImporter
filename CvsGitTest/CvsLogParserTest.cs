@@ -7,6 +7,7 @@ using System;
 using System.IO;
 using System.Linq;
 using CvsGitConverter;
+using CvsGitConverter.Utils;
 using CvsGitTest.Properties;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -18,10 +19,28 @@ namespace CvsGitTest
 	[TestClass]
 	public class CvsLogParserTest
 	{
+		private TempDir m_temp;
+		private string m_sandbox;
+
+		[TestInitialize]
+		public void Setup()
+		{
+			m_temp = new TempDir();
+			Directory.CreateDirectory(m_temp.GetPath("CVS"));
+			File.WriteAllText(m_temp.GetPath(@"CVS\Repository"), "xjtag/dev/src/Project/test");
+			m_sandbox = m_temp.Path;
+		}
+
+		[TestCleanup]
+		public void Clearup()
+		{
+			m_temp.Dispose();
+		}
+
 		[TestMethod]
 		public void StandardFormat()
 		{
-			var parser = new CvsLogParser(new StringReader(CvsLogParserResources.StandardFormat), DateTime.MinValue);
+			var parser = new CvsLogParser(m_sandbox, new StringReader(CvsLogParserResources.StandardFormat), DateTime.MinValue);
 			var revisions = parser.Parse().ToList();
 
 			Assert.AreEqual(revisions.Count(), 2);
@@ -39,7 +58,7 @@ namespace CvsGitTest
 		[TestMethod]
 		public void Mergepoint()
 		{
-			var parser = new CvsLogParser(new StringReader(CvsLogParserResources.Mergepoint), DateTime.MinValue);
+			var parser = new CvsLogParser(m_sandbox, new StringReader(CvsLogParserResources.Mergepoint), DateTime.MinValue);
 			var revisions = parser.Parse().ToList();
 
 			var rev = revisions.First(r => r.Revision == Revision.Create("1.2"));
@@ -50,14 +69,14 @@ namespace CvsGitTest
 		[ExpectedException(typeof(ParseException))]
 		public void MissingCommitId_AfterStartDate()
 		{
-			var parser = new CvsLogParser(new StringReader(CvsLogParserResources.MissingCommitId), DateTime.MinValue);
+			var parser = new CvsLogParser(m_sandbox, new StringReader(CvsLogParserResources.MissingCommitId), DateTime.MinValue);
 			parser.Parse().ToList();
 		}
 
 		[TestMethod]
 		public void MissingCommitId_BeforeStartDate()
 		{
-			var parser = new CvsLogParser(new StringReader(CvsLogParserResources.MissingCommitId), new DateTime(2012, 1, 1));
+			var parser = new CvsLogParser(m_sandbox, new StringReader(CvsLogParserResources.MissingCommitId), new DateTime(2012, 1, 1));
 			var revisions = parser.Parse().ToList();
 
 			Assert.IsFalse(revisions.Any(), "No revisions");
@@ -66,7 +85,7 @@ namespace CvsGitTest
 		[TestMethod]
 		public void StateDead()
 		{
-			var parser = new CvsLogParser(new StringReader(CvsLogParserResources.StateDead), DateTime.MinValue);
+			var parser = new CvsLogParser(m_sandbox, new StringReader(CvsLogParserResources.StateDead), DateTime.MinValue);
 			var revisions = parser.Parse().ToList();
 
 			var r = revisions.First();

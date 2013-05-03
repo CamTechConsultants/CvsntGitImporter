@@ -83,6 +83,7 @@
     <Compile Include="Utils\SwitchesParser.cs" />
     <Compile Include="Utils\SwitchHiddenAttribute.cs" />
     <Compile Include="Utils\SwitchInfo.cs" />
+    <Compile Include="Utils\TempDir.cs" />
     <Compile Include="Utils\TypeExtensions.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

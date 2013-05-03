@@ -23,10 +23,10 @@ namespace CvsGitConverter
 				m_switches.Parse(args);
 
 				if (m_switches.ExtraArguments.Count != 1)
-				throw new ArgumentException("Need a cvs.log file");
+					throw new ArgumentException("Need a cvs.log file");
 
-			using (var log = new Logger("gitconvert.log"))
-			{
+				using (var log = new Logger("gitconvert.log"))
+				{
 					Import(log);
 				}
 			}
@@ -41,7 +41,7 @@ namespace CvsGitConverter
 
 		private static void Import(Logger log)
 		{
-			var parser = new CvsLogParser(m_switches.ExtraArguments[0], startDate: StartDate);
+			var parser = new CvsLogParser(m_switches.Sandbox, m_switches.ExtraArguments[0], startDate: StartDate);
 			var builder = new CommitBuilder(parser);
 			IEnumerable<Commit> commits = builder.GetCommits()
 					.SplitMultiBranchCommits()
