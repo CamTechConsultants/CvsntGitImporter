@@ -36,6 +36,8 @@ namespace CvsGitTest
 			};
 		}
 
+		#region Construct
+
 		[TestMethod]
 		public void Construct()
 		{
@@ -43,6 +45,7 @@ namespace CvsGitTest
 
 			Assert.IsTrue(streams["MAIN"].ToList().Select(c => c.CommitId).SequenceEqual("1", "3"));
 			Assert.IsTrue(streams["branch"].ToList().Single().CommitId == "2");
+			Assert.IsTrue(streams.Verify());
 		}
 
 		[TestMethod]
@@ -72,6 +75,11 @@ namespace CvsGitTest
 			Assert.IsTrue(streams["branch"].ToList().Single().Predecessor == m_commits[0]);
 		}
 
+		#endregion Construct
+
+
+		#region Properties
+
 		[TestMethod]
 		public void Roots()
 		{
@@ -98,6 +106,11 @@ namespace CvsGitTest
 			Assert.IsTrue(streams.Branches.OrderBy(x => x, StringComparer.OrdinalIgnoreCase).SequenceEqual("branch", "MAIN"));
 		}
 
+		#endregion Properties
+
+
+		#region MoveCommit
+
 		[TestMethod]
 		public void MoveCommit_ToItself()
 		{
@@ -106,6 +119,7 @@ namespace CvsGitTest
 			streams.MoveCommit(m_commits[2], m_commits[2]);
 
 			Assert.IsTrue(streams["MAIN"].ToList().SequenceEqual(m_commits[0], m_commits[2]));
+			Assert.IsTrue(streams.Verify());
 		}
 
 		[TestMethod]
@@ -128,6 +142,7 @@ namespace CvsGitTest
 			streams.MoveCommit(m_commits[2], m_commits[4]);
 
 			Assert.IsTrue(streams["MAIN"].ToList().Select(c => c.CommitId).SequenceEqual("1", "4", "5", "3", "6"));
+			Assert.IsTrue(streams.Verify());
 		}
 
 		[TestMethod]
@@ -141,6 +156,7 @@ namespace CvsGitTest
 
 			Assert.IsTrue(streams["MAIN"].ToList().Select(c => c.CommitId).SequenceEqual("1", "3", "5", "4"));
 			Assert.IsTrue(streams.Head("MAIN").CommitId == "4");
+			Assert.IsTrue(streams.Verify());
 		}
 
 		[TestMethod]
@@ -154,6 +170,9 @@ namespace CvsGitTest
 
 			Assert.IsTrue(streams["branch"].CommitId == "4");
 			Assert.IsTrue(streams["branch"].ToList().Select(c => c.CommitId).SequenceEqual("4", "5", "2"));
+			Assert.IsTrue(streams.Verify());
 		}
+
+		#endregion MoveCommit
 	}
 }

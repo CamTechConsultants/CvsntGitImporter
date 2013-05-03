@@ -72,6 +72,9 @@ namespace CvsGitConverter
 			return m_heads.TryGetValue(branch, out head) ? head : null;
 		}
 
+		/// <summary>
+		/// Move a commit in the list to the position of another.
+		/// </summary>
 		public void MoveCommit(Commit commitToMove, Commit commitToReplace)
 		{
 			// only support moving forwards at the moment
@@ -112,9 +115,37 @@ namespace CvsGitConverter
 				}
 			}
 
+			// should never happen
 			throw new ImportFailedException(String.Format(
 					"Failed to find commit with index {0} moving forward from {1} on branch {2}",
 					commitToReplace.Index, commitToMove.Index, commitToMove.Branch));
+		}
+
+		/// <summary>
+		/// Verify the datastructure is consistent.
+		/// </summary>
+		/// <returns></returns>
+		public bool Verify()
+		{
+			foreach (var branch in Branches)
+			{
+				var root = this[branch];
+				if (branch == "MAIN" && root.Predecessor != null)
+					return false;
+				else if (branch != "MAIN" && (root.Predecessor == null || !root.Predecessor.Branches.Contains(root)))
+					return false;
+
+				var previous = root;
+				for (var c = root.Successor; c != null; previous = c, c = c.Successor)
+				{
+					if (c.Predecessor != previous)
+						return false;
+					else if (c.Index <= previous.Index)
+						return false;
+				}
+			}
+
+			return true;
 		}
 
 		private void AddCommit(Commit commit)
