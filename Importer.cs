@@ -52,15 +52,23 @@ namespace CvsGitConverter
 
 		public void Import()
 		{
-			foreach (var commit in m_player.Play())
+			m_log.DoubleRuleOff();
+			m_log.WriteLine("Importing");
+
+			using (m_log.Indent())
 			{
-				Import(commit);
+				foreach (var commit in m_player.Play())
+				{
+					Import(commit);
+				}
 			}
 		}
 
 		private void Import(Commit commit)
 		{
-			m_log.WriteLine("Commit {0}  branch={1} author={2} when={3}", commit.CommitId, commit.Branch, commit.Author, commit.Time);
+			m_log.WriteLine("Commit {0}/{1}  branch={2} author={3} when={4}{5}", commit.CommitId, commit.Index,
+					commit.Branch, commit.Author, commit.Time,
+					(commit.MergeFrom == null) ? "" : String.Format(" mergefrom={0}/{1}", commit.MergeFrom.CommitId, commit.MergeFrom.Index));
 
 			WriteLine("commit refs/heads/{0}", (commit.Branch == "MAIN") ? "master" : commit.Branch);
 			WriteLine("mark :{0}", commit.Index);
