@@ -86,7 +86,8 @@ namespace CvsGitConverter
 			var mergeResolver = new MergeResolver(log, streams);
 			mergeResolver.Resolve();
 
-			var importer = new Importer(log, streams);
+			var cvs = new Cvs(m_switches.Sandbox);
+			var importer = new Importer(log, streams, cvs);
 			importer.Import();
 		}
 

@@ -4,9 +4,7 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 
 namespace CvsGitConverter
@@ -17,6 +15,7 @@ namespace CvsGitConverter
 	class Importer : IDisposable
 	{
 		private readonly ILogger m_log;
+		private readonly Cvs m_cvs;
 		private readonly CommitPlayer m_player;
 		private readonly Stream m_stream;
 		private static readonly Encoding m_encoding = Encoding.UTF8;
@@ -24,9 +23,10 @@ namespace CvsGitConverter
 
 		private bool m_isDisposed = false;
 
-		public Importer(ILogger log, BranchStreamCollection branches)
+		public Importer(ILogger log, BranchStreamCollection branches, Cvs cvs)
 		{
 			m_log = log;
+			m_cvs = cvs;
 			m_player = new CommitPlayer(log, branches);
 
 			m_stream = Console.OpenStandardOutput();
@@ -72,7 +72,7 @@ namespace CvsGitConverter
 
 			WriteLine("commit refs/heads/{0}", (commit.Branch == "MAIN") ? "master" : commit.Branch);
 			WriteLine("mark :{0}", commit.Index);
-			WriteLine("committer {0} <{0}@ctg.local> {1}", commit.Author, commit.Time.ToString("r"));
+			WriteLine("committer {0} <{0}@ctg.local> {1} +0000", commit.Author, DateTimeToUnixTimestamp(commit.Time));
 
 			var msgBytes = GetBytes(commit.Message);
 			WriteLine("data {0}", msgBytes.Length);
@@ -81,12 +81,28 @@ namespace CvsGitConverter
 			if (commit.Predecessor != null)
 				WriteLine("from :{0}", commit.Predecessor.Index);
 
-			WriteLine("M 644 inline file.txt");
-			var content = GetBytes(String.Format("mark {0}\r\nblah\r\n", commit.Index));
-			WriteLine("data {0}", content.Length);
-			WriteLine(content);
+			if (commit.MergeFrom != null)
+				WriteLine("merge :{0}", commit.MergeFrom.Index);
+
+			foreach (var file in m_cvs.GetCommit(commit))
+			{
+				if (file.IsDead)
+				{
+					WriteLine("D {0}", file.Name);
+				}
+				else
+				{
+					WriteLine("M 644 inline {0}", file.Name);
+					WriteData(file.Data);
+				}
+			}
 
 			WriteLine("");
+		}
+
+		public static double DateTimeToUnixTimestamp(DateTime dateTime)
+		{
+			return (dateTime - new DateTime(1970, 1, 1).ToLocalTime()).TotalSeconds;
 		}
 
 		private void WriteLine(string format, params object[] args)
@@ -99,6 +115,17 @@ namespace CvsGitConverter
 		private void WriteLine(byte[] bytes)
 		{
 			m_stream.Write(bytes, 0, bytes.Length);
+			m_stream.Write(m_newLine, 0, m_newLine.Length);
+		}
+
+		private void WriteData(FileContentData data)
+		{
+			if (data.Length > int.MaxValue)
+				throw new NotSupportedException("Import cannot currently cope with files larger than 2 GB");
+
+			WriteLine("data {0}", data.Length);
+
+			m_stream.Write(data.Data, 0, (int)data.Length);
 			m_stream.Write(m_newLine, 0, m_newLine.Length);
 		}
 
