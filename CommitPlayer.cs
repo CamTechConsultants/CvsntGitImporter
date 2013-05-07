@@ -24,6 +24,17 @@ namespace CvsGitConverter
 		}
 
 		/// <summary>
+		/// Get the total number of commits.
+		/// </summary>
+		public int Count
+		{
+			get
+			{
+				return m_branches.Branches.Select(b => CountCommits(m_branches[b])).Sum();
+			}
+		}
+
+		/// <summary>
 		/// Get the commits in an order in which they can be imported.
 		/// </summary>
 		public IEnumerable<Commit> Play()
@@ -49,6 +60,14 @@ namespace CvsGitConverter
 						yield return branchCommit;
 				}
 			}
+		}
+
+		private int CountCommits(Commit root)
+		{
+			int count = 0;
+			for (Commit c = root; c != null; c = c.Successor)
+				count++;
+			return count;
 		}
 	}
 }

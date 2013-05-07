@@ -29,7 +29,7 @@ namespace CvsGitConverter
 			m_cvs = cvs;
 			m_player = new CommitPlayer(log, branches);
 
-			m_stream = Console.OpenStandardOutput();
+			m_stream = new FileStream("import.dat", FileMode.Create, FileAccess.Write);
 		}
 
 
@@ -55,12 +55,24 @@ namespace CvsGitConverter
 			m_log.DoubleRuleOff();
 			m_log.WriteLine("Importing");
 
+			bool printProgress = !Console.IsOutputRedirected;
+			int totalCommits = 0;
+			if (printProgress)
+				totalCommits = m_player.Count;
+
 			using (m_log.Indent())
 			{
+				int count = 0;
 				foreach (var commit in m_player.Play())
 				{
 					Import(commit);
+
+					if (printProgress)
+						Console.Out.Write("\rProcessed {0} of {1} commits ({2}%)", count++, totalCommits, count * 100 / totalCommits);
 				}
+
+				if (printProgress)
+					Console.Out.WriteLine();
 			}
 		}
 
