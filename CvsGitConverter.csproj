@@ -56,12 +56,15 @@
     <Compile Include="CommitPlayer.cs" />
     <Compile Include="Cvs.cs" />
     <Compile Include="CvsException.cs" />
+    <Compile Include="CvsRepository.cs" />
+    <Compile Include="CvsRepositoryCache.cs" />
     <Compile Include="FileContent.cs" />
     <Compile Include="FuncExtensions.cs" />
     <Compile Include="FileInfo.cs" />
     <Compile Include="FileRevision.cs" />
     <Compile Include="CvsLogParser.cs" />
     <Compile Include="CvsLogReader.cs" />
+    <Compile Include="ICvsRepository.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="Importer.cs" />
     <Compile Include="ImportFailedException.cs" />

@@ -86,7 +86,11 @@ namespace CvsGitConverter
 			var mergeResolver = new MergeResolver(log, streams);
 			mergeResolver.Resolve();
 
-			var cvs = new Cvs(m_switches.Sandbox);
+			ICvsRepository repository = new CvsRepository(m_switches.Sandbox);
+			if (m_switches.CvsCache != null)
+				repository = new CvsRepositoryCache(m_switches.CvsCache, repository);
+
+			var cvs = new Cvs(repository);
 			var importer = new Importer(log, streams, cvs);
 			importer.Import();
 		}
