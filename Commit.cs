@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace CvsGitConverter
 {
@@ -115,7 +114,7 @@ namespace CvsGitConverter
 		}
 
 		/// <summary>
-		/// Is this commit a merge?
+		/// Gets the files that are merged in this commit.
 		/// </summary>
 		public IEnumerable<FileRevision> MergedFiles
 		{
