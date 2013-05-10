@@ -23,6 +23,9 @@ namespace CvsGitConverter
 		[SwitchDef(ShortSwitch="-C", LongSwitch="--config")]
 		public ObservableCollection<string> Config { get; set; }
 
+		[SwitchDef(LongSwitch="--debug", ShortSwitch="-d")]
+		public bool Debug { get; set; }
+
 		[SwitchDef(LongSwitch="--sandbox")]
 		public string Sandbox { get; set; }
 

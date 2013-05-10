@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using CvsGitConverter.Utils;
 
 namespace CvsGitConverter
@@ -15,6 +16,7 @@ namespace CvsGitConverter
 	{
 		static readonly DateTime StartDate = new DateTime(2003, 2, 1);
 		private static readonly Switches m_switches = new Switches();
+		private static readonly string m_logDir = Path.Combine(Environment.CurrentDirectory, "gitconvert");
 
 		static int Main(string[] args)
 		{
@@ -25,7 +27,8 @@ namespace CvsGitConverter
 				if (m_switches.ExtraArguments.Count != 1)
 					throw new ArgumentException("Need a cvs.log file");
 
-				using (var log = new Logger("gitconvert.log"))
+				Directory.CreateDirectory(m_logDir);
+				using (var log = new Logger(GetLogFilePath("import.log")))
 				{
 					Import(log);
 				}
@@ -86,6 +89,8 @@ namespace CvsGitConverter
 			var mergeResolver = new MergeResolver(log, streams);
 			mergeResolver.Resolve();
 
+			WriteBranchLogs(streams);
+
 			ICvsRepository repository = new CvsRepository(m_switches.Sandbox);
 			if (m_switches.CvsCache != null)
 				repository = new CvsRepositoryCache(m_switches.CvsCache, repository);
@@ -95,9 +100,56 @@ namespace CvsGitConverter
 			importer.Import();
 		}
 
+		private static void WriteBranchLogs(BranchStreamCollection streams)
+		{
+			foreach (var branch in streams.Branches)
+			{
+				var filename = String.Format("commits-{0}.log", branch);
+				using (var writer = new StreamWriter(GetLogFilePath(filename), append: false, encoding: Encoding.UTF8))
+				{
+					writer.WriteLine("Branch: {0}", branch);
+					writer.WriteLine();
+
+					for (var c = streams[branch]; c != null; c = c.Successor)
+						WriteCommitLog(writer, c);
+				}
+			}
+		}
+
+		private static void WriteCommitLog(StreamWriter writer, Commit c)
+		{
+			writer.WriteLine("Commit {0}/{1}", c.CommitId, c.Index);
+			writer.WriteLine("{0} by {1}", c.Time, c.Author);
+
+			foreach (var branchCommit in c.Branches)
+				writer.WriteLine("Branchpoint for {0}", branchCommit.Branch);
+
+			if (c.MergeFrom != null)
+				writer.WriteLine("Merge from {0}/{1} on {2}", c.MergeFrom.CommitId, c.MergeFrom.Index, c.MergeFrom.Branch);
+
+			foreach (var revision in c.OrderBy(r => r.File.Name, StringComparer.OrdinalIgnoreCase))
+			{
+				if (revision.IsDead)
+				writer.Write("  {0} deleted", revision.File.Name);
+				else
+				writer.Write("  {0} r{1}", revision.File.Name, revision.Revision);
+
+				if (revision.Mergepoint != Revision.Empty)
+					writer.WriteLine(" merge from {0} on {1}", revision.Mergepoint, revision.File.GetBranch(revision.Mergepoint));
+				else
+					writer.WriteLine();
+			}
+
+			writer.WriteLine();
+		}
+
 		private static void WriteLogFile(string filename, IEnumerable<string> lines)
 		{
-			File.WriteAllLines(filename, lines);
+			if (m_switches.Debug)
+			{
+				var logPath = GetLogFilePath(filename);
+				File.WriteAllLines(logPath, lines);
+			}
 		}
 
 		private static void Verify(IEnumerable<Commit> commits)
@@ -123,6 +175,11 @@ namespace CvsGitConverter
 					Console.Error.WriteLine("========================================");
 				}
 			}
+		}
+
+		private static string GetLogFilePath(string filename)
+		{
+			return Path.Combine(m_logDir, filename);
 		}
 	}
 }
