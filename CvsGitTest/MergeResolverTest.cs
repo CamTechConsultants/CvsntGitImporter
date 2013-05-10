@@ -145,6 +145,31 @@ namespace CvsGitTest
 			Assert.IsTrue(streams["MAIN"].ToList().All(c => c.MergeFrom == null));
 		}
 
+		[TestMethod]
+		public void MergeFromParentBranch_Ignore()
+		{
+			var commits = new List<Commit>()
+			{
+				new Commit("initial").WithRevision(m_file, "1.1"),
+				new Commit("branch1").WithRevision(m_file, "1.1.2.1"),
+				new Commit("main1").WithRevision(m_file, "1.2"),
+				new Commit("branch2").WithRevision(m_file, "1.1.2.2", mergepoint: "1.2"),
+			};
+			m_file.WithBranch("branch", "1.1.0.2");
+
+			var branchpoints = new Dictionary<string, Commit>()
+			{
+				{ "branch", commits[0] }
+			};
+
+			var streams = new BranchStreamCollection(commits, branchpoints);
+			var resolver = new MergeResolver(m_logger, streams, new[] { "MAIN", "branch" });
+			resolver.Resolve();
+
+			Assert.IsTrue(streams["MAIN"].ToList().All(c => c.MergeFrom == null));
+			Assert.IsTrue(streams["branch"].ToList().All(c => c.MergeFrom == null));
+		}
+
 
 		private BranchStreamCollection CreateSingleMerge()
 		{

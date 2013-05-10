@@ -75,29 +75,41 @@ namespace CvsGitConverter
 						.OrderByDescending(c => c.Index)
 						.First();
 
-				if (m_includedBranches.Contains(commitSource.Branch))
+				// ignore excluded branches
+				if (!m_includedBranches.Contains(commitSource.Branch))
+					continue;
+
+				var commitBranchRoot = m_streams[commitSource.Branch];
+				if (commitBranchRoot.Predecessor == null || commitBranchRoot.Predecessor.Branch != commitDest.Branch)
 				{
-					var lastMergeSource = getLastMerge(commitSource.Branch);
-					if (lastMergeSource != null && commitSource.Index < lastMergeSource.Index)
+					using (m_log.Indent())
 					{
-						m_log.WriteLine("Merges from {0} to {1} are crossed ({2}->{3})",
-								commitSource.Branch, commitDest.Branch, commitSource.CommitId, commitDest.CommitId);
-
-						using (m_log.Indent())
-						{
-							m_streams.MoveCommit(commitSource, lastMergeSource);
-
-							// don't update last merge as it has not changed
-						}
+						m_log.WriteLine("Warning: ignoring merge to commit {0} on {1} - merged commit {2} is on {3} which is not branched off from {4}",
+								commitDest.CommitId, commitDest.Branch, commitSource.CommitId, commitSource.Branch, commitDest.Branch);
 					}
-					else
-					{
-						lastMerges[commitSource.Branch] = commitSource;
-					}
-
-					// fill in the resolved merge
-					commitDest.MergeFrom = commitSource;
+					continue;
 				}
+
+				var lastMergeSource = getLastMerge(commitSource.Branch);
+				if (lastMergeSource != null && commitSource.Index < lastMergeSource.Index)
+				{
+					m_log.WriteLine("Merges from {0} to {1} are crossed ({2}->{3})",
+							commitSource.Branch, commitDest.Branch, commitSource.CommitId, commitDest.CommitId);
+
+					using (m_log.Indent())
+					{
+						m_streams.MoveCommit(commitSource, lastMergeSource);
+
+						// don't update last merge as it has not changed
+					}
+				}
+				else
+				{
+					lastMerges[commitSource.Branch] = commitSource;
+				}
+
+				// fill in the resolved merge
+				commitDest.MergeFrom = commitSource;
 			}
 
 			return failures;
