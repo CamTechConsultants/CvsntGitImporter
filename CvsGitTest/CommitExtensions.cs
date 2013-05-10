@@ -18,16 +18,10 @@ namespace CvsGitTest
 		{
 			var mergepointRevision = (mergepoint == null) ? Revision.Empty : Revision.Create(mergepoint);
 
-			var fileRevision = new FileRevision(file,
-					commitId: commit.CommitId,
-					revision: Revision.Create(revision),
-					mergepoint: mergepointRevision,
-					isDead: isDead,
-					time: DateTime.Now,
-					author: "fred");
-
+			var fileRevision = file.CreateRevision(revision, commit.CommitId, mergepoint: mergepoint, isDead: isDead);
 			commit.Add(fileRevision);
 			file.AddCommit(commit, fileRevision.Revision);
+
 			return commit;
 		}
 

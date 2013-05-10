@@ -40,7 +40,7 @@ namespace CvsGitTest
 		[TestMethod]
 		public void StandardFormat()
 		{
-			var parser = new CvsLogParser(m_sandbox, new StringReader(CvsLogParserResources.StandardFormat), DateTime.MinValue);
+			var parser = new CvsLogParser(m_sandbox, new StringReader(CvsLogParserResources.StandardFormat));
 			var revisions = parser.Parse().ToList();
 
 			Assert.AreEqual(revisions.Count(), 2);
@@ -58,7 +58,7 @@ namespace CvsGitTest
 		[TestMethod]
 		public void Mergepoint()
 		{
-			var parser = new CvsLogParser(m_sandbox, new StringReader(CvsLogParserResources.Mergepoint), DateTime.MinValue);
+			var parser = new CvsLogParser(m_sandbox, new StringReader(CvsLogParserResources.Mergepoint));
 			var revisions = parser.Parse().ToList();
 
 			var rev = revisions.First(r => r.Revision == Revision.Create("1.2"));
@@ -66,30 +66,23 @@ namespace CvsGitTest
 		}
 		
 		[TestMethod]
-		[ExpectedException(typeof(ParseException))]
-		public void MissingCommitId_AfterStartDate()
-		{
-			var parser = new CvsLogParser(m_sandbox, new StringReader(CvsLogParserResources.MissingCommitId), DateTime.MinValue);
-			parser.Parse().ToList();
-		}
-
-		[TestMethod]
-		public void MissingCommitId_BeforeStartDate()
-		{
-			var parser = new CvsLogParser(m_sandbox, new StringReader(CvsLogParserResources.MissingCommitId), new DateTime(2012, 1, 1));
-			var revisions = parser.Parse().ToList();
-
-			Assert.IsFalse(revisions.Any(), "No revisions");
-		}
-
-		[TestMethod]
 		public void StateDead()
 		{
-			var parser = new CvsLogParser(m_sandbox, new StringReader(CvsLogParserResources.StateDead), DateTime.MinValue);
+			var parser = new CvsLogParser(m_sandbox, new StringReader(CvsLogParserResources.StateDead));
 			var revisions = parser.Parse().ToList();
 
 			var r = revisions.First();
 			Assert.IsTrue(r.IsDead);
+		}
+		
+		[TestMethod]
+		public void NoCommitId()
+		{
+			var parser = new CvsLogParser(m_sandbox, new StringReader(CvsLogParserResources.MissingCommitId));
+			var revisions = parser.Parse().ToList();
+
+			Assert.AreEqual(revisions.Count, 2);
+			Assert.IsTrue(revisions.All(r => r.CommitId == ""));
 		}
 	}
 }

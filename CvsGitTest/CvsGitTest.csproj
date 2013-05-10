@@ -59,6 +59,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="CommitBuilderTest.cs" />
     <Compile Include="CommitExtensions.cs" />
     <Compile Include="CommitListExtensions.cs" />
     <Compile Include="CommitListExtensionsTest.cs" />
@@ -68,6 +69,7 @@
     <Compile Include="FileContentDataTest.cs" />
     <Compile Include="FileInfoExtensions.cs" />
     <Compile Include="FileInfoTest.cs" />
+    <Compile Include="FileRevisionExtensions.cs" />
     <Compile Include="RepositoryBranchStateTest.cs" />
     <Compile Include="Properties\CvsLogParserResources.Designer.cs">
       <AutoGen>True</AutoGen>

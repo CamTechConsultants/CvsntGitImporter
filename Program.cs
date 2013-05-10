@@ -14,7 +14,6 @@ namespace CvsGitConverter
 {
 	class Program
 	{
-		static readonly DateTime StartDate = new DateTime(2003, 2, 1);
 		private static readonly Switches m_switches = new Switches();
 		private static readonly string m_logDir = Path.Combine(Environment.CurrentDirectory, "gitconvert");
 
@@ -44,8 +43,8 @@ namespace CvsGitConverter
 
 		private static void Import(Logger log)
 		{
-			var parser = new CvsLogParser(m_switches.Sandbox, m_switches.ExtraArguments[0], startDate: StartDate);
-			var builder = new CommitBuilder(parser);
+			var parser = new CvsLogParser(m_switches.Sandbox, m_switches.ExtraArguments[0]);
+			var builder = new CommitBuilder(parser.Parse());
 			IEnumerable<Commit> commits = builder.GetCommits()
 					.SplitMultiBranchCommits()
 					.AddCommitsToFiles()

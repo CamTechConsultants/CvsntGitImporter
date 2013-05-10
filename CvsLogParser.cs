@@ -22,25 +22,23 @@ namespace CvsGitConverter
 
 		private readonly string m_sandboxPath;
 		private readonly CvsLogReader m_reader;
-		private readonly DateTime m_startDate;
 		private readonly List<FileInfo> m_files = new List<FileInfo>();
 		private string m_repo;
 		private string m_fullRepoPath;
 
-		private CvsLogParser(string sandboxPath, CvsLogReader reader, DateTime startDate)
+		private CvsLogParser(string sandboxPath, CvsLogReader reader)
 		{
 			m_sandboxPath = sandboxPath;
 			m_reader = reader;
-			m_startDate = startDate;
 		}
 
-		public CvsLogParser(string sandboxPath, string logFile, DateTime startDate)
-			: this(sandboxPath, new CvsLogReader(logFile), startDate)
+		public CvsLogParser(string sandboxPath, string logFile)
+			: this(sandboxPath, new CvsLogReader(logFile))
 		{
 		}
 
-		public CvsLogParser(string sandboxPath, TextReader reader, DateTime startDate)
-			: this(sandboxPath, new CvsLogReader(reader), startDate)
+		public CvsLogParser(string sandboxPath, TextReader reader)
+			: this(sandboxPath, new CvsLogReader(reader))
 		{
 		}
 
@@ -210,25 +208,14 @@ namespace CvsGitConverter
 			var time = DateTime.ParseExact(dateStr, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
 			var mergepoint = mergepointStr == null ? Revision.Empty : Revision.Create(mergepointStr);
 
-			if (time >= m_startDate)
-			{
-				if (commitId == null)
-					throw MakeParseException("Commit is missing a commit id: '{0}'", line);
-
-				return new FileRevision(
-						file: currentFile,
-						revision: revision,
-						mergepoint: mergepoint,
-						time: time,
-						author: author,
-						commitId: commitId,
-						isDead: state == "dead");
-			}
-			else
-			{
-				// too early
-				return null;
-			}
+			return new FileRevision(
+					file: currentFile,
+					revision: revision,
+					mergepoint: mergepoint,
+					time: time,
+					author: author,
+					commitId: commitId ?? "",
+					isDead: state == "dead");
 		}
 
 		private ParseException MakeParseException(string format, params object[] args)

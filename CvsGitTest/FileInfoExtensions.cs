@@ -3,6 +3,7 @@
  * Copyright (c) Cambridge Technology Consultants Ltd. All rights reserved.
  */
 
+using System;
 using CvsGitConverter;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -30,6 +31,32 @@ namespace CvsGitTest
 			Assert.IsTrue(((Revision)revision).IsBranch);
 			file.AddTag(branchName, revision);
 			return file;
+		}
+
+		/// <summary>
+		/// Create a FileRevision for a file.
+		/// </summary>
+		public static FileRevision CreateRevision(this FileInfo file, string revision, string commitId,
+				string author = "fred", string mergepoint = null, bool isDead = false)
+		{
+			return CreateRevision(file, revision, commitId, DateTime.Now, author, mergepoint, isDead);
+		}
+		/// <summary>
+		/// Create a FileRevision for a file.
+		/// </summary>
+		public static FileRevision CreateRevision(this FileInfo file, string revision, string commitId, DateTime time,
+				string author = "fred", string mergepoint = null, bool isDead = false)
+		{
+			var mergepointRevision = (mergepoint == null) ? Revision.Empty : Revision.Create(mergepoint);
+
+			return new FileRevision(
+					file,
+					commitId: commitId,
+					revision: Revision.Create(revision),
+					mergepoint: mergepointRevision,
+					isDead: isDead,
+					time: time,
+					author: author);
 		}
 	}
 }
