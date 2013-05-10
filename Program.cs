@@ -58,6 +58,7 @@ namespace CvsGitConverter
 			foreach (var f in parser.Files)
 				allFiles.Add(f.Name, f);
 
+			// resolve branchpoints
 			var branchResolver = new BranchResolver(log, commits, allFiles, m_switches.BranchMatcher);
 			if (!branchResolver.ResolveAndFix())
 			{
@@ -66,6 +67,7 @@ namespace CvsGitConverter
 			}
 			commits = branchResolver.Commits;
 
+			// resolve tags
 			var tagResolver = new TagResolver(log, commits, allFiles, m_switches.TagMatcher);
 			if (!tagResolver.ResolveAndFix())
 			{
@@ -86,11 +88,13 @@ namespace CvsGitConverter
 
 			var streams = commits.SplitBranchStreams(branchResolver.ResolvedCommits);
 
-			var mergeResolver = new MergeResolver(log, streams);
+			// resolve merges
+			var mergeResolver = new MergeResolver(log, streams, branchResolver.AllTags);
 			mergeResolver.Resolve();
 
 			WriteBranchLogs(streams);
 
+			// do the import
 			ICvsRepository repository = new CvsRepository(m_switches.Sandbox);
 			if (m_switches.CvsCache != null)
 				repository = new CvsRepositoryCache(m_switches.CvsCache, repository);

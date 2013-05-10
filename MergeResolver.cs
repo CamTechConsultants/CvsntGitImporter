@@ -17,11 +17,13 @@ namespace CvsGitConverter
 	{
 		private readonly ILogger m_log;
 		private readonly BranchStreamCollection m_streams;
+		private readonly HashSet<string> m_includedBranches;
 
-		public MergeResolver(ILogger log, BranchStreamCollection streams)
+		public MergeResolver(ILogger log, BranchStreamCollection streams, IEnumerable<string> includedBranches)
 		{
 			m_log = log;
 			m_streams = streams;
+			m_includedBranches = new HashSet<string>(includedBranches);
 		}
 
 		public void Resolve()
@@ -73,26 +75,29 @@ namespace CvsGitConverter
 						.OrderByDescending(c => c.Index)
 						.First();
 
-				var lastMergeSource = getLastMerge(commitSource.Branch);
-				if (lastMergeSource != null && commitSource.Index < lastMergeSource.Index)
+				if (m_includedBranches.Contains(commitSource.Branch))
 				{
-					m_log.WriteLine("Merges from {0} to {1} are crossed ({2}->{3})",
-							commitSource.Branch, commitDest.Branch, commitSource.CommitId, commitDest.CommitId);
-
-					using (m_log.Indent())
+					var lastMergeSource = getLastMerge(commitSource.Branch);
+					if (lastMergeSource != null && commitSource.Index < lastMergeSource.Index)
 					{
-						m_streams.MoveCommit(commitSource, lastMergeSource);
+						m_log.WriteLine("Merges from {0} to {1} are crossed ({2}->{3})",
+								commitSource.Branch, commitDest.Branch, commitSource.CommitId, commitDest.CommitId);
 
-						// don't update last merge as it has not changed
+						using (m_log.Indent())
+						{
+							m_streams.MoveCommit(commitSource, lastMergeSource);
+
+							// don't update last merge as it has not changed
+						}
 					}
-				}
-				else
-				{
-					lastMerges[commitSource.Branch] = commitSource;
-				}
+					else
+					{
+						lastMerges[commitSource.Branch] = commitSource;
+					}
 
-				// fill in the resolved merge
-				commitDest.MergeFrom = commitSource;
+					// fill in the resolved merge
+					commitDest.MergeFrom = commitSource;
+				}
 			}
 
 			return failures;
