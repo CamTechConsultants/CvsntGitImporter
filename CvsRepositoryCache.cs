@@ -58,9 +58,20 @@ namespace CvsGitConverter
 				throw new NotSupportedException("Cannot currently cope with files larger than 2 GB");
 
 			Directory.CreateDirectory(Path.GetDirectoryName(cachedPath));
-			using (var stream = new FileStream(cachedPath, FileMode.CreateNew))
+			var tempFile = cachedPath + ".tmp";
+
+			try
 			{
-				stream.Write(contents.Data.Data, 0, (int)contents.Data.Length);
+				// create temp file in case we're interrupted
+				using (var stream = new FileStream(tempFile, FileMode.CreateNew))
+				{
+					stream.Write(contents.Data.Data, 0, (int)contents.Data.Length);
+				}
+				File.Move(tempFile, cachedPath);
+			}
+			finally
+			{
+				try { File.Delete(tempFile); } catch { }
 			}
 		}
 
