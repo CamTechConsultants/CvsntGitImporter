@@ -59,6 +59,7 @@
     <Compile Include="CvsRepository.cs" />
     <Compile Include="CvsRepositoryCache.cs" />
     <Compile Include="FileContent.cs" />
+    <Compile Include="FileContentData.cs" />
     <Compile Include="FuncExtensions.cs" />
     <Compile Include="FileInfo.cs" />
     <Compile Include="FileRevision.cs" />

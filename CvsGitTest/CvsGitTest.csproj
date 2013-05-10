@@ -65,6 +65,7 @@
     <Compile Include="CvsLogParserTest.cs" />
     <Compile Include="CvsRepositoryCacheTest.cs" />
     <Compile Include="EnumerableExtensions.cs" />
+    <Compile Include="FileContentDataTest.cs" />
     <Compile Include="FileInfoExtensions.cs" />
     <Compile Include="FileInfoTest.cs" />
     <Compile Include="RepositoryBranchStateTest.cs" />
