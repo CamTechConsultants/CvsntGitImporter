@@ -86,6 +86,7 @@
     <Compile Include="CommitTest.cs" />
     <Compile Include="MergeResolverTest.cs" />
     <Compile Include="BranchStreamCollectionTest.cs" />
+    <Compile Include="Utils\RhinoMocksExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CvsGitConverter.csproj">
