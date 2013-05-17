@@ -14,11 +14,12 @@ namespace CvsGitTest
 	/// </summary>
 	static class CommitExtensions
 	{
-		public static Commit WithRevision(this Commit commit, FileInfo file, string revision, string mergepoint = null, bool isDead = false)
+		public static Commit WithRevision(this Commit commit, FileInfo file, string revision, DateTime time = default(DateTime),
+				string mergepoint = null, bool isDead = false)
 		{
 			var mergepointRevision = (mergepoint == null) ? Revision.Empty : Revision.Create(mergepoint);
 
-			var fileRevision = file.CreateRevision(revision, commit.CommitId, mergepoint: mergepoint, isDead: isDead);
+			var fileRevision = file.CreateRevision(revision, commit.CommitId, time: time, mergepoint: mergepoint, isDead: isDead);
 			commit.Add(fileRevision);
 			file.AddCommit(commit, fileRevision.Revision);
 

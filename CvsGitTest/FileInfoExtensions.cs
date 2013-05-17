@@ -55,7 +55,7 @@ namespace CvsGitTest
 					revision: Revision.Create(revision),
 					mergepoint: mergepointRevision,
 					isDead: isDead,
-					time: time,
+					time: (time == default(DateTime)) ? DateTime.Now : time,
 					author: author);
 		}
 	}

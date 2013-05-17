@@ -3,6 +3,7 @@
  * Copyright (c) Cambridge Technology Consultants Ltd. All rights reserved.
  */
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -10,17 +11,18 @@ namespace CvsGitConverter
 {
 	/// <summary>
 	/// Playback commits in an appropriate order for importing them.
-	/// Does a depth first search, returning branches in their entirety as they're encountered.
 	/// </summary>
 	class CommitPlayer
 	{
 		private readonly ILogger m_log;
-		private readonly BranchStreamCollection m_branches;
+		private readonly BranchStreamCollection m_streams;
+		private readonly Dictionary<string, Commit> m_branchHeads = new Dictionary<string, Commit>();
+		private static readonly Commit EndMarker = new Commit("ENDMARKER") { Index = int.MaxValue };
 
-		public CommitPlayer(ILogger log, BranchStreamCollection branches)
+		public CommitPlayer(ILogger log, BranchStreamCollection streams)
 		{
 			m_log = log;
-			m_branches = branches;
+			m_streams = streams;
 		}
 
 		/// <summary>
@@ -30,7 +32,7 @@ namespace CvsGitConverter
 		{
 			get
 			{
-				return m_branches.Branches.Select(b => CountCommits(m_branches[b])).Sum();
+				return m_streams.Branches.Select(b => CountCommits(m_streams[b])).Sum();
 			}
 		}
 
@@ -39,27 +41,63 @@ namespace CvsGitConverter
 		/// </summary>
 		public IEnumerable<Commit> Play()
 		{
-			return EnumerateBranch("MAIN");
-		}
+			foreach (var branch in m_streams.Branches)
+				m_branchHeads[branch] = m_streams[branch];
 
-		private IEnumerable<Commit> EnumerateBranch(string branch)
-		{
-			var root = m_branches[branch];
+			// ensure first commit is the first commit from MAIN
+			var mainHead = m_streams["MAIN"];
+			yield return mainHead;
+			UpdateHead("MAIN", mainHead.Successor);
 
-			for (var commit = root; commit != null; commit = commit.Successor)
+			Commit nextCommit;
+			while ((nextCommit = GetNextCommit()) != null)
 			{
-				yield return commit;
-
-				if (commit.IsBranchpoint)
+				// ensure that any branch we merge from is far enough along
+				if (nextCommit.MergeFrom != null)
 				{
-					var branchCommits = from branchpoint in commit.Branches
-										from c in EnumerateBranch(branchpoint.Branch)
-										select c;
-
-					foreach (var branchCommit in branchCommits)
+					foreach (var branchCommit in FastForwardBranch(nextCommit.MergeFrom))
 						yield return branchCommit;
 				}
+
+				yield return nextCommit;
+				UpdateHead(nextCommit.Branch, nextCommit.Successor);
 			}
+		}
+
+		private IEnumerable<Commit> FastForwardBranch(Commit commit)
+		{
+			var branch = commit.Branch;
+			Commit nextCommit;
+			while ((nextCommit = m_branchHeads[branch]).Index <= commit.Index)
+			{
+				// may need to recursively fast forward to handle stacked branches
+				if (nextCommit.MergeFrom != null)
+				{
+					foreach (var branchCommit in FastForwardBranch(nextCommit.MergeFrom))
+						yield return branchCommit;
+				}
+
+				yield return nextCommit;
+				UpdateHead(branch, nextCommit.Successor);
+			}
+		}
+
+		private Commit GetNextCommit()
+		{
+			Commit earliest = null;
+
+			foreach (var c in m_branchHeads.Values.Where(c => c != EndMarker))
+			{
+				if (earliest == null || c.Time < earliest.Time)
+					earliest = c;
+			}
+
+			return earliest;
+		}
+
+		private void UpdateHead(string branch, Commit commit)
+		{
+			m_branchHeads[branch] = commit ?? EndMarker;
 		}
 
 		private int CountCommits(Commit root)
