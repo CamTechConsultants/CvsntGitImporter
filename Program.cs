@@ -98,7 +98,7 @@ namespace CvsGitConverter
 			if (m_switches.CvsCache != null)
 				repository = new CvsRepositoryCache(m_switches.CvsCache, repository);
 
-			var cvs = new Cvs(repository);
+			var cvs = new Cvs(repository, m_switches.CvsProcesses);
 			var importer = new Importer(log, streams, cvs);
 			importer.Import();
 		}

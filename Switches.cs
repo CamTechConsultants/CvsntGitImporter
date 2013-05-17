@@ -32,6 +32,9 @@ namespace CvsGitConverter
 		[SwitchDef(LongSwitch="--cvs-cache")]
 		public string CvsCache { get; set; }
 
+		[SwitchDef(LongSwitch="--cvs-processes", Description="The number of CVS processes to run in parallel when importing. Defaults to the number of processors on the system.")]
+		public string _CvsProcesses { get; set; }
+
 		[SwitchDef(LongSwitch="--include-tag")]
 		public ObservableCollection<string> IncludeTag { get; set; }
 
@@ -48,6 +51,11 @@ namespace CvsGitConverter
 
 		public readonly InclusionMatcher BranchMatcher = new InclusionMatcher();
 
+		/// <summary>
+		/// Gets the number of CVS processes to run.
+		/// </summary>
+		public int CvsProcesses { get; private set; }
+
 		public Switches()
 		{
 			Config = new ObservableCollection<string>();
@@ -57,6 +65,8 @@ namespace CvsGitConverter
 					ExcludeTag = new ObservableCollection<string>(), TagMatcher);
 			new IncludeExcludeWatcher(IncludeBranch = new ObservableCollection<string>(),
 					ExcludeBranch = new ObservableCollection<string>(), BranchMatcher);
+
+			CvsProcesses = Environment.ProcessorCount;
 		}
 
 		public override void Verify()
@@ -65,6 +75,15 @@ namespace CvsGitConverter
 
 			if (this.Sandbox == null)
 				throw new CommandLineArgsException("No CVS repository specified");
+
+			if (_CvsProcesses != null)
+			{
+				int cvsProcesses;
+				if (int.TryParse(_CvsProcesses, out cvsProcesses) && cvsProcesses > 0)
+					this.CvsProcesses = cvsProcesses;
+				else
+					throw new CommandLineArgsException("Invalid value for cvs-processes: {0}", _CvsProcesses);
+			}
 		}
 
 		void ParseConfigFile(string filename)

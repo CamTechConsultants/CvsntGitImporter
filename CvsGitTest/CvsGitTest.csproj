@@ -65,6 +65,7 @@
     <Compile Include="CommitListExtensionsTest.cs" />
     <Compile Include="CvsLogParserTest.cs" />
     <Compile Include="CvsRepositoryCacheTest.cs" />
+    <Compile Include="CvsTest.cs" />
     <Compile Include="EnumerableExtensions.cs" />
     <Compile Include="FileContentDataTest.cs" />
     <Compile Include="FileInfoExtensions.cs" />
@@ -86,6 +87,7 @@
     <Compile Include="CommitTest.cs" />
     <Compile Include="MergeResolverTest.cs" />
     <Compile Include="BranchStreamCollectionTest.cs" />
+    <Compile Include="SwitchesTest.cs" />
     <Compile Include="Utils\RhinoMocksExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
