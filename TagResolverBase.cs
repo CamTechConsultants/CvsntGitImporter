@@ -22,8 +22,6 @@ namespace CvsGitConverter
 		private readonly InclusionMatcher m_tagMatcher;
 		private readonly bool m_branches;
 
-		private IEnumerable<string> m_allTags;
-
 		private Dictionary<string, Commit> m_finalCommits;
 
 		private IEnumerable<string> m_problematicTags;
@@ -45,9 +43,9 @@ namespace CvsGitConverter
 		{
 			get
 			{
-				if (m_allTags == null)
+				if (m_finalCommits == null)
 					throw new InvalidOperationException("Resolve not yet called");
-				return m_allTags.OrderBy(t => t);
+				return m_finalCommits.Keys.OrderBy(t => t);
 			}
 		}
 
@@ -83,7 +81,6 @@ namespace CvsGitConverter
 		public bool Resolve()
 		{
 			m_finalCommits = FindCommitsPerTag();
-			m_allTags = m_finalCommits.Keys;
 
 			var candidateCommits = FindCandidateCommits(m_finalCommits);
 			m_problematicTags = FindProblematicTags(candidateCommits);
