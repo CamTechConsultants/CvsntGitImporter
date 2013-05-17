@@ -82,8 +82,8 @@ namespace CvsGitConverter
 						branchResolver.UnresolvedTags.StringJoin(", ")));
 			}
 
-			WriteLogFile("allbranches.log", branchResolver.AllTags);
-			WriteLogFile("alltags.log", tagResolver.AllTags);
+			WriteLogFile("allbranches.log", branchResolver.AllTags.Select(t => PrintPossibleRename(t, m_switches.BranchRename)));
+			WriteLogFile("alltags.log", tagResolver.AllTags.Select(t => PrintPossibleRename(t, m_switches.TagRename)));
 
 			var streams = commits.SplitBranchStreams(branchResolver.ResolvedCommits);
 
@@ -117,6 +117,15 @@ namespace CvsGitConverter
 						WriteCommitLog(writer, c);
 				}
 			}
+		}
+
+		private static string PrintPossibleRename(string tag, Renamer renamer)
+		{
+			var renamed = renamer.Process(tag);
+			if (renamed == tag)
+				return tag;
+			else
+				return String.Format("{0} (renamed to {1})", tag, renamed);
 		}
 
 		private static void WriteCommitLog(StreamWriter writer, Commit c)

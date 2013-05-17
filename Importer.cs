@@ -88,11 +88,13 @@ namespace CvsGitConverter
 
 		private void Import(Commit commit)
 		{
+			var renamedBranch = m_switches.BranchRename.Process(commit.Branch);
+
 			m_log.WriteLine("Commit {0}/{1}  branch={2} author={3} when={4}{5}", commit.CommitId, commit.Index,
-					commit.Branch, commit.Author, commit.Time,
+					renamedBranch, commit.Author, commit.Time,
 					(commit.MergeFrom == null) ? "" : String.Format(" mergefrom={0}/{1}", commit.MergeFrom.CommitId, commit.MergeFrom.Index));
 
-			WriteLine("commit refs/heads/{0}", (commit.Branch == "MAIN") ? "master" : commit.Branch);
+			WriteLine("commit refs/heads/{0}", (commit.Branch == "MAIN") ? "master" : renamedBranch);
 			WriteLine("mark :{0}", commit.Index);
 			WriteLine("committer {0} <{0}@ctg.local> {1}", commit.Author, DateTimeToUnixTimestamp(commit.Time));
 
@@ -124,6 +126,8 @@ namespace CvsGitConverter
 
 		private void ImportTags()
 		{
+			var renamer = m_switches.TagRename;
+
 			foreach (var kvp in m_tags)
 			{
 				// ignore tags that are on branches that we're not importing
@@ -131,7 +135,7 @@ namespace CvsGitConverter
 				if (m_branches[commit.Branch] == null)
 					continue;
 
-				var tagName = kvp.Key;
+				var tagName = renamer.Process(kvp.Key);
 				m_log.WriteLine("Tag {0}: {1}/{2}", tagName, commit.CommitId, commit.Index);
 
 				WriteLine("tag {0}", tagName);

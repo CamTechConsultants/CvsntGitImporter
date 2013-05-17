@@ -42,35 +42,61 @@ namespace CvsGitConverter
 		public string TaggerEmail { get; set; }
 
 		[SwitchDef(LongSwitch="--include-tag")]
-		public ObservableCollection<string> IncludeTag { get; set; }
+		public ObservableCollection<string> _IncludeTag { get; set; }
 
 		[SwitchDef(LongSwitch="--exclude-tag")]
-		public ObservableCollection<string> ExcludeTag { get; set; }
+		public ObservableCollection<string> _ExcludeTag { get; set; }
 
 		[SwitchDef(LongSwitch="--include-branch")]
-		public ObservableCollection<string> IncludeBranch { get; set; }
+		public ObservableCollection<string> _IncludeBranch { get; set; }
 
 		[SwitchDef(LongSwitch="--exclude-branch")]
-		public ObservableCollection<string> ExcludeBranch { get; set; }
+		public ObservableCollection<string> _ExcludeBranch { get; set; }
 
+		[SwitchDef(LongSwitch="--rename-tag")]
+		public ObservableCollection<string> _RenameTag { get; set; }
+
+		[SwitchDef(LongSwitch="--rename-branch")]
+		public ObservableCollection<string> _RenameBranch { get; set; }
+
+
+		/// <summary>
+		/// The matcher for tags.
+		/// </summary>
 		public readonly InclusionMatcher TagMatcher = new InclusionMatcher();
 
+		/// <summary>
+		/// The matcher for branches.
+		/// </summary>
 		public readonly InclusionMatcher BranchMatcher = new InclusionMatcher();
+
+		/// <summary>
+		/// The renamer for tags.
+		/// </summary>
+		public readonly Renamer TagRename = new Renamer();
+
+		/// <summary>
+		/// The renamer for tags.
+		/// </summary>
+		public readonly Renamer BranchRename = new Renamer();
 
 		/// <summary>
 		/// Gets the number of CVS processes to run.
 		/// </summary>
 		public int CvsProcesses { get; private set; }
 
+
 		public Switches()
 		{
 			Config = new ObservableCollection<string>();
 			Config.CollectionChanged += Config_CollectionChanged;
 
-			new IncludeExcludeWatcher(IncludeTag = new ObservableCollection<string>(),
-					ExcludeTag = new ObservableCollection<string>(), TagMatcher);
-			new IncludeExcludeWatcher(IncludeBranch = new ObservableCollection<string>(),
-					ExcludeBranch = new ObservableCollection<string>(), BranchMatcher);
+			_IncludeTag = new RuleCollection(p => AddIncludeRule(TagMatcher, true, p));
+			_ExcludeTag = new RuleCollection(p => AddIncludeRule(TagMatcher, false, p));
+			_IncludeBranch = new RuleCollection(p => AddIncludeRule(BranchMatcher, true, p));
+			_ExcludeBranch = new RuleCollection(p => AddIncludeRule(BranchMatcher, false, p));
+			_RenameTag = new RuleCollection(r => AddRenameRule(TagRename, r));
+			_RenameBranch = new RuleCollection(r => AddRenameRule(BranchRename, r));
 
 			CvsProcesses = Environment.ProcessorCount;
 			TaggerName = Environment.GetEnvironmentVariable("USERNAME") ?? "nobody";
@@ -134,7 +160,6 @@ namespace CvsGitConverter
 			}
 		}
 
-
 		void Config_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
 		{
 			// Parse config files as they're encountered
@@ -142,49 +167,53 @@ namespace CvsGitConverter
 				ParseConfigFile(e.NewItems[0] as string);
 		}
 
-
-		/// <summary>
-		/// Watch two collections of include and exclude rules and update the rules in
-		/// an InclusionMatcher instance. Means that the rules get added in the correct order.
-		/// </summary>
-		private class IncludeExcludeWatcher
+		private void AddIncludeRule(InclusionMatcher matcher, bool include, string pattern)
 		{
-			private readonly InclusionMatcher m_matcher;
-
-			public IncludeExcludeWatcher(ObservableCollection<string> includes, ObservableCollection<string> excludes,
-					InclusionMatcher matcher)
+			try
 			{
-				m_matcher = matcher;
-				includes.CollectionChanged += Include_CollectionChanged;
-				excludes.CollectionChanged += Exclude_CollectionChanged;
-			}
-
-			void AddRule(string pattern, bool include)
-			{
-				Regex regex;
-				try
-				{
-					regex = new Regex(pattern);
-				}
-				catch (ArgumentException)
-				{
-					throw new CommandLineArgsException("Invalid regex: {0}", pattern);
-				}
+				var regex = new Regex(pattern);
 
 				if (include)
-					m_matcher.AddIncludeRule(regex);
+					matcher.AddIncludeRule(regex);
 				else
-					m_matcher.AddExcludeRule(regex);
+					matcher.AddExcludeRule(regex);
+			}
+			catch (ArgumentException)
+			{
+				throw new CommandLineArgsException("Invalid regex: {0}", pattern);
+			}
+		}
+
+		private void AddRenameRule(Renamer renamer, string rule)
+		{
+			var parts = rule.Split('/');
+			if (parts.Length != 2)
+				throw new CommandLineArgsException("Invalid rename rule: {0}", rule);
+
+			try
+			{
+				var regex = new Regex(parts[0]);
+				renamer.AddRule(regex, parts[1]);
+			}
+			catch (ArgumentException)
+			{
+				throw new CommandLineArgsException("Invalid regex: {0}", parts[0]);
+			}
+		}
+
+		private class RuleCollection : ObservableCollection<string>
+		{
+			private readonly Action<string> m_action;
+
+			public RuleCollection(Action<string> action)
+			{
+				m_action = action;
 			}
 
-			void Include_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+			protected override void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
 			{
-				AddRule(e.NewItems[0] as string, true);
-			}
-
-			void Exclude_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-			{
-				AddRule(e.NewItems[0] as string, false);
+				base.OnCollectionChanged(e);
+				m_action(e.NewItems[0] as string);
 			}
 		}
 	}
