@@ -89,6 +89,12 @@
     <Compile Include="MergeResolverTest.cs" />
     <Compile Include="BranchStreamCollectionTest.cs" />
     <Compile Include="SwitchesTest.cs" />
+    <Compile Include="Properties\UserMapResources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>UserMapResources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="UserMapTest.cs" />
     <Compile Include="Utils\RhinoMocksExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -101,6 +107,10 @@
     <EmbeddedResource Include="Properties\CvsLogParserResources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>CvsLogParserResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\UserMapResources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>UserMapResources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
@@ -115,6 +125,18 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="TestData\CvsLogParser\StateDead.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="TestData\UserMap\extrafield.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="TestData\UserMap\missingemail.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="TestData\UserMap\good.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="TestData\UserMap\duplicate.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

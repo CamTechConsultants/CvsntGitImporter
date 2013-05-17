@@ -16,6 +16,7 @@ namespace CvsGitConverter
 	{
 		private static readonly Switches m_switches = new Switches();
 		private static readonly string m_logDir = Path.Combine(Environment.CurrentDirectory, "gitconvert");
+		private static UserMap m_userMap;
 
 		static int Main(string[] args)
 		{
@@ -25,6 +26,11 @@ namespace CvsGitConverter
 
 				if (m_switches.ExtraArguments.Count != 1)
 					throw new ArgumentException("Need a cvs.log file");
+
+				// parse user file
+				m_userMap = new UserMap(m_switches.DefaultDomain);
+				if (m_switches.UserFile != null)
+					m_userMap.ParseUserFile(m_switches.UserFile);
 
 				Directory.CreateDirectory(m_logDir);
 				using (var log = new Logger(GetLogFilePath("import.log")))
@@ -84,6 +90,7 @@ namespace CvsGitConverter
 
 			WriteLogFile("allbranches.log", branchResolver.AllTags.Select(t => PrintPossibleRename(t, m_switches.BranchRename)));
 			WriteLogFile("alltags.log", tagResolver.AllTags.Select(t => PrintPossibleRename(t, m_switches.TagRename)));
+			WriteUserLog("allusers.log", commits);
 
 			var streams = commits.SplitBranchStreams(branchResolver.ResolvedCommits);
 
@@ -99,7 +106,7 @@ namespace CvsGitConverter
 				repository = new CvsRepositoryCache(m_switches.CvsCache, repository);
 
 			var cvs = new Cvs(repository, m_switches.CvsProcesses);
-			var importer = new Importer(log, m_switches, streams, tagResolver.ResolvedCommits, cvs);
+			var importer = new Importer(log, m_switches, m_userMap, streams, tagResolver.ResolvedCommits, cvs);
 			importer.Import();
 		}
 
@@ -116,6 +123,27 @@ namespace CvsGitConverter
 					for (var c = streams[branch]; c != null; c = c.Successor)
 						WriteCommitLog(writer, c);
 				}
+			}
+		}
+
+		private static void WriteUserLog(string filename, IEnumerable<Commit> commits)
+		{
+			if (m_switches.Debug)
+			{
+				var logPath = GetLogFilePath(filename);
+				var allUsers = commits.Select(c => c.Author)
+					.Distinct()
+					.OrderBy(i => i, StringComparer.OrdinalIgnoreCase)
+					.Select(name =>
+					{
+						var user = m_userMap.GetUser(name);
+						if (user.Generated)
+							return name;
+						else
+							return String.Format("{0} ({1})", name, user);
+					});
+
+				File.WriteAllLines(logPath, allUsers);
 			}
 		}
 

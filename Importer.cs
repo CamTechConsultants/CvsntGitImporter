@@ -20,6 +20,7 @@ namespace CvsGitConverter
 
 		private readonly ILogger m_log;
 		private readonly Switches m_switches;
+		private readonly UserMap m_userMap;
 		private readonly BranchStreamCollection m_branches;
 		private readonly IDictionary<string, Commit> m_tags;
 		private readonly Cvs m_cvs;
@@ -28,10 +29,12 @@ namespace CvsGitConverter
 
 		private bool m_isDisposed = false;
 
-		public Importer(ILogger log, Switches switches, BranchStreamCollection branches, IDictionary<string, Commit> tags, Cvs cvs)
+		public Importer(ILogger log, Switches switches, UserMap userMap, BranchStreamCollection branches,
+				IDictionary<string, Commit> tags, Cvs cvs)
 		{
 			m_log = log;
 			m_switches = switches;
+			m_userMap = userMap;
 			m_branches = branches;
 			m_tags = tags;
 			m_cvs = cvs;
@@ -89,6 +92,7 @@ namespace CvsGitConverter
 		private void Import(Commit commit)
 		{
 			var renamedBranch = m_switches.BranchRename.Process(commit.Branch);
+			var author = m_userMap.GetUser(commit.Author);
 
 			m_log.WriteLine("Commit {0}/{1}  branch={2} author={3} when={4}{5}", commit.CommitId, commit.Index,
 					renamedBranch, commit.Author, commit.Time,
@@ -96,7 +100,7 @@ namespace CvsGitConverter
 
 			WriteLine("commit refs/heads/{0}", (commit.Branch == "MAIN") ? "master" : renamedBranch);
 			WriteLine("mark :{0}", commit.Index);
-			WriteLine("committer {0} <{0}@ctg.local> {1}", commit.Author, DateTimeToUnixTimestamp(commit.Time));
+			WriteLine("committer {0} {1}", WriteUser(author), DateTimeToUnixTimestamp(commit.Time));
 
 			var msgBytes = GetBytes(commit.Message);
 			WriteLine("data {0}", msgBytes.Length);
@@ -140,9 +144,14 @@ namespace CvsGitConverter
 
 				WriteLine("tag {0}", tagName);
 				WriteLine("from :{0}", commit.Index);
-				WriteLine("tagger {0} <{1}> {2}", m_switches.TaggerName, m_switches.TaggerEmail, DateTimeToUnixTimestamp(commit.Time));
+				WriteLine("tagger {0} {1}", WriteUser(m_switches.Tagger), DateTimeToUnixTimestamp(commit.Time));
 				WriteData(FileContentData.Empty);
 			}
+		}
+
+		private string WriteUser(User user)
+		{
+			return String.Format("{0} <{1}>", user.Name, user.Email);
 		}
 
 		private static string DateTimeToUnixTimestamp(DateTime dateTime)

@@ -1,0 +1,3 @@
+joe	Joe Bloggs	joe.bloggs@example.com
+
+ fred 	 Fred X	 fred2@example.com   

@@ -84,5 +84,23 @@ namespace CvsGitTest
 			var switches = new Switches();
 			switches.Parse("--sandbox", Path.GetTempPath(), "--rename-tag", "**/foo");
 		}
+
+		[TestMethod]
+		public void Tagger_DefaultEmail()
+		{
+			var switches = new Switches();
+			switches.Parse("--sandbox", Path.GetTempPath(), "--default-domain", "example.com", "--tagger-name", "Joe Bloggs");
+
+			Assert.AreEqual(switches.Tagger.Email, "Joe@example.com");
+		}
+
+		[TestMethod]
+		public void Tagger_NoDefaultEmailIfSetExplicitly()
+		{
+			var switches = new Switches();
+			switches.Parse("--sandbox", Path.GetTempPath(), "--default-domain", "example.com", "--tagger-email", "blah@example.com");
+
+			Assert.AreEqual(switches.Tagger.Email, "blah@example.com");
+		}
 	}
 }

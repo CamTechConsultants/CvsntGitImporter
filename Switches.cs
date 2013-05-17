@@ -35,11 +35,17 @@ namespace CvsGitConverter
 		[SwitchDef(LongSwitch="--cvs-processes", Description="The number of CVS processes to run in parallel when importing. Defaults to the number of processors on the system.")]
 		public string _CvsProcesses { get; set; }
 
+		[SwitchDef(LongSwitch="--default-domain", Description="The default domain name to use for unknown users")]
+		public string DefaultDomain { get; set; }
+
+		[SwitchDef(LongSwitch="--user-file", Description="A file specifying user names and e-mail addresses")]
+		public string UserFile { get; set; }
+
 		[SwitchDef(LongSwitch="--tagger-name", Description="The name to use for the user when creating tags")]
-		public string TaggerName { get; set; }
+		public string _TaggerName { get; set; }
 
 		[SwitchDef(LongSwitch="--tagger-email", Description="The e-mail address to use for the user when creating tags")]
-		public string TaggerEmail { get; set; }
+		public string _TaggerEmail { get; set; }
 
 		[SwitchDef(LongSwitch="--include-tag")]
 		public ObservableCollection<string> _IncludeTag { get; set; }
@@ -59,6 +65,11 @@ namespace CvsGitConverter
 		[SwitchDef(LongSwitch="--rename-branch")]
 		public ObservableCollection<string> _RenameBranch { get; set; }
 
+
+		/// <summary>
+		/// Gets the user to use for creating tags.
+		/// </summary>
+		public User Tagger { get; private set; }
 
 		/// <summary>
 		/// The matcher for tags.
@@ -99,8 +110,8 @@ namespace CvsGitConverter
 			_RenameBranch = new RuleCollection(r => AddRenameRule(BranchRename, r));
 
 			CvsProcesses = Environment.ProcessorCount;
-			TaggerName = Environment.GetEnvironmentVariable("USERNAME") ?? "nobody";
-			TaggerEmail = String.Format("{0}@{1}", TaggerName, Environment.MachineName);
+			DefaultDomain = Environment.MachineName;
+			_TaggerName = Environment.GetEnvironmentVariable("USERNAME") ?? "nobody";
 		}
 
 		public override void Verify()
@@ -118,6 +129,23 @@ namespace CvsGitConverter
 				else
 					throw new CommandLineArgsException("Invalid value for cvs-processes: {0}", _CvsProcesses);
 			}
+		}
+
+		public override void Parse(params string[] args)
+		{
+			base.Parse(args);
+
+			var taggerEmail = _TaggerEmail;
+			if (taggerEmail == null)
+			{
+				var name = _TaggerName.Trim();
+				var spaceIndex = name.IndexOf(' ');
+				if (spaceIndex > 0)
+					name = name.Remove(spaceIndex);
+				taggerEmail = String.Format("{0}@{1}", name, DefaultDomain);
+			}
+
+			this.Tagger = new User(_TaggerName, taggerEmail);
 		}
 
 		void ParseConfigFile(string filename)
