@@ -35,6 +35,12 @@ namespace CvsGitConverter
 		[SwitchDef(LongSwitch="--cvs-processes", Description="The number of CVS processes to run in parallel when importing. Defaults to the number of processors on the system.")]
 		public string _CvsProcesses { get; set; }
 
+		[SwitchDef(LongSwitch="--tagger-name", Description="The name to use for the user when creating tags")]
+		public string TaggerName { get; set; }
+
+		[SwitchDef(LongSwitch="--tagger-email", Description="The e-mail address to use for the user when creating tags")]
+		public string TaggerEmail { get; set; }
+
 		[SwitchDef(LongSwitch="--include-tag")]
 		public ObservableCollection<string> IncludeTag { get; set; }
 
@@ -67,6 +73,8 @@ namespace CvsGitConverter
 					ExcludeBranch = new ObservableCollection<string>(), BranchMatcher);
 
 			CvsProcesses = Environment.ProcessorCount;
+			TaggerName = Environment.GetEnvironmentVariable("USERNAME") ?? "nobody";
+			TaggerEmail = String.Format("{0}@{1}", TaggerName, Environment.MachineName);
 		}
 
 		public override void Verify()

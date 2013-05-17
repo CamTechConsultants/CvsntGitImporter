@@ -99,7 +99,7 @@ namespace CvsGitConverter
 				repository = new CvsRepositoryCache(m_switches.CvsCache, repository);
 
 			var cvs = new Cvs(repository, m_switches.CvsProcesses);
-			var importer = new Importer(log, streams, cvs);
+			var importer = new Importer(log, m_switches, streams, tagResolver.ResolvedCommits, cvs);
 			importer.Import();
 		}
 

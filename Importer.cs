@@ -4,6 +4,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -14,18 +15,25 @@ namespace CvsGitConverter
 	/// </summary>
 	class Importer : IDisposable
 	{
-		private readonly ILogger m_log;
-		private readonly Cvs m_cvs;
-		private readonly CommitPlayer m_player;
-		private readonly Stream m_stream;
 		private static readonly Encoding m_encoding = Encoding.UTF8;
 		private static readonly byte[] m_newLine = m_encoding.GetBytes("\n");
 
+		private readonly ILogger m_log;
+		private readonly Switches m_switches;
+		private readonly BranchStreamCollection m_branches;
+		private readonly IDictionary<string, Commit> m_tags;
+		private readonly Cvs m_cvs;
+		private readonly CommitPlayer m_player;
+		private readonly Stream m_stream;
+
 		private bool m_isDisposed = false;
 
-		public Importer(ILogger log, BranchStreamCollection branches, Cvs cvs)
+		public Importer(ILogger log, Switches switches, BranchStreamCollection branches, IDictionary<string, Commit> tags, Cvs cvs)
 		{
 			m_log = log;
+			m_switches = switches;
+			m_branches = branches;
+			m_tags = tags;
 			m_cvs = cvs;
 			m_player = new CommitPlayer(log, branches);
 
@@ -68,11 +76,13 @@ namespace CvsGitConverter
 					Import(commit);
 
 					if (printProgress)
-						Console.Out.Write("\rProcessed {0} of {1} commits ({2}%)", count++, totalCommits, count * 100 / totalCommits);
+						Console.Out.Write("\rProcessed {0} of {1} commits ({2}%)", ++count, totalCommits, count * 100 / totalCommits);
 				}
 
 				if (printProgress)
 					Console.Out.WriteLine();
+
+				ImportTags();
 			}
 		}
 
@@ -84,7 +94,7 @@ namespace CvsGitConverter
 
 			WriteLine("commit refs/heads/{0}", (commit.Branch == "MAIN") ? "master" : commit.Branch);
 			WriteLine("mark :{0}", commit.Index);
-			WriteLine("committer {0} <{0}@ctg.local> {1} +0000", commit.Author, DateTimeToUnixTimestamp(commit.Time));
+			WriteLine("committer {0} <{0}@ctg.local> {1}", commit.Author, DateTimeToUnixTimestamp(commit.Time));
 
 			var msgBytes = GetBytes(commit.Message);
 			WriteLine("data {0}", msgBytes.Length);
@@ -112,9 +122,28 @@ namespace CvsGitConverter
 			WriteLine("");
 		}
 
-		public static double DateTimeToUnixTimestamp(DateTime dateTime)
+		private void ImportTags()
 		{
-			return (dateTime - new DateTime(1970, 1, 1).ToLocalTime()).TotalSeconds;
+			foreach (var kvp in m_tags)
+			{
+				// ignore tags that are on branches that we're not importing
+				var commit = kvp.Value;
+				if (m_branches[commit.Branch] == null)
+					continue;
+
+				var tagName = kvp.Key;
+				m_log.WriteLine("Tag {0}: {1}/{2}", tagName, commit.CommitId, commit.Index);
+
+				WriteLine("tag {0}", tagName);
+				WriteLine("from :{0}", commit.Index);
+				WriteLine("tagger {0} <{1}> {2}", m_switches.TaggerName, m_switches.TaggerEmail, DateTimeToUnixTimestamp(commit.Time));
+				WriteData(FileContentData.Empty);
+			}
+		}
+
+		private static string DateTimeToUnixTimestamp(DateTime dateTime)
+		{
+			return String.Format("{0} +0000", (dateTime - new DateTime(1970, 1, 1).ToLocalTime()).TotalSeconds);
 		}
 
 		private void WriteLine(string format, params object[] args)
