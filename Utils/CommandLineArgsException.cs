@@ -10,6 +10,7 @@ namespace CvsGitConverter.Utils
 	/// <summary>
 	/// Exception thrown when the arguments passed to an application are invalid.
 	/// </summary>
+	[Serializable]
 	class CommandLineArgsException : Exception
 	{
 		#region Constructors

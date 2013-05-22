@@ -11,6 +11,7 @@ namespace CvsGitConverter
 	/// <summary>
 	/// Thrown when the CVS repository is inconsistent.
 	/// </summary>
+	[Serializable]
 	class RepositoryConsistencyException : Exception
 	{
 		/// <summary>

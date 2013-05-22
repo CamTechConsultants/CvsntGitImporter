@@ -116,7 +116,7 @@ namespace CvsGitConverter.Utils
 			catch (TargetInvocationException tie)
 			{
 				if (tie.InnerException == null)
-					throw tie;
+					throw;
 				else
 					throw tie.InnerException;
 			}

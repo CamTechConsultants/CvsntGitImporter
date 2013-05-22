@@ -11,6 +11,7 @@ namespace CvsGitConverter
 	/// <summary>
 	/// An exception thrown as a result of a CVS command
 	/// </summary>
+	[Serializable]
 	class CvsException : Exception
 	{
 		/// <summary>

@@ -11,6 +11,7 @@ namespace CvsGitConverter
 	/// <summary>
 	/// Thrown when the import fails.
 	/// </summary>
+	[Serializable]
 	class ImportFailedException : Exception
 	{
 		/// <summary>

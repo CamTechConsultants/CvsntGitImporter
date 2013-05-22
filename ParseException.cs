@@ -11,6 +11,7 @@ namespace CvsGitConverter
 	/// <summary>
 	/// An exception that occurred while parsing.
 	/// </summary>
+	[Serializable]
 	class ParseException : Exception
 	{
 		/// <summary>
