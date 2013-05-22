@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace CvsGitConverter
+namespace CTC.CvsntGitImporter
 {
 	/// <summary>
 	/// Tracks the versions of all files in the repository for a specific branch.

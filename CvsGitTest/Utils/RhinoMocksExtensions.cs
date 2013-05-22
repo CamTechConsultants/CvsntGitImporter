@@ -7,7 +7,7 @@ using System;
 using Rhino.Mocks;
 using Rhino.Mocks.Interfaces;
 
-namespace CvsGitTest.Utils
+namespace CTC.CvsntGitImporter.TestCode.Utils
 {
 	/// <summary>
 	/// Extensions methods for Rhino Mocks.

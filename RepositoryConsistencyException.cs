@@ -6,7 +6,7 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace CvsGitConverter
+namespace CTC.CvsntGitImporter
 {
 	/// <summary>
 	/// Thrown when the CVS repository is inconsistent.

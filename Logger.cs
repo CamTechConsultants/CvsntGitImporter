@@ -7,7 +7,7 @@ using System;
 using System.IO;
 using System.Text;
 
-namespace CvsGitConverter
+namespace CTC.CvsntGitImporter
 {
 	/// <summary>
 	/// Logging.

@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace CvsGitConverter.Utils
+namespace CTC.CvsntGitImporter.Utils
 {
 	/// <summary>
 	/// Description of a command line switch.

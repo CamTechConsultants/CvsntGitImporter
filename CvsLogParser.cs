@@ -9,7 +9,7 @@ using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace CvsGitConverter
+namespace CTC.CvsntGitImporter
 {
 	/// <summary>
 	/// CVS log file parser.

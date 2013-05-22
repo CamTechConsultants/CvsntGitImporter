@@ -5,11 +5,11 @@
 
 using System.Linq;
 using System.Collections.Generic;
-using CvsGitConverter;
+using CTC.CvsntGitImporter;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 
-namespace CvsGitTest
+namespace CTC.CvsntGitImporter.TestCode
 {
 	[TestClass]
 	public class BranchStreamCollectionTest

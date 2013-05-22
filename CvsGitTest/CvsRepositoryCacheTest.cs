@@ -5,12 +5,12 @@
 
 using System;
 using System.IO;
-using CvsGitConverter;
-using CvsGitConverter.Utils;
+using CTC.CvsntGitImporter;
+using CTC.CvsntGitImporter.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Rhino.Mocks;
 
-namespace CvsGitTest
+namespace CTC.CvsntGitImporter.TestCode
 {
 	/// <summary>
 	/// Unit tests for the CvsRepositoryCache class.
@@ -44,7 +44,7 @@ namespace CvsGitTest
 		[TestMethod]
 		public void GetCvsRevision_CallsUnderlyingIfFileMissing()
 		{
-			var f = new FileRevision(new CvsGitConverter.FileInfo("file.txt"), Revision.Create("1.1"),
+			var f = new FileRevision(new FileInfo("file.txt"), Revision.Create("1.1"),
 					mergepoint: Revision.Empty,
 					time: DateTime.Now,
 					author: "fred",
@@ -61,7 +61,7 @@ namespace CvsGitTest
 		[TestMethod]
 		public void GetCvsRevision_ReturnsExistingFileIfPresent()
 		{
-			var f = new FileRevision(new CvsGitConverter.FileInfo("file.txt"), Revision.Create("1.1"),
+			var f = new FileRevision(new FileInfo("file.txt"), Revision.Create("1.1"),
 					mergepoint: Revision.Empty,
 					time: DateTime.Now,
 					author: "fred",

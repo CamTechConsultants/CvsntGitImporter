@@ -5,7 +5,7 @@
 
 using System;
 
-namespace CvsGitConverter
+namespace CTC.CvsntGitImporter
 {
 	/// <summary>
 	/// Application logging.

@@ -5,9 +5,9 @@
 
 using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using CvsGitConverter;
+using CTC.CvsntGitImporter;
 
-namespace CvsGitTest
+namespace CTC.CvsntGitImporter.TestCode
 {
 	[TestClass]
 	public class FuncExtensionsTest

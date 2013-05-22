@@ -7,8 +7,8 @@
     <ProjectGuid>{A32E83AB-4D2B-4EB1-B49D-7CDF9286435B}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CvsGitConverter</RootNamespace>
-    <AssemblyName>CvsGitConverter</AssemblyName>
+    <RootNamespace>CTC.CvsntGitImporter</RootNamespace>
+    <AssemblyName>CvsntGitImporter</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />

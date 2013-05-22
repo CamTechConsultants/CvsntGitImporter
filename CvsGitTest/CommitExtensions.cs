@@ -5,9 +5,9 @@
 
 using System;
 using System.Collections.Generic;
-using CvsGitConverter;
+using CTC.CvsntGitImporter;
 
-namespace CvsGitTest
+namespace CTC.CvsntGitImporter.TestCode
 {
 	/// <summary>
 	/// Extension methods on the Commit class.

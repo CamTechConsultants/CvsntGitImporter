@@ -8,7 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using IOPath = System.IO.Path;
 
-namespace CvsGitConverter.Utils
+namespace CTC.CvsntGitImporter.Utils
 {
 	/// <summary>
 	/// Create and delete a temporary directory using RAII.

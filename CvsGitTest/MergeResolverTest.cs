@@ -6,11 +6,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using CvsGitConverter;
+using CTC.CvsntGitImporter;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Rhino.Mocks;
 
-namespace CvsGitTest
+namespace CTC.CvsntGitImporter.TestCode
 {
 	/// <summary>
 	/// Unit tests for the MergeResolver class.

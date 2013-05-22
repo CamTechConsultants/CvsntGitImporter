@@ -5,7 +5,7 @@
 
 using System.Collections.Generic;
 
-namespace CvsGitConverter
+namespace CTC.CvsntGitImporter
 {
 	/// <summary>
 	/// Tracks the state of the repository allowing commits to be replayed.

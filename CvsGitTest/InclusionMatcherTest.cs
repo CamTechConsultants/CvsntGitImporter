@@ -5,10 +5,10 @@
 
 using System;
 using System.Text.RegularExpressions;
-using CvsGitConverter;
+using CTC.CvsntGitImporter;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace CvsGitTest
+namespace CTC.CvsntGitImporter.TestCode
 {
 	/// <summary>
 	/// Unit tests for InclusionMatcher class.

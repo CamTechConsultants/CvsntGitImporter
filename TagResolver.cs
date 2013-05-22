@@ -5,7 +5,7 @@
 
 using System.Collections.Generic;
 
-namespace CvsGitConverter
+namespace CTC.CvsntGitImporter
 {
 	/// <summary>
 	/// Resolves tags to specific commits.

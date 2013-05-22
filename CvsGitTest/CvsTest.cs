@@ -5,13 +5,13 @@
 
 using System;
 using System.Linq;
-using CvsGitConverter;
+using CTC.CvsntGitImporter;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Rhino.Mocks;
-using CvsGitTest.Utils;
+using CTC.CvsntGitImporter.TestCode.Utils;
 using System.Text;
 
-namespace CvsGitTest
+namespace CTC.CvsntGitImporter.TestCode
 {
 	/// <summary>
 	/// Unit tests for the CVS class.

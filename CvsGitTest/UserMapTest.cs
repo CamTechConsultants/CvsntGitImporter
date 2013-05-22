@@ -4,11 +4,11 @@
  */
 
 using System.IO;
-using CvsGitConverter;
-using CvsGitTest.Properties;
+using CTC.CvsntGitImporter;
+using CTC.CvsntGitImporter.TestCode.Properties;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace CvsGitTest
+namespace CTC.CvsntGitImporter.TestCode
 {
 	[TestClass]
 	public class UserMapTest

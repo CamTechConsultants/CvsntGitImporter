@@ -4,10 +4,10 @@
  */
 
 using System.Text.RegularExpressions;
-using CvsGitConverter;
+using CTC.CvsntGitImporter;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace CvsGitTest
+namespace CTC.CvsntGitImporter.TestCode
 {
 	[TestClass]
 	public class RenamerTest

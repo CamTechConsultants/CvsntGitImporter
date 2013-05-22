@@ -9,7 +9,7 @@ using System.Reflection;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace CvsGitConverter.Utils
+namespace CTC.CvsntGitImporter.Utils
 {
 	/// <summary>
 	/// Class for parsing command line arguments.

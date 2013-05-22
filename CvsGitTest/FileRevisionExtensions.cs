@@ -3,9 +3,9 @@
  * Copyright (c) Cambridge Technology Consultants Ltd. All rights reserved.
  */
 
-using CvsGitConverter;
+using CTC.CvsntGitImporter;
 
-namespace CvsGitTest
+namespace CTC.CvsntGitImporter.TestCode
 {
 	/// <summary>
 	/// Extension methods on FileRevision class.

@@ -3,7 +3,7 @@
  * Copyright (c) Cambridge Technology Consultants Ltd. All rights reserved.
  */
 
-namespace CvsGitConverter
+namespace CTC.CvsntGitImporter
 {
 	/// <summary>
 	/// Log level.

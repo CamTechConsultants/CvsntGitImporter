@@ -6,7 +6,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace CvsGitConverter
+namespace CTC.CvsntGitImporter
 {
 	/// <summary>
 	/// Extension methods on Func.

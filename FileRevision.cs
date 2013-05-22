@@ -7,7 +7,7 @@ using System;
 using System.Linq;
 using System.Text;
 
-namespace CvsGitConverter
+namespace CTC.CvsntGitImporter
 {
 	/// <summary>
 	/// Represents a commit to a single file.

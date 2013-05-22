@@ -11,9 +11,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using CvsGitConverter.Utils;
+using CTC.CvsntGitImporter.Utils;
 
-namespace CvsGitConverter
+namespace CTC.CvsntGitImporter
 {
 	/// <summary>
 	/// Command line switches.

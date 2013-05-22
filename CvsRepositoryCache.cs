@@ -6,7 +6,7 @@
 using System;
 using System.IO;
 
-namespace CvsGitConverter
+namespace CTC.CvsntGitImporter
 {
 	/// <summary>
 	/// A cache of CVS repository files.

@@ -5,7 +5,7 @@
 
 using System;
 
-namespace CvsGitConverter.Utils
+namespace CTC.CvsntGitImporter.Utils
 {
 	/// <summary>
 	/// Exception thrown when the arguments passed to an application are invalid.

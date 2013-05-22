@@ -6,7 +6,7 @@
 using System;
 using System.Linq;
 
-namespace CvsGitConverter.Utils
+namespace CTC.CvsntGitImporter.Utils
 {
 	/// <summary>
 	/// Extension methods for Type.

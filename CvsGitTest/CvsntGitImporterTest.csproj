@@ -6,8 +6,8 @@
     <ProjectGuid>{2BD43735-3B24-4D23-8CE7-886D6B446B03}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CvsGitTest</RootNamespace>
-    <AssemblyName>CvsGitTest</AssemblyName>
+    <RootNamespace>CTC.CvsntGitImporter.TestCode</RootNamespace>
+    <AssemblyName>CvsntGitImporterTest</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -99,9 +99,9 @@
     <Compile Include="Utils\RhinoMocksExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CvsGitConverter.csproj">
+    <ProjectReference Include="..\CvsntGitImporter.csproj">
       <Project>{a32e83ab-4d2b-4eb1-b49d-7cdf9286435b}</Project>
-      <Name>CvsGitConverter</Name>
+      <Name>CvsntGitImporter</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

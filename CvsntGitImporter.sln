@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CvsGitConverter", "CvsGitConverter.csproj", "{A32E83AB-4D2B-4EB1-B49D-7CDF9286435B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CvsntGitImporter", "CvsntGitImporter.csproj", "{A32E83AB-4D2B-4EB1-B49D-7CDF9286435B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CvsGitTest", "CvsGitTest\CvsGitTest.csproj", "{2BD43735-3B24-4D23-8CE7-886D6B446B03}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CvsntGitImporterTest", "CvsGitTest\CvsntGitImporterTest.csproj", "{2BD43735-3B24-4D23-8CE7-886D6B446B03}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

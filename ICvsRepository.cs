@@ -5,7 +5,7 @@
 
 using System;
 
-namespace CvsGitConverter
+namespace CTC.CvsntGitImporter
 {
 	/// <summary>
 	/// Access files in the CVS repository.

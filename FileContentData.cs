@@ -6,7 +6,7 @@
 using System;
 using System.Text;
 
-namespace CvsGitConverter
+namespace CTC.CvsntGitImporter
 {
 	/// <summary>
 	/// The raw data for a revision of a file.

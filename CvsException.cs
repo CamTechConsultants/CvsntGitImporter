@@ -6,7 +6,7 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace CvsGitConverter
+namespace CTC.CvsntGitImporter
 {
 	/// <summary>
 	/// An exception thrown as a result of a CVS command

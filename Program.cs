@@ -8,9 +8,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using CvsGitConverter.Utils;
+using CTC.CvsntGitImporter.Utils;
 
-namespace CvsGitConverter
+namespace CTC.CvsntGitImporter
 {
 	class Program
 	{

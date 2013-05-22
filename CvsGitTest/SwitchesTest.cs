@@ -5,11 +5,11 @@
 
 using System;
 using System.IO;
-using CvsGitConverter;
-using CvsGitConverter.Utils;
+using CTC.CvsntGitImporter;
+using CTC.CvsntGitImporter.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace CvsGitTest
+namespace CTC.CvsntGitImporter.TestCode
 {
 	/// <summary>
 	/// Unit tests for the Switches class.

@@ -6,7 +6,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace CvsGitConverter.Utils
+namespace CTC.CvsntGitImporter.Utils
 {
 	/// <summary>
 	/// Extension methods for IEnumerable.

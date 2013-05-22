@@ -6,12 +6,12 @@
 using System;
 using System.IO;
 using System.Linq;
-using CvsGitConverter;
-using CvsGitConverter.Utils;
-using CvsGitTest.Properties;
+using CTC.CvsntGitImporter;
+using CTC.CvsntGitImporter.Utils;
+using CTC.CvsntGitImporter.TestCode.Properties;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace CvsGitTest
+namespace CTC.CvsntGitImporter.TestCode
 {
 	/// <summary>
 	/// Unit tests for the CvsLogParser class.
