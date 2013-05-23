@@ -29,6 +29,47 @@ namespace CTC.CvsntGitImporter
 		}
 
 		/// <summary>
+		/// Verify commits
+		/// </summary>
+		public static IEnumerable<Commit> Verify(this IEnumerable<Commit> commits, ILogger log)
+		{
+			bool anyFailed = false;
+
+			foreach (var commit in commits)
+			{
+				bool passed = commit.Verify();
+				yield return commit;
+
+				if (!passed)
+				{
+					if (!anyFailed)
+					{
+						log.DoubleRuleOff();
+						log.WriteLine("Commit verification");
+						anyFailed = true;
+					}
+
+					using (log.Indent())
+					{
+						log.WriteLine("Verification failed: {0} {1}", commit.CommitId, commit.Time);
+						foreach (var revision in commit)
+							log.WriteLine("  {0} r{1}", revision.File, revision.Revision);
+
+						foreach (var error in commit.Errors)
+						{
+							log.WriteLine(error);
+						}
+
+						log.RuleOff();
+					}
+				}
+			}
+
+			if (anyFailed)
+				throw new RepositoryConsistencyException("One or more commits failed verification");
+		}
+
+		/// <summary>
 		/// Find the index of an item working backwards starting from an index.
 		/// </summary>
 		public static int IndexOfFromEnd<T>(this IList<T> list, T item)
