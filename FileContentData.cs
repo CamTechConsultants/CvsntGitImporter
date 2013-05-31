@@ -23,6 +23,10 @@ namespace CTC.CvsntGitImporter
 		/// </summary>
 		public readonly long Length;
 
+		public FileContentData(byte[] data) : this(data, data.Length)
+		{
+		}
+
 		public FileContentData(byte[] data, long length)
 		{
 			Data = data;
@@ -31,7 +35,7 @@ namespace CTC.CvsntGitImporter
 
 		public override string ToString()
 		{
-			return Encoding.Default.GetString(Data, 0, (int)Math.Max(Length, 0x100));
+			return Encoding.Default.GetString(Data, 0, (int)Length);
 		}
 
 		public override bool Equals(object obj)
