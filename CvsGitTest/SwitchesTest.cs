@@ -61,6 +61,15 @@ namespace CTC.CvsntGitImporter.TestCode
 		}
 
 		[TestMethod]
+		public void RenameTag_WhitespaceIsTrimmed()
+		{
+			var switches = new Switches();
+			switches.Parse("--sandbox", Path.GetTempPath(), "--rename-tag", "  foo /  \tbar");
+
+			Assert.AreEqual(switches.TagRename.Process("foobar"), "barbar");
+		}
+
+		[TestMethod]
 		public void RenameBranch()
 		{
 			var switches = new Switches();

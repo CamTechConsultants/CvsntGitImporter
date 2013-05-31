@@ -256,8 +256,8 @@ namespace CTC.CvsntGitImporter
 
 			try
 			{
-				var regex = new Regex(parts[0]);
-				renamer.AddRule(regex, parts[1]);
+				var regex = new Regex(parts[0].Trim());
+				renamer.AddRule(regex, parts[1].Trim());
 			}
 			catch (ArgumentException)
 			{
