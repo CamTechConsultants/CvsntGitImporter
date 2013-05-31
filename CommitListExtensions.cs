@@ -124,6 +124,14 @@ namespace CTC.CvsntGitImporter
 		}
 
 		/// <summary>
+		/// Filter out excluded files from the stream of commits.
+		/// </summary>
+		public static IEnumerable<Commit> FilterExcludedFiles(this IEnumerable<Commit> commits, ExclusionFilter filter)
+		{
+			return filter.Filter(commits);
+		}
+
+		/// <summary>
 		/// Split a flat list of commits into a set of streams per branch.
 		/// </summary>
 		public static BranchStreamCollection SplitBranchStreams(this IEnumerable<Commit> commits, IDictionary<string, Commit> branchpoints)

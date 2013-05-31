@@ -100,6 +100,37 @@ namespace CTC.CvsntGitImporter.TestCode
 		#endregion Properties
 
 
+		#region AppendCommit
+
+		[TestMethod]
+		public void AppendCommit_ToMain()
+		{
+			var streams = new BranchStreamCollection(m_commits, m_branchpoints);
+
+			var commit = new Commit("new").WithRevision(m_f1, "1.3");
+			streams.AppendCommit(commit);
+
+			Assert.AreSame(streams.Head("MAIN"), commit);
+			Assert.AreSame(streams["MAIN"].Successor.Successor, commit);
+			Assert.IsTrue(commit.Index > streams["MAIN"].Successor.Index, "Index set");
+		}
+
+		[TestMethod]
+		public void AppendCommit_ToBranch()
+		{
+			var streams = new BranchStreamCollection(m_commits, m_branchpoints);
+
+			var commit = new Commit("new").WithRevision(m_f1, "1.1.2.2");
+			streams.AppendCommit(commit);
+
+			Assert.AreSame(streams.Head("branch"), commit);
+			Assert.AreSame(streams["branch"].Successor, commit);
+			Assert.IsTrue(commit.Index > streams["MAIN"].Index, "Index set");
+		}
+
+		#endregion AppendCommit
+
+
 		#region MoveCommit
 
 		[TestMethod]
@@ -165,5 +196,30 @@ namespace CTC.CvsntGitImporter.TestCode
 		}
 
 		#endregion MoveCommit
+
+
+		#region OrderedBranches
+
+		[TestMethod]
+		public void OrderedBranches()
+		{
+			Commit subBranchPoint;
+			m_commits.AddRange(new[]
+			{
+				new Commit("4").WithRevision(m_f1, "1.3"),
+				new Commit("5").WithRevision(m_f1, "1.1.2.2"),
+				subBranchPoint = new Commit("6").WithRevision(m_f1, "1.1.2.3"),
+				new Commit("7").WithRevision(m_f1, "1.1.2.3.2.1"),
+			});
+
+			m_f1.WithBranch("subbranch", "1.1.2.3.0.2");
+			m_branchpoints["subbranch"] = subBranchPoint;
+			var streams = new BranchStreamCollection(m_commits, m_branchpoints);
+
+			var orderedBranches = streams.OrderedBranches.ToList();
+			Assert.IsTrue(orderedBranches.SequenceEqual("MAIN", "branch", "subbranch"));
+		}
+
+		#endregion OrderedBranches
 	}
 }

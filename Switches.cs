@@ -35,17 +35,29 @@ namespace CTC.CvsntGitImporter
 		[SwitchDef(LongSwitch="--cvs-processes", Description="The number of CVS processes to run in parallel when importing. Defaults to the number of processors on the system.")]
 		public string _CvsProcesses { get; set; }
 
+
 		[SwitchDef(LongSwitch="--default-domain", Description="The default domain name to use for unknown users")]
 		public string DefaultDomain { get; set; }
 
 		[SwitchDef(LongSwitch="--user-file", Description="A file specifying user names and e-mail addresses")]
 		public string UserFile { get; set; }
 
-		[SwitchDef(LongSwitch="--tagger-name", Description="The name to use for the user when creating tags")]
-		public string _TaggerName { get; set; }
+		[SwitchDef(LongSwitch="--nobody-name", Description="The name to use for the user when creating tags or manufacturer commits")]
+		public string _NobodyName { get; set; }
 
-		[SwitchDef(LongSwitch="--tagger-email", Description="The e-mail address to use for the user when creating tags")]
-		public string _TaggerEmail { get; set; }
+		[SwitchDef(LongSwitch="--nobody-email", Description="The e-mail address to use for the user when creating tags or manufacturer commits")]
+		public string _NobodyEmail { get; set; }
+
+
+		[SwitchDef(LongSwitch="--exclude")]
+		public ObservableCollection<string> _ExcludeFile { get; set; }
+
+		[SwitchDef(LongSwitch="--head-only")]
+		public ObservableCollection<string> _HeadOnly { get; set; }
+
+		[SwitchDef(LongSwitch="--head-only-branch")]
+		public List<string> HeadOnlyBranches { get; set; }
+
 
 		[SwitchDef(LongSwitch="--include-tag")]
 		public ObservableCollection<string> _IncludeTag { get; set; }
@@ -69,7 +81,17 @@ namespace CTC.CvsntGitImporter
 		/// <summary>
 		/// Gets the user to use for creating tags.
 		/// </summary>
-		public User Tagger { get; private set; }
+		public User Nobody { get; private set; }
+
+		/// <summary>
+		/// The matcher for files.
+		/// </summary>
+		public readonly InclusionMatcher FileMatcher = new InclusionMatcher();
+
+		/// <summary>
+		/// The matcher for latest-only files.
+		/// </summary>
+		public readonly InclusionMatcher HeadOnlyMatcher = new InclusionMatcher();
 
 		/// <summary>
 		/// The matcher for tags.
@@ -102,6 +124,8 @@ namespace CTC.CvsntGitImporter
 			Config = new ObservableCollection<string>();
 			Config.CollectionChanged += Config_CollectionChanged;
 
+			_ExcludeFile = new RuleCollection(p => AddIncludeRule(FileMatcher, false, p));
+			_HeadOnly = new RuleCollection(p => { AddIncludeRule(FileMatcher, false, p); AddIncludeRule(HeadOnlyMatcher, true, p); });
 			_IncludeTag = new RuleCollection(p => AddIncludeRule(TagMatcher, true, p));
 			_ExcludeTag = new RuleCollection(p => AddIncludeRule(TagMatcher, false, p));
 			_IncludeBranch = new RuleCollection(p => AddIncludeRule(BranchMatcher, true, p));
@@ -111,7 +135,9 @@ namespace CTC.CvsntGitImporter
 
 			CvsProcesses = Environment.ProcessorCount;
 			DefaultDomain = Environment.MachineName;
-			_TaggerName = Environment.GetEnvironmentVariable("USERNAME") ?? "nobody";
+			_NobodyName = Environment.GetEnvironmentVariable("USERNAME") ?? "nobody";
+
+			BranchRename.AddRule(new Regex("^MAIN$"), "master");
 		}
 
 		public override void Verify()
@@ -135,17 +161,17 @@ namespace CTC.CvsntGitImporter
 		{
 			base.Parse(args);
 
-			var taggerEmail = _TaggerEmail;
+			var taggerEmail = _NobodyEmail;
 			if (taggerEmail == null)
 			{
-				var name = _TaggerName.Trim();
+				var name = _NobodyName.Trim();
 				var spaceIndex = name.IndexOf(' ');
 				if (spaceIndex > 0)
 					name = name.Remove(spaceIndex);
 				taggerEmail = String.Format("{0}@{1}", name, DefaultDomain);
 			}
 
-			this.Tagger = new User(_TaggerName, taggerEmail);
+			this.Nobody = new User(_NobodyName, taggerEmail);
 		}
 
 		void ParseConfigFile(string filename)

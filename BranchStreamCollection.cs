@@ -64,6 +64,19 @@ namespace CTC.CvsntGitImporter
 		}
 
 		/// <summary>
+		/// Get a list of the names of all branches, sorted with parent branches before their children.
+		/// </summary>
+		public IEnumerable<string> OrderedBranches
+		{
+			get
+			{
+				yield return "MAIN";
+				foreach (var branch in EnumerateBranches(m_roots["MAIN"]))
+					yield return branch;
+			}
+		}
+
+		/// <summary>
 		/// Get the head (the last commit) for a branch.
 		/// </summary>
 		/// <returns>the last Commit for the branch or null if the branch does not exist</returns>
@@ -71,6 +84,14 @@ namespace CTC.CvsntGitImporter
 		{
 			Commit head;
 			return m_heads.TryGetValue(branch, out head) ? head : null;
+		}
+
+		/// <summary>
+		/// Append a commit to a branch.
+		/// </summary>
+		public void AppendCommit(Commit commit)
+		{
+			AddCommit(commit);
 		}
 
 		/// <summary>
@@ -194,6 +215,19 @@ namespace CTC.CvsntGitImporter
 			commit.Index = m_nextIndex++;
 			m_lastBranchHead = commit;
 			m_heads[branch] = commit;
+		}
+
+		private IEnumerable<string> EnumerateBranches(Commit root)
+		{
+			for (var c = root; c != null; c = c.Successor)
+			{
+				foreach (var branchroot in c.Branches)
+				{
+					yield return branchroot.Branch;
+					foreach (var branch in EnumerateBranches(branchroot))
+						yield return branch;
+				}
+			}
 		}
 	}
 }

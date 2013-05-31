@@ -144,7 +144,7 @@ namespace CTC.CvsntGitImporter
 
 				WriteLine("tag {0}", tagName);
 				WriteLine("from :{0}", commit.Index);
-				WriteLine("tagger {0} {1}", WriteUser(m_switches.Tagger), DateTimeToUnixTimestamp(commit.Time));
+				WriteLine("tagger {0} {1}", WriteUser(m_switches.Nobody), DateTimeToUnixTimestamp(commit.Time));
 				WriteData(FileContentData.Empty);
 			}
 		}

@@ -29,6 +29,7 @@ namespace CTC.CvsntGitImporter
 
 				// parse user file
 				m_userMap = new UserMap(m_switches.DefaultDomain);
+				m_userMap.AddEntry("", m_switches.Nobody);
 				if (m_switches.UserFile != null)
 					m_userMap.ParseUserFile(m_switches.UserFile);
 
@@ -52,8 +53,11 @@ namespace CTC.CvsntGitImporter
 		{
 			var parser = new CvsLogParser(m_switches.Sandbox, m_switches.ExtraArguments[0]);
 			var builder = new CommitBuilder(parser.Parse());
+			var exclusionFilter = new ExclusionFilter(m_log, m_switches.FileMatcher, m_switches.HeadOnlyMatcher, m_switches.BranchRename);
+
 			IEnumerable<Commit> commits = builder.GetCommits()
 					.SplitMultiBranchCommits()
+					.FilterExcludedFiles(exclusionFilter)
 					.AddCommitsToFiles()
 					.Verify(m_log)
 					.ToListIfNeeded();
@@ -99,6 +103,9 @@ namespace CTC.CvsntGitImporter
 			mergeResolver.Resolve();
 
 			WriteBranchLogs(streams);
+
+			// add any "head-only" files
+			exclusionFilter.CreateHeadOnlyCommits(m_switches.HeadOnlyBranches, streams, allFiles);
 
 			// do the import
 			ICvsRepository repository = new CvsRepository(m_switches.Sandbox);

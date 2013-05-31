@@ -86,21 +86,21 @@ namespace CTC.CvsntGitImporter.TestCode
 		}
 
 		[TestMethod]
-		public void Tagger_DefaultEmail()
+		public void Nobody_DefaultEmail()
 		{
 			var switches = new Switches();
-			switches.Parse("--sandbox", Path.GetTempPath(), "--default-domain", "example.com", "--tagger-name", "Joe Bloggs");
+			switches.Parse("--sandbox", Path.GetTempPath(), "--default-domain", "example.com", "--nobody-name", "Joe Bloggs");
 
-			Assert.AreEqual(switches.Tagger.Email, "Joe@example.com");
+			Assert.AreEqual(switches.Nobody.Email, "Joe@example.com");
 		}
 
 		[TestMethod]
-		public void Tagger_NoDefaultEmailIfSetExplicitly()
+		public void Nobody_NoDefaultEmailIfSetExplicitly()
 		{
 			var switches = new Switches();
-			switches.Parse("--sandbox", Path.GetTempPath(), "--default-domain", "example.com", "--tagger-email", "blah@example.com");
+			switches.Parse("--sandbox", Path.GetTempPath(), "--default-domain", "example.com", "--nobody-email", "blah@example.com");
 
-			Assert.AreEqual(switches.Tagger.Email, "blah@example.com");
+			Assert.AreEqual(switches.Nobody.Email, "blah@example.com");
 		}
 	}
 }

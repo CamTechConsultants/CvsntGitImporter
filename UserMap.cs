@@ -36,6 +36,14 @@ namespace CTC.CvsntGitImporter
 		}
 
 		/// <summary>
+		/// Add a single entry.
+		/// </summary>
+		public void AddEntry(string cvsName, User user)
+		{
+			m_map[cvsName] = user;
+		}
+
+		/// <summary>
 		/// Parse a user file.
 		/// </summary>
 		/// <exception cref="IOException">if an error occurs reading the file</exception>
