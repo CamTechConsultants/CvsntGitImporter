@@ -97,6 +97,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>UserMapResources.resx</DependentUpon>
     </Compile>
+    <Compile Include="UnixTimeTest.cs" />
     <Compile Include="UserMapTest.cs" />
     <Compile Include="Utils\RhinoMocksExtensions.cs" />
   </ItemGroup>

@@ -86,6 +86,7 @@
     <Compile Include="SplitMultiBranchCommits.cs" />
     <Compile Include="Switches.cs" />
     <Compile Include="TagResolver.cs" />
+    <Compile Include="UnixTime.cs" />
     <Compile Include="User.cs" />
     <Compile Include="UserMap.cs" />
     <Compile Include="Utils\AttributeExtensions.cs" />

@@ -100,7 +100,7 @@ namespace CTC.CvsntGitImporter
 
 			WriteLine("commit refs/heads/{0}", (commit.Branch == "MAIN") ? "master" : renamedBranch);
 			WriteLine("mark :{0}", commit.Index);
-			WriteLine("committer {0} {1}", WriteUser(author), DateTimeToUnixTimestamp(commit.Time));
+			WriteLine("committer {0} {1}", WriteUser(author), UnixTime.FromDateTime(commit.Time));
 
 			var msgBytes = GetBytes(commit.Message);
 			WriteLine("data {0}", msgBytes.Length);
@@ -112,8 +112,14 @@ namespace CTC.CvsntGitImporter
 			if (commit.MergeFrom != null)
 				WriteLine("merge :{0}", commit.MergeFrom.Index);
 
-			foreach (var file in m_cvs.GetCommit(commit))
+			foreach (var cvsFile in m_cvs.GetCommit(commit))
 			{
+				FileContent file;
+				if (CvsIgnoreFile.IsIgnoreFile(cvsFile))
+					file = CvsIgnoreFile.Rewrite(cvsFile);
+				else
+					file = cvsFile;
+
 				if (file.IsDead)
 				{
 					WriteLine("D {0}", file.Name);
@@ -144,7 +150,7 @@ namespace CTC.CvsntGitImporter
 
 				WriteLine("tag {0}", tagName);
 				WriteLine("from :{0}", commit.Index);
-				WriteLine("tagger {0} {1}", WriteUser(m_switches.Nobody), DateTimeToUnixTimestamp(commit.Time));
+				WriteLine("tagger {0} {1}", WriteUser(m_switches.Nobody), UnixTime.FromDateTime(commit.Time));
 				WriteData(FileContentData.Empty);
 			}
 		}
@@ -152,11 +158,6 @@ namespace CTC.CvsntGitImporter
 		private string WriteUser(User user)
 		{
 			return String.Format("{0} <{1}>", user.Name, user.Email);
-		}
-
-		private static string DateTimeToUnixTimestamp(DateTime dateTime)
-		{
-			return String.Format("{0} +0000", (dateTime - new DateTime(1970, 1, 1).ToLocalTime()).TotalSeconds);
 		}
 
 		private void WriteLine(string format, params object[] args)
