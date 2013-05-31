@@ -66,6 +66,7 @@ namespace CTC.CvsntGitImporter
 			var allFiles = new Dictionary<string, FileInfo>();
 			foreach (var f in parser.Files)
 				allFiles.Add(f.Name, f);
+			WriteExcludedFileLog(parser);
 
 			// resolve branchpoints
 			var branchResolver = new BranchResolver(m_log, commits, allFiles, m_switches.BranchMatcher);
@@ -92,14 +93,14 @@ namespace CTC.CvsntGitImporter
 						branchResolver.UnresolvedTags.StringJoin(", ")));
 			}
 
-			m_log.WriteDebugFile("allbranches.log", branchResolver.AllTags.Select(t => PrintPossibleRename(t, m_switches.BranchRename)));
-			m_log.WriteDebugFile("alltags.log", tagResolver.AllTags.Select(t => PrintPossibleRename(t, m_switches.TagRename)));
+			WriteTagLog("allbranches.log", branchResolver, m_switches.BranchRename);
+			WriteTagLog("alltags.log", tagResolver, m_switches.TagRename);
 			WriteUserLog("allusers.log", commits);
 
 			var streams = commits.SplitBranchStreams(branchResolver.ResolvedCommits);
 
 			// resolve merges
-			var mergeResolver = new MergeResolver(m_log, streams, branchResolver.AllTags);
+			var mergeResolver = new MergeResolver(m_log, streams, branchResolver.IncludedTags);
 			mergeResolver.Resolve();
 
 			WriteBranchLogs(streams);
@@ -115,6 +116,58 @@ namespace CTC.CvsntGitImporter
 			var cvs = new Cvs(repository, m_switches.CvsProcesses);
 			var importer = new Importer(m_log, m_switches, m_userMap, streams, tagResolver.ResolvedCommits, cvs);
 			importer.Import();
+		}
+
+		private static void WriteExcludedFileLog(CvsLogParser parser)
+		{
+			if (m_log.DebugEnabled)
+			{
+				var files = parser.Files
+						.Select(f => f.Name)
+						.Where(f => !m_switches.FileMatcher.Match(f) && !m_switches.HeadOnlyMatcher.Match(f))
+						.OrderBy(i => i, StringComparer.OrdinalIgnoreCase);
+
+				m_log.WriteDebugFile("excluded_files.log", files);
+
+				var headOnly = parser.Files
+						.Select(f => f.Name)
+						.Where(f => m_switches.HeadOnlyMatcher.Match(f))
+						.OrderBy(i => i, StringComparer.OrdinalIgnoreCase);
+
+				m_log.WriteDebugFile("headonly_files.log", headOnly);
+			}
+		}
+
+		private static void WriteTagLog(string filename, TagResolverBase resolver, Renamer renamer)
+		{
+			if (m_log.DebugEnabled)
+			{
+				using (var log = m_log.OpenDebugFile(filename))
+				{
+					if (resolver.IncludedTags.Any())
+					{
+						var included = resolver.IncludedTags
+								.Select(t => "  " + PrintPossibleRename(t, renamer))
+								.ToList();
+
+						log.WriteLine("Included:");
+						log.Write(String.Join(Environment.NewLine, included));
+						log.WriteLine();
+						log.WriteLine();
+					}
+
+					if (resolver.ExcludedTags.Any())
+					{
+						var excluded = resolver.ExcludedTags
+								.Select(t => "  " + PrintPossibleRename(t, renamer))
+								.ToList();
+
+						log.WriteLine("Excluded:");
+						log.Write(String.Join(Environment.NewLine, excluded));
+						log.WriteLine();
+					}
+				}
+			}
 		}
 
 		private static void WriteBranchLogs(BranchStreamCollection streams)

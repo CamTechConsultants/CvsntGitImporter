@@ -22,6 +22,7 @@ namespace CTC.CvsntGitImporter
 		private readonly InclusionMatcher m_tagMatcher;
 		private readonly bool m_branches;
 
+		private readonly HashSet<string> m_excludedTags = new HashSet<string>();
 		private Dictionary<string, Commit> m_finalCommits;
 
 		private IEnumerable<string> m_problematicTags;
@@ -39,7 +40,7 @@ namespace CTC.CvsntGitImporter
 		/// <summary>
 		/// Gets a list of all tags being considered.
 		/// </summary>
-		public IEnumerable<string> AllTags
+		public IEnumerable<string> IncludedTags
 		{
 			get
 			{
@@ -47,6 +48,14 @@ namespace CTC.CvsntGitImporter
 					throw new InvalidOperationException("Resolve not yet called");
 				return m_finalCommits.Keys.OrderBy(t => t);
 			}
+		}
+
+		/// <summary>
+		/// Gets a list of all tags being considered.
+		/// </summary>
+		public IEnumerable<string> ExcludedTags
+		{
+			get { return m_excludedTags; }
 		}
 
 		/// <summary>
@@ -131,6 +140,8 @@ namespace CTC.CvsntGitImporter
 					{
 						if (m_tagMatcher.Match(tag))
 							tags[tag] = commit;
+						else
+							m_excludedTags.Add(tag);
 					}
 				}
 			}
