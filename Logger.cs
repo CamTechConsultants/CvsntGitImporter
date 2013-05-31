@@ -4,6 +4,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -15,6 +16,7 @@ namespace CTC.CvsntGitImporter
 	class Logger : ILogger, IDisposable
 	{
 		private bool m_isDisposed = false;
+		private readonly string m_logDir;
 		private readonly TextWriter m_writer;
 
 		private const int IndentCount = 2;
@@ -24,12 +26,16 @@ namespace CTC.CvsntGitImporter
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Logger"/> class.
 		/// </summary>
-		/// <param name="filename">The filename.</param>
+		/// <param name="directoryName">The directory to store log files in.</param>
 		/// <exception cref="IOException">there was an error opening the log file</exception>
-		public Logger(string filename)
+		public Logger(string directoryName, bool debugEnabled = false)
 		{
+			m_logDir = directoryName;
+			DebugEnabled = debugEnabled;
+
 			try
 			{
+				var filename = GetLogFilePath("import.log");
 				m_writer = new StreamWriter(filename, false, Encoding.UTF8);
 			}
 			catch (System.Security.SecurityException se)
@@ -57,6 +63,7 @@ namespace CTC.CvsntGitImporter
 			m_isDisposed = true;
 		}
 
+		public bool DebugEnabled { get; set; }
 
 		public IDisposable Indent()
 		{
@@ -95,6 +102,34 @@ namespace CTC.CvsntGitImporter
 		public void DoubleRuleOff()
 		{
 			m_writer.WriteLine("===============================================================================");
+		}
+
+
+		public void WriteDebugFile(string filename, IEnumerable<string> lines)
+		{
+			if (DebugEnabled)
+			{
+				var logPath = GetLogFilePath(filename);
+				File.WriteAllLines(logPath, lines);
+			}
+		}
+
+		public TextWriter OpenDebugFile(string filename)
+		{
+			if (DebugEnabled)
+			{
+				return new StreamWriter(GetLogFilePath(filename), append: false, encoding: Encoding.UTF8);
+			}
+			else
+			{
+				return TextWriter.Null;
+			}
+		}
+
+
+		private string GetLogFilePath(string filename)
+		{
+			return Path.Combine(m_logDir, filename);
 		}
 
 

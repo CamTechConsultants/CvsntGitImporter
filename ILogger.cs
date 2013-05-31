@@ -4,6 +4,8 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.IO;
 
 namespace CTC.CvsntGitImporter
 {
@@ -12,6 +14,11 @@ namespace CTC.CvsntGitImporter
 	/// </summary>
 	interface ILogger
 	{
+		/// <summary>
+		/// Are debug log files enabled?
+		/// </summary>
+		bool DebugEnabled { get; set; }
+
 		/// <summary>
 		/// Increase the indent for any following entries. When the returned object is disposed, the indent
 		/// is removed.
@@ -42,5 +49,15 @@ namespace CTC.CvsntGitImporter
 		/// Write a line of text.
 		/// </summary>
 		void WriteLine(string format, params object[] args);
+
+		/// <summary>
+		/// Write a debug log file. If DebugEnabled is false then nothing is written.
+		/// </summary>
+		void WriteDebugFile(string filename, IEnumerable<string> lines);
+
+		/// <summary>
+		/// Open a debug log file. If DebugEnabled is false then nothing is written.
+		/// </summary>
+		TextWriter OpenDebugFile(string filename);
 	}
 }

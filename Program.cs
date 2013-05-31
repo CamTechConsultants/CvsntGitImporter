@@ -15,7 +15,7 @@ namespace CTC.CvsntGitImporter
 	class Program
 	{
 		private static readonly Switches m_switches = new Switches();
-		private static readonly string m_logDir = Path.Combine(Environment.CurrentDirectory, "gitconvert");
+		private static Logger m_log;
 		private static UserMap m_userMap;
 
 		static int Main(string[] args)
@@ -32,10 +32,11 @@ namespace CTC.CvsntGitImporter
 				if (m_switches.UserFile != null)
 					m_userMap.ParseUserFile(m_switches.UserFile);
 
-				Directory.CreateDirectory(m_logDir);
-				using (var log = new Logger(GetLogFilePath("import.log")))
+				var logDir = Path.Combine(Environment.CurrentDirectory, "gitconvert");
+				Directory.CreateDirectory(logDir);
+				using (m_log = new Logger(logDir, debugEnabled: m_switches.Debug))
 				{
-					Import(log);
+					Import();
 				}
 			}
 			catch (Exception e)
@@ -47,14 +48,14 @@ namespace CTC.CvsntGitImporter
 			return 0;
 		}
 
-		private static void Import(Logger log)
+		private static void Import()
 		{
 			var parser = new CvsLogParser(m_switches.Sandbox, m_switches.ExtraArguments[0]);
 			var builder = new CommitBuilder(parser.Parse());
 			IEnumerable<Commit> commits = builder.GetCommits()
 					.SplitMultiBranchCommits()
 					.AddCommitsToFiles()
-					.Verify(log)
+					.Verify(m_log)
 					.ToListIfNeeded();
 
 			// build lookup of all files
@@ -63,7 +64,7 @@ namespace CTC.CvsntGitImporter
 				allFiles.Add(f.Name, f);
 
 			// resolve branchpoints
-			var branchResolver = new BranchResolver(log, commits, allFiles, m_switches.BranchMatcher);
+			var branchResolver = new BranchResolver(m_log, commits, allFiles, m_switches.BranchMatcher);
 			if (!branchResolver.ResolveAndFix())
 			{
 				throw new ImportFailedException(String.Format("Unable to resolve all branches to a single commit: {0}",
@@ -72,7 +73,7 @@ namespace CTC.CvsntGitImporter
 			commits = branchResolver.Commits;
 
 			// resolve tags
-			var tagResolver = new TagResolver(log, commits, allFiles, m_switches.TagMatcher);
+			var tagResolver = new TagResolver(m_log, commits, allFiles, m_switches.TagMatcher);
 			if (!tagResolver.ResolveAndFix())
 			{
 				throw new ImportFailedException(String.Format("Unable to resolve all tags to a single commit: {0}",
@@ -87,14 +88,14 @@ namespace CTC.CvsntGitImporter
 						branchResolver.UnresolvedTags.StringJoin(", ")));
 			}
 
-			WriteLogFile("allbranches.log", branchResolver.AllTags.Select(t => PrintPossibleRename(t, m_switches.BranchRename)));
-			WriteLogFile("alltags.log", tagResolver.AllTags.Select(t => PrintPossibleRename(t, m_switches.TagRename)));
+			m_log.WriteDebugFile("allbranches.log", branchResolver.AllTags.Select(t => PrintPossibleRename(t, m_switches.BranchRename)));
+			m_log.WriteDebugFile("alltags.log", tagResolver.AllTags.Select(t => PrintPossibleRename(t, m_switches.TagRename)));
 			WriteUserLog("allusers.log", commits);
 
 			var streams = commits.SplitBranchStreams(branchResolver.ResolvedCommits);
 
 			// resolve merges
-			var mergeResolver = new MergeResolver(log, streams, branchResolver.AllTags);
+			var mergeResolver = new MergeResolver(m_log, streams, branchResolver.AllTags);
 			mergeResolver.Resolve();
 
 			WriteBranchLogs(streams);
@@ -105,7 +106,7 @@ namespace CTC.CvsntGitImporter
 				repository = new CvsRepositoryCache(m_switches.CvsCache, repository);
 
 			var cvs = new Cvs(repository, m_switches.CvsProcesses);
-			var importer = new Importer(log, m_switches, m_userMap, streams, tagResolver.ResolvedCommits, cvs);
+			var importer = new Importer(m_log, m_switches, m_userMap, streams, tagResolver.ResolvedCommits, cvs);
 			importer.Import();
 		}
 
@@ -114,7 +115,7 @@ namespace CTC.CvsntGitImporter
 			foreach (var branch in streams.Branches)
 			{
 				var filename = String.Format("commits-{0}.log", branch);
-				using (var writer = new StreamWriter(GetLogFilePath(filename), append: false, encoding: Encoding.UTF8))
+				using (var writer = m_log.OpenDebugFile(filename))
 				{
 					writer.WriteLine("Branch: {0}", branch);
 					writer.WriteLine();
@@ -127,23 +128,22 @@ namespace CTC.CvsntGitImporter
 
 		private static void WriteUserLog(string filename, IEnumerable<Commit> commits)
 		{
-			if (m_switches.Debug)
-			{
-				var logPath = GetLogFilePath(filename);
-				var allUsers = commits.Select(c => c.Author)
-					.Distinct()
-					.OrderBy(i => i, StringComparer.OrdinalIgnoreCase)
-					.Select(name =>
-					{
-						var user = m_userMap.GetUser(name);
-						if (user.Generated)
-							return name;
-						else
-							return String.Format("{0} ({1})", name, user);
-					});
+			if (!m_log.DebugEnabled)
+				return;
 
-				File.WriteAllLines(logPath, allUsers);
-			}
+			var allUsers = commits.Select(c => c.Author)
+				.Distinct()
+				.OrderBy(i => i, StringComparer.OrdinalIgnoreCase)
+				.Select(name =>
+				{
+					var user = m_userMap.GetUser(name);
+					if (user.Generated)
+						return name;
+					else
+						return String.Format("{0} ({1})", name, user);
+				});
+
+			m_log.WriteDebugFile(filename, allUsers);
 		}
 
 		private static string PrintPossibleRename(string tag, Renamer renamer)
@@ -155,7 +155,7 @@ namespace CTC.CvsntGitImporter
 				return String.Format("{0} (renamed to {1})", tag, renamed);
 		}
 
-		private static void WriteCommitLog(StreamWriter writer, Commit c)
+		private static void WriteCommitLog(TextWriter writer, Commit c)
 		{
 			writer.WriteLine("Commit {0}/{1}", c.CommitId, c.Index);
 			writer.WriteLine("{0} by {1}", c.Time, c.Author);
@@ -180,20 +180,6 @@ namespace CTC.CvsntGitImporter
 			}
 
 			writer.WriteLine();
-		}
-
-		private static void WriteLogFile(string filename, IEnumerable<string> lines)
-		{
-			if (m_switches.Debug)
-			{
-				var logPath = GetLogFilePath(filename);
-				File.WriteAllLines(logPath, lines);
-			}
-		}
-
-		private static string GetLogFilePath(string filename)
-		{
-			return Path.Combine(m_logDir, filename);
 		}
 	}
 }
