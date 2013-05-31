@@ -79,6 +79,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>CvsLogParserResources.resx</DependentUpon>
     </Compile>
+    <Compile Include="RepositoryStateTest.cs" />
     <Compile Include="RevisionTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SplitMultiBranchCommitsTest.cs" />

@@ -4,6 +4,7 @@
  */
 
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CTC.CvsntGitImporter
 {
@@ -36,7 +37,15 @@ namespace CTC.CvsntGitImporter
 		/// </summary>
 		public void Apply(Commit commit)
 		{
-			this[commit.Branch].Apply(commit);
+			var state = this[commit.Branch];
+			state.Apply(commit);
+
+			// create copies of current state for any branches
+			foreach (var branch in commit.Branches.Select(c => c.Branch))
+			{
+				if (!m_branches.ContainsKey(branch))
+					m_branches[branch] = state.Copy(branch);
+			}
 		}
 	}
 }

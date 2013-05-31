@@ -15,6 +15,7 @@ namespace CTC.CvsntGitImporter
 	/// </summary>
 	class RepositoryBranchState
 	{
+		private readonly string m_branch;
 		private readonly Dictionary<string, Revision> m_files = new Dictionary<string, Revision>(StringComparer.OrdinalIgnoreCase);
 
 		/// <summary>
@@ -55,6 +56,16 @@ namespace CTC.CvsntGitImporter
 
 		public RepositoryBranchState(string branch)
 		{
+			m_branch = branch;
+		}
+
+		/// <summary>
+		/// Copy constructor.
+		/// </summary>
+		private RepositoryBranchState(string branch, RepositoryBranchState other) : this(branch)
+		{
+			foreach (var kvp in other.m_files)
+				m_files[kvp.Key] = kvp.Value;
 		}
 
 		/// <summary>
@@ -69,6 +80,14 @@ namespace CTC.CvsntGitImporter
 				else
 					m_files[f.File.Name] = f.Revision;
 			}
+		}
+
+		/// <summary>
+		/// Make a copy of this state.
+		/// </summary>
+		public RepositoryBranchState Copy(string branch)
+		{
+			return new RepositoryBranchState(branch, this);
 		}
 	}
 }
