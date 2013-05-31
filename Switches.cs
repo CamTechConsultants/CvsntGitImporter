@@ -175,16 +175,26 @@ namespace CTC.CvsntGitImporter
 			foreach (var rawLine in File.ReadLines(filename, Encoding.UTF8))
 			{
 				lineNo++;
-				var line = Regex.Replace(rawLine, @"#.*$", "");
+				var line = Regex.Replace(rawLine, @"#.*$", "").Trim();
 				if (Regex.IsMatch(line, @"^\s*$"))
 					continue;
 
 				var match = Regex.Match(line, @"^(\S+)\s+(.*)");
-				if (!match.Success)
+				if (match.Success)
+				{
+					// switch with an argument
+					yield return String.Format("--{0}", match.Groups[1].Value);
+					yield return match.Groups[2].Value.Trim();
+				}
+				else if (!Regex.IsMatch(line, @"\s"))
+				{
+					// boolean switch
+					yield return String.Format("--{0}", line);
+				}
+				else
+				{
 					throw new CommandLineArgsException("{0}({1}): unrecognised input", filename, lineNo);
-
-				yield return String.Format("--{0}", match.Groups[1].Value);
-				yield return match.Groups[2].Value.Trim();
+				}
 			}
 		}
 
