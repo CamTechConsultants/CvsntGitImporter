@@ -48,6 +48,11 @@ namespace CTC.CvsntGitImporter
 				this.Pattern = pattern;
 				this.Replacement = replacement;
 			}
+
+			public override string ToString()
+			{
+				return string.Format("{0} -> {1}", Pattern.ToString(), Replacement);
+			}
 		}
 	}
 }
