@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using CTC.CvsntGitImporter.Properties;
 using CTC.CvsntGitImporter.Utils;
 
 namespace CTC.CvsntGitImporter
@@ -20,19 +21,22 @@ namespace CTC.CvsntGitImporter
 	/// </summary>
 	class Switches : SwitchesDefBase
 	{
-		[SwitchDef(ShortSwitch="-C", LongSwitch="--config")]
+		[SwitchDef(ShortSwitch="-C", LongSwitch="--config", ValueDescription="filename", Description="Specify a configuration file containing parameters")]
 		public ObservableCollection<string> Config { get; set; }
 
-		[SwitchDef(LongSwitch="--debug", ShortSwitch="-d")]
+		[SwitchDef(LongSwitch="--debug", ShortSwitch="-d", Description="Enable extra debug log files")]
 		public bool Debug { get; set; }
 
-		[SwitchDef(LongSwitch="--sandbox")]
+		[SwitchDef(LongSwitch="--help", ShortSwitch="-h", Description="Display this help")]
+		public bool Help { get; set; }
+
+		[SwitchDef(LongSwitch="--sandbox", Description="The location of the checked out source code from CVS. Required")]
 		public string Sandbox { get; set; }
 
-		[SwitchDef(LongSwitch="--cvs-cache")]
+		[SwitchDef(LongSwitch="--cvs-cache", Description="A directory to cache versions of files in. Useful if the import needs to be run more than once")]
 		public string CvsCache { get; set; }
 
-		[SwitchDef(LongSwitch="--cvs-processes", Description="The number of CVS processes to run in parallel when importing. Defaults to the number of processors on the system.")]
+		[SwitchDef(LongSwitch="--cvs-processes", Description="The number of CVS processes to run in parallel when importing. Defaults to the number of processors on the system")]
 		public string _CvsProcesses { get; set; }
 
 
@@ -49,32 +53,32 @@ namespace CTC.CvsntGitImporter
 		public string _NobodyEmail { get; set; }
 
 
-		[SwitchDef(LongSwitch="--exclude")]
+		[SwitchDef(LongSwitch="--exclude", ValueDescription="regex", Description="A pattern to match files to exclude")]
 		public ObservableCollection<string> _ExcludeFile { get; set; }
 
-		[SwitchDef(LongSwitch="--head-only")]
+		[SwitchDef(LongSwitch="--head-only", ValueDescription="regex", Description="A pattern to match files that should have just their head version imported and no historical versions")]
 		public ObservableCollection<string> _HeadOnly { get; set; }
 
-		[SwitchDef(LongSwitch="--head-only-branch")]
+		[SwitchDef(LongSwitch="--head-only-branch", ValueDescription="name", Description="A branch that should have the head version imported for all files that match the --head-only patterns")]
 		public List<string> HeadOnlyBranches { get; set; }
 
 
-		[SwitchDef(LongSwitch="--include-tag")]
+		[SwitchDef(LongSwitch="--include-tag", ValueDescription="regex", Description="A pattern to match tags that should be imported")]
 		public ObservableCollection<string> _IncludeTag { get; set; }
 
-		[SwitchDef(LongSwitch="--exclude-tag")]
+		[SwitchDef(LongSwitch="--exclude-tag", ValueDescription="regex", Description="A pattern to match tags that should not be imported")]
 		public ObservableCollection<string> _ExcludeTag { get; set; }
 
-		[SwitchDef(LongSwitch="--include-branch")]
+		[SwitchDef(LongSwitch="--include-branch", ValueDescription="regex", Description="A pattern to match branches that should be imported")]
 		public ObservableCollection<string> _IncludeBranch { get; set; }
 
-		[SwitchDef(LongSwitch="--exclude-branch")]
+		[SwitchDef(LongSwitch="--exclude-branch", ValueDescription="regex", Description="A pattern to match branches that should not be imported")]
 		public ObservableCollection<string> _ExcludeBranch { get; set; }
 
-		[SwitchDef(LongSwitch="--rename-tag")]
+		[SwitchDef(LongSwitch="--rename-tag", ValueDescription="rule", Description="A rule to rename tags as they're imported")]
 		public ObservableCollection<string> _RenameTag { get; set; }
 
-		[SwitchDef(LongSwitch="--rename-branch")]
+		[SwitchDef(LongSwitch="--rename-branch", ValueDescription="rule", Description="to rename branches as they're imported")]
 		public ObservableCollection<string> _RenameBranch { get; set; }
 
 
@@ -144,7 +148,7 @@ namespace CTC.CvsntGitImporter
 		{
 			base.Verify();
 
-			if (this.Sandbox == null)
+			if (!this.Help && this.Sandbox == null)
 				throw new CommandLineArgsException("No CVS repository specified");
 
 			if (_CvsProcesses != null)
@@ -172,6 +176,17 @@ namespace CTC.CvsntGitImporter
 			}
 
 			this.Nobody = new User(_NobodyName, taggerEmail);
+		}
+
+		public override string GetHelpText(int maxWidth)
+		{
+			var buf = new StringBuilder(base.GetHelpText(maxWidth));
+
+			buf.AppendLine();
+			foreach (var i in Wrap(Resources.ExtraHelp, maxWidth))
+				buf.AppendLine(i);
+
+			return buf.ToString();
 		}
 
 		void ParseConfigFile(string filename)

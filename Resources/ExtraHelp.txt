@@ -1,0 +1,3 @@
+A rule is a regular expression and some replacement text separated with a single slash (/). The regular expression is used to match an item to rename and the replacement text replaces whatever is matched. The regular expressions are standard .NET regexes. Captured groups can be referenced using \1, \2, etc.
+
+The config file is a file containing a list of switches to the application without the leading --. Blank lines are ignored and comments start with a hash (#) and run to the end of the line.

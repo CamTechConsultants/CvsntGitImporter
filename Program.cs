@@ -24,6 +24,12 @@ namespace CTC.CvsntGitImporter
 			{
 				m_switches.Parse(args);
 
+				if (m_switches.Help)
+				{
+					Console.Out.WriteLine(m_switches.GetHelpText());
+					return 0;
+				}
+
 				if (m_switches.ExtraArguments.Count != 1)
 					throw new ArgumentException("Need a cvs.log file");
 

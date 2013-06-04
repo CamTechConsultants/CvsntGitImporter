@@ -165,7 +165,7 @@ namespace CTC.CvsntGitImporter.Utils
 				string switches = FormatSwitchForHelp(sw);
 				buf.AppendFormat("  {0}{1} - ", switches, new String(' ', maxSwitchWidth - switches.Length));
 
-				string description = sw.Description;
+				string description = sw.Description ?? "";
 				if (sw.Type == typeof(List<string>))
 					description += " (may be specified more than once)";
 
@@ -290,7 +290,7 @@ namespace CTC.CvsntGitImporter.Utils
 					buf.Append(',');
 				buf.Append(arg.LongSwitch);
 				if (valueDesc != null)
-					buf.AppendFormat("=<{0}>", valueDesc);
+					buf.AppendFormat(" <{0}>", valueDesc);
 			}
 
 			return buf.ToString();
@@ -302,11 +302,11 @@ namespace CTC.CvsntGitImporter.Utils
 		/// <param name="text">Text to be wrapped into of List of Strings</param>
 		/// <param name="maxLength">Max length you want each line to be.</param>
 		/// <returns>List of Strings</returns>
-		private static List<String> Wrap(string text, int maxLength)
+		protected static List<String> Wrap(string text, int maxLength)
 		{
 			// Return empty list of strings if the text was empty
 			if (text.Length == 0)
-				return new List<string>();
+				return new List<string>() { "" };
 
 			var words = text.Split(' ');
 			var lines = new List<string>();
@@ -314,8 +314,8 @@ namespace CTC.CvsntGitImporter.Utils
 
 			foreach (var currentWord in words)
 			{
-				if ((currentLine.Length > maxLength) ||
-					((currentLine.Length + currentWord.Length) > maxLength))
+				if ((currentLine.Length >= maxLength) ||
+					((currentLine.Length + currentWord.Length) >= maxLength))
 				{
 					lines.Add(currentLine);
 					currentLine = "";
