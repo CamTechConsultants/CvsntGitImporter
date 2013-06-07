@@ -5,6 +5,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -45,9 +46,10 @@ namespace CTC.CvsntGitImporter
 				Directory.CreateDirectory(logDir);
 				using (m_log = new Logger(logDir, debugEnabled: m_switches.Debug))
 				{
-					Analyse();
+					RunOperation("Analysis", Analyse);
+
 					if (m_switches.DoImport)
-						Import();
+						RunOperation("Import", Import);
 				}
 			}
 			catch (Exception e)
@@ -57,6 +59,25 @@ namespace CTC.CvsntGitImporter
 			}
 
 			return 0;
+		}
+
+		private static void RunOperation(string name, Action operation)
+		{
+			m_log.DoubleRuleOff();
+			m_log.WriteLine("{0} started at {1}", name, DateTime.Now);
+
+			var stopwatch = new Stopwatch();
+			stopwatch.Start();
+
+			try
+			{
+				operation();
+			}
+			finally
+			{
+				stopwatch.Stop();
+				m_log.WriteLine("{0} took {1}", name, stopwatch.Elapsed);
+			}
 		}
 
 		private static void Analyse()

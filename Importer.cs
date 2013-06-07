@@ -63,17 +63,12 @@ namespace CTC.CvsntGitImporter
 
 		public void Import()
 		{
-			m_log.DoubleRuleOff();
-			m_log.WriteLine("Importing");
-
 			m_stream = OpenOutput();
 
 			try
 			{
 				bool printProgress = !Console.IsOutputRedirected;
-				int totalCommits = 0;
-				if (printProgress)
-					totalCommits = m_player.Count;
+				int totalCommits = m_player.Count;
 
 				using (m_log.Indent())
 				{
@@ -91,6 +86,11 @@ namespace CTC.CvsntGitImporter
 
 					ImportTags();
 				}
+
+				m_log.WriteLine();
+				m_log.WriteLine("Imported {0} commits", totalCommits);
+				m_log.WriteLine("Imported {0} tags", m_tags.Count);
+				m_log.WriteLine();
 			}
 			catch (IOException ioe)
 			{
