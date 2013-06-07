@@ -33,6 +33,9 @@ namespace CTC.CvsntGitImporter
 		[SwitchDef(LongSwitch="--sandbox", Description="The location of the checked out source code from CVS. Required")]
 		public string Sandbox { get; set; }
 
+		[SwitchDef(LongSwitch="--noimport", ShortSwitch="-n", Description="Don't actually import the data, just do the analysis")]
+		public bool _NoImport { get; set; }
+
 		[SwitchDef(LongSwitch="--gitdir", ValueDescription="dir", Description="The directory to create the git repository in. Must not exist or be empty")]
 		public string GitDir { get; set; }
 
@@ -84,6 +87,14 @@ namespace CTC.CvsntGitImporter
 		[SwitchDef(LongSwitch="--rename-branch", ValueDescription="rule", Description="to rename branches as they're imported")]
 		public ObservableCollection<string> _RenameBranch { get; set; }
 
+
+		/// <summary>
+		/// Should we actually import the data?
+		/// </summary>
+		public bool DoImport
+		{
+			get { return !_NoImport; }
+		}
 
 		/// <summary>
 		/// Gets the user to use for creating tags.
@@ -163,7 +174,7 @@ namespace CTC.CvsntGitImporter
 					throw new CommandLineArgsException("Invalid value for cvs-processes: {0}", _CvsProcesses);
 			}
 
-			if (GitDir != null && Directory.Exists(GitDir))
+			if (GitDir != null && DoImport && Directory.Exists(GitDir))
 			{
 				if (Directory.EnumerateFileSystemEntries(GitDir).Any())
 					throw new CommandLineArgsException("Git directory {0} is not empty", GitDir);

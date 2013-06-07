@@ -17,6 +17,8 @@ namespace CTC.CvsntGitImporter
 		private static readonly Switches m_switches = new Switches();
 		private static Logger m_log;
 		private static UserMap m_userMap;
+		private static BranchStreamCollection m_streams;
+		private static IDictionary<string, Commit> m_resolvedTags;
 
 		static int Main(string[] args)
 		{
@@ -43,7 +45,9 @@ namespace CTC.CvsntGitImporter
 				Directory.CreateDirectory(logDir);
 				using (m_log = new Logger(logDir, debugEnabled: m_switches.Debug))
 				{
-					Import();
+					Analyse();
+					if (m_switches.DoImport)
+						Import();
 				}
 			}
 			catch (Exception e)
@@ -55,7 +59,7 @@ namespace CTC.CvsntGitImporter
 			return 0;
 		}
 
-		private static void Import()
+		private static void Analyse()
 		{
 			var parser = new CvsLogParser(m_switches.Sandbox, m_switches.ExtraArguments[0]);
 			var builder = new CommitBuilder(parser.Parse());
@@ -114,13 +118,20 @@ namespace CTC.CvsntGitImporter
 			// add any "head-only" files
 			exclusionFilter.CreateHeadOnlyCommits(m_switches.HeadOnlyBranches, streams, allFiles);
 
+			// store data needed for import
+			m_streams = streams;
+			m_resolvedTags = tagResolver.ResolvedCommits;
+		}
+
+		private static void Import()
+		{
 			// do the import
 			ICvsRepository repository = new CvsRepository(m_switches.Sandbox);
 			if (m_switches.CvsCache != null)
 				repository = new CvsRepositoryCache(m_switches.CvsCache, repository);
 
 			var cvs = new Cvs(repository, m_switches.CvsProcesses);
-			var importer = new Importer(m_log, m_switches, m_userMap, streams, tagResolver.ResolvedCommits, cvs);
+			var importer = new Importer(m_log, m_switches, m_userMap, m_streams, m_resolvedTags, cvs);
 			importer.Import();
 		}
 
