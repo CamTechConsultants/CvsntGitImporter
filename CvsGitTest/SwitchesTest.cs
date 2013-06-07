@@ -17,6 +17,8 @@ namespace CTC.CvsntGitImporter.TestCode
 	[TestClass]
 	public class SwitchesTest
 	{
+		#region CvsProcesses
+
 		[TestMethod]
 		public void CvsProcesses_DefaultValue()
 		{
@@ -50,6 +52,36 @@ namespace CTC.CvsntGitImporter.TestCode
 			var switches = new Switches();
 			switches.Parse("--sandbox", Path.GetTempPath(), "--cvs-processes", "blah");
 		}
+
+		#endregion CvsProcesses
+
+
+		#region GitDir
+
+		[TestMethod]
+		[ExpectedException(typeof(CommandLineArgsException))]
+		public void GitDir_NotEmpty()
+		{
+			using (var temp = new TempDir())
+			{
+				File.WriteAllText(temp.GetPath("file.txt"), "blah");
+
+				var switches = new Switches();
+				switches.Parse("--sandbox", Path.GetTempPath(), "--gitdir", temp.Path);
+			}
+		}
+
+		[TestMethod]
+		public void GitDir_InvalidChars()
+		{
+			var switches = new Switches();
+			switches.Parse("--sandbox", Path.GetTempPath(), "--gitdir", "blah:blah");
+		}
+
+		#endregion GitDir
+
+
+		#region RenameTag/RenameBranch
 
 		[TestMethod]
 		public void RenameTag()
@@ -94,6 +126,11 @@ namespace CTC.CvsntGitImporter.TestCode
 			switches.Parse("--sandbox", Path.GetTempPath(), "--rename-tag", "**/foo");
 		}
 
+		#endregion RenameTag/RenameBranch
+
+
+		#region Nobody
+
 		[TestMethod]
 		public void Nobody_DefaultEmail()
 		{
@@ -111,5 +148,7 @@ namespace CTC.CvsntGitImporter.TestCode
 
 			Assert.AreEqual(switches.Nobody.Email, "blah@example.com");
 		}
+
+		#endregion Nobody
 	}
 }

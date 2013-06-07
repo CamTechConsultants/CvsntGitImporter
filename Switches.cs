@@ -33,6 +33,9 @@ namespace CTC.CvsntGitImporter
 		[SwitchDef(LongSwitch="--sandbox", Description="The location of the checked out source code from CVS. Required")]
 		public string Sandbox { get; set; }
 
+		[SwitchDef(LongSwitch="--gitdir", ValueDescription="dir", Description="The directory to create the git repository in. Must not exist or be empty")]
+		public string GitDir { get; set; }
+
 		[SwitchDef(LongSwitch="--cvs-cache", Description="A directory to cache versions of files in. Useful if the import needs to be run more than once")]
 		public string CvsCache { get; set; }
 
@@ -158,6 +161,12 @@ namespace CTC.CvsntGitImporter
 					this.CvsProcesses = cvsProcesses;
 				else
 					throw new CommandLineArgsException("Invalid value for cvs-processes: {0}", _CvsProcesses);
+			}
+
+			if (GitDir != null && Directory.Exists(GitDir))
+			{
+				if (Directory.EnumerateFileSystemEntries(GitDir).Any())
+					throw new CommandLineArgsException("Git directory {0} is not empty", GitDir);
 			}
 		}
 

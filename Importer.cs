@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using CTC.CvsntGitImporter.Win32;
 
 namespace CTC.CvsntGitImporter
 {
@@ -25,7 +26,9 @@ namespace CTC.CvsntGitImporter
 		private readonly IDictionary<string, Commit> m_tags;
 		private readonly Cvs m_cvs;
 		private readonly CommitPlayer m_player;
-		private readonly Stream m_stream;
+		private GitRepo m_git;
+		private Stream m_stream;
+		private bool m_brokenPipe;
 
 		private bool m_isDisposed = false;
 
@@ -39,10 +42,7 @@ namespace CTC.CvsntGitImporter
 			m_tags = tags;
 			m_cvs = cvs;
 			m_player = new CommitPlayer(log, branches);
-
-			m_stream = new FileStream("import.dat", FileMode.Create, FileAccess.Write);
 		}
-
 
 		public void Dispose()
 		{
@@ -66,30 +66,92 @@ namespace CTC.CvsntGitImporter
 			m_log.DoubleRuleOff();
 			m_log.WriteLine("Importing");
 
-			bool printProgress = !Console.IsOutputRedirected;
-			int totalCommits = 0;
-			if (printProgress)
-				totalCommits = m_player.Count;
+			m_stream = OpenOutput();
 
-			using (m_log.Indent())
+			try
 			{
-				int count = 0;
-				foreach (var commit in m_player.Play())
+				bool printProgress = !Console.IsOutputRedirected;
+				int totalCommits = 0;
+				if (printProgress)
+					totalCommits = m_player.Count;
+
+				using (m_log.Indent())
 				{
-					Import(commit);
+					int count = 0;
+					foreach (var commit in m_player.Play())
+					{
+						ImportCommit(commit);
+
+						if (printProgress)
+							Console.Out.Write("\rProcessed {0} of {1} commits ({2}%)", ++count, totalCommits, count * 100 / totalCommits);
+					}
 
 					if (printProgress)
-						Console.Out.Write("\rProcessed {0} of {1} commits ({2}%)", ++count, totalCommits, count * 100 / totalCommits);
+						Console.Out.WriteLine();
+
+					ImportTags();
 				}
-
-				if (printProgress)
-					Console.Out.WriteLine();
-
-				ImportTags();
+			}
+			catch (IOException ioe)
+			{
+				// if the error is broken pipe, then catch the exception - we should get an error in
+				// GitRepo.EndImport in the finally block below
+				if ((ioe.HResult & 0xffff) == (int)WinError.BrokenPipe)
+					m_brokenPipe = true;
+				else
+					throw;
+			}
+			finally
+			{
+				CloseOutput();
 			}
 		}
 
-		private void Import(Commit commit)
+		private Stream OpenOutput()
+		{
+			m_brokenPipe = false;
+
+			if (m_switches.GitDir == null)
+			{
+				return new FileStream("import.dat", FileMode.Create, FileAccess.Write);
+			}
+			else
+			{
+				m_git = new GitRepo(m_switches.GitDir);
+				m_git.Init();
+				return m_git.StartImport();
+			}
+		}
+
+		private void CloseOutput()
+		{
+			if (m_switches.GitDir == null)
+			{
+				m_stream.Close();
+			}
+			else
+			{
+				try
+				{
+					m_git.EndImport();
+				}
+				catch (IOException ioe)
+				{
+					Console.Error.WriteLine();
+					Console.Error.WriteLine(ioe.Message);
+					m_log.DoubleRuleOff();
+					m_log.WriteLine(ioe.Message);
+					throw;
+				}
+
+				// this should not occur - if the stdin pipe broke, it implies that git fast-import
+				// exited prematurely, which means we should have had an error from it above
+				if (m_brokenPipe)
+					throw new IOException("Git process exited prematurely");
+			}
+		}
+
+		private void ImportCommit(Commit commit)
 		{
 			var renamedBranch = m_switches.BranchRename.Process(commit.Branch);
 			var author = m_userMap.GetUser(commit.Author);
