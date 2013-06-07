@@ -42,7 +42,7 @@ namespace CTC.CvsntGitImporter
 				if (m_switches.UserFile != null)
 					m_userMap.ParseUserFile(m_switches.UserFile);
 
-				var logDir = Path.Combine(Environment.CurrentDirectory, "gitconvert");
+				var logDir = Path.Combine(Environment.CurrentDirectory, "DebugLogs");
 				Directory.CreateDirectory(logDir);
 				using (m_log = new Logger(logDir, debugEnabled: m_switches.Debug))
 				{
