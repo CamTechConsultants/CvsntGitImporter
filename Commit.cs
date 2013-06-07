@@ -175,12 +175,12 @@ namespace CTC.CvsntGitImporter
 			if (authors.Count() > 1)
 				AddError("Multiple authors found: {0}", String.Join(", ", authors));
 
-			var times = m_files.Select(c => c.Time).Distinct();
-			if (times.Max() - times.Min() >= TimeSpan.FromMinutes(1))
-				AddError("Times vary too much: {0}", String.Join(", ", times));
-
 			if (fussy)
 			{
+				var times = m_files.Select(c => c.Time).Distinct();
+				if (times.Max() - times.Min() >= TimeSpan.FromMinutes(1))
+					AddError("Times vary too much: {0}", String.Join(", ", times));
+
 				var branches = m_files.Select(c => c.Branch).Distinct();
 				if (branches.Count() > 1)
 					AddError("Multiple branches found: {0}", String.Join(", ", branches));
