@@ -155,7 +155,7 @@ namespace CTC.CvsntGitImporter
 			DefaultDomain = Environment.MachineName;
 			_NobodyName = Environment.GetEnvironmentVariable("USERNAME") ?? "nobody";
 
-			BranchRename.AddRule(new Regex("^MAIN$"), "master");
+			BranchRename.AddRule(new RenameRule("^MAIN$", "master"));
 		}
 
 		public override void Verify()
@@ -285,18 +285,13 @@ namespace CTC.CvsntGitImporter
 
 		private void AddRenameRule(Renamer renamer, string rule)
 		{
-			var parts = rule.Split('/');
-			if (parts.Length != 2)
-				throw new CommandLineArgsException("Invalid rename rule: {0}", rule);
-
 			try
 			{
-				var regex = new Regex(parts[0].Trim());
-				renamer.AddRule(regex, parts[1].Trim());
+				renamer.AddRule(RenameRule.Parse(rule));
 			}
-			catch (ArgumentException)
+			catch (ArgumentException ae)
 			{
-				throw new CommandLineArgsException("Invalid regex: {0}", parts[0]);
+				throw new CommandLineArgsException("Invalid rename rule: {0}", ae.Message);
 			}
 		}
 

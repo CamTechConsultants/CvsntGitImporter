@@ -24,7 +24,7 @@ namespace CTC.CvsntGitImporter.TestCode
 		public void Rename_Match()
 		{
 			var renamer = new Renamer();
-			renamer.AddRule(new Regex("a(.)"), "b$1");
+			renamer.AddRule(new RenameRule("a(.)", "b$1"));
 			var renamed = renamer.Process("blah");
 			Assert.AreEqual(renamed, "blbh");
 		}
@@ -33,8 +33,8 @@ namespace CTC.CvsntGitImporter.TestCode
 		public void Rename_MultipleMatches_FirstWins()
 		{
 			var renamer = new Renamer();
-			renamer.AddRule(new Regex("a"), "b");
-			renamer.AddRule(new Regex("h"), "x");
+			renamer.AddRule(new RenameRule("a", "b"));
+			renamer.AddRule(new RenameRule("h", "x"));
 
 			var renamed = renamer.Process("blah");
 			Assert.AreEqual(renamed, "blbh");

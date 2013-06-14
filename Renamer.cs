@@ -15,14 +15,14 @@ namespace CTC.CvsntGitImporter
 	/// </summary>
 	class Renamer
 	{
-		private readonly List<Rule> m_rules = new List<Rule>();
+		private readonly List<RenameRule> m_rules = new List<RenameRule>();
 
 		/// <summary>
 		/// Adds a renaming rule.
 		/// </summary>
-		public void AddRule(Regex pattern, string replacement)
+		public void AddRule(RenameRule rule)
 		{
-			m_rules.Add(new Rule(pattern, replacement));
+			m_rules.Add(rule);
 		}
 
 		/// <summary>
@@ -30,29 +30,11 @@ namespace CTC.CvsntGitImporter
 		/// </summary>
 		public string Process(string name)
 		{
-			var match = m_rules.FirstOrDefault(r => r.Pattern.IsMatch(name));
+			var match = m_rules.FirstOrDefault(r => r.IsMatch(name));
 			if (match == null)
 				return name;
 			else
-				return match.Pattern.Replace(name, match.Replacement);
-		}
-
-
-		private class Rule
-		{
-			public readonly Regex Pattern;
-			public readonly string Replacement;
-
-			public Rule(Regex pattern, string replacement)
-			{
-				this.Pattern = pattern;
-				this.Replacement = replacement;
-			}
-
-			public override string ToString()
-			{
-				return string.Format("{0} -> {1}", Pattern.ToString(), Replacement);
-			}
+				return match.Apply(name);
 		}
 	}
 }

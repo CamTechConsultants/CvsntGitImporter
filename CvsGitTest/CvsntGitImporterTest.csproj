@@ -76,6 +76,7 @@
     <Compile Include="GitRepoTest.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="RenamerTest.cs" />
+    <Compile Include="RenameRuleTest.cs" />
     <Compile Include="RepositoryBranchStateTest.cs" />
     <Compile Include="Properties\CvsLogParserResources.Designer.cs">
       <AutoGen>True</AutoGen>

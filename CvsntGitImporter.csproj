@@ -88,6 +88,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="RenameRule.cs" />
     <Compile Include="TagResolverBase.cs" />
     <Compile Include="Revision.cs" />
     <Compile Include="SplitMultiBranchCommits.cs" />

@@ -202,8 +202,8 @@ namespace CTC.CvsntGitImporter.TestCode
 
 			// rename branch1
 			var renamer = new Renamer();
-			renamer.AddRule(new Regex(@"^MAIN$"), "master");
-			renamer.AddRule(new Regex(@"^branch(\d)"), "BRANCH#$1");
+			renamer.AddRule(new RenameRule(@"^MAIN$", "master"));
+			renamer.AddRule(new RenameRule(@"^branch(\d)", "BRANCH#$1"));
 
 			var matcher = new InclusionMatcher();
 			matcher.AddExcludeRule(new Regex(@"^file2$"));
