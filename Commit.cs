@@ -186,16 +186,49 @@ namespace CTC.CvsntGitImporter
 					AddError("Multiple branches found: {0}", String.Join(", ", branches));
 			}
 
-			var mergedFromBranches = MergedFiles.Select(f => f.BranchMergedFrom).Distinct();
-			if (mergedFromBranches.Count() > 1)
+			// check for a commit that merges from multiple branches
+			List<string> mergedBranches = null;
+			bool first = true;
+			foreach (var fr in MergedFiles)
 			{
-				var buf = new StringBuilder();
-				buf.AppendFormat("Multiple branches merged from found: {0}\r\n", String.Join(", ", mergedFromBranches));
-				m_files.Aggregate(buf, (sb, f) => sb.AppendFormat("    {0}: {1}\r\n", f, f.BranchMergedFrom));
-				AddError(buf.ToString());
+				var thisFileBranches = PossibleMergedBranches(fr);
+
+				if (first)
+				{
+					mergedBranches = thisFileBranches.ToList();
+					first = false;
+				}
+				else
+				{
+					var overlap = mergedBranches.Intersect(thisFileBranches).ToList();
+					if (overlap.Any())
+					{
+						mergedBranches = overlap;
+					}
+					else
+					{
+						var buf = new StringBuilder();
+						var branches = mergedBranches.Concat(thisFileBranches).Distinct();
+						buf.AppendFormat("Multiple branches merged from found: {0}\r\n", String.Join(", ", branches));
+						m_files.Aggregate(buf, (sb, f) => sb.AppendFormat("    {0}: {1}\r\n", f, String.Join(", ", PossibleMergedBranches(f))));
+						AddError(buf.ToString());
+						break;
+					}
+				}
 			}
 
 			return !Errors.Any();
+		}
+
+		private IEnumerable<string> PossibleMergedBranches(FileRevision r)
+		{
+			if (r.Mergepoint.Equals(Revision.Empty))
+				yield break;
+
+			yield return r.File.GetBranch(r.Mergepoint);
+
+			foreach (var branch in r.File.GetBranchesAtRevision(r.Mergepoint))
+				yield return branch;
 		}
 
 		public override string ToString()

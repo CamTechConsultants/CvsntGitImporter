@@ -37,20 +37,6 @@ namespace CTC.CvsntGitImporter
 			get { return this.File.GetBranch(this.Revision); }
 		}
 
-		/// <summary>
-		/// Gets the branch that this commit was merged from, or null if there is no merge.
-		/// </summary>
-		public string BranchMergedFrom
-		{
-			get
-			{
-				if (Mergepoint == Revision.Empty)
-					return null;
-				else
-					return this.File.GetBranch(this.Mergepoint);
-			}
-		}
-
 		public FileRevision(FileInfo file, Revision revision, Revision mergepoint, DateTime time, string author,
 				string commitId, bool isDead = false)
 		{

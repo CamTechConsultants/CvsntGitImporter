@@ -28,6 +28,9 @@ namespace CTC.CvsntGitImporter.TestCode
 			m_f3 = new FileInfo("f3");
 		}
 
+
+		#region MergedFiles
+
 		[TestMethod]
 		public void MergedFiles_None()
 		{
@@ -60,6 +63,11 @@ namespace CTC.CvsntGitImporter.TestCode
 			Assert.AreEqual(result.Single().File.Name, "f1");
 		}
 
+		#endregion MergedFiles
+
+
+		#region Verify
+
 		[TestMethod]
 		public void Verify_MergeFromTwoBranches()
 		{
@@ -90,6 +98,25 @@ namespace CTC.CvsntGitImporter.TestCode
 		}
 
 		[TestMethod]
+		public void Verify_MergeFromParallelBranch_WithUnmodifiedFileOnSourceBranch()
+		{
+			m_f1.WithBranch("branch1", "1.1.0.2").WithBranch("branch2", "1.2.0.2");
+			m_f2.WithBranch("branch1", "1.1.0.2").WithBranch("branch2", "1.2.0.2");
+
+			var commit = new Commit("abc")
+				.WithRevision(m_f1, "1.2.2.1", mergepoint: "1.1.2.1") // file was modified on branch1
+				.WithRevision(m_f2, "1.2.2.1", mergepoint: "1.1");    // file was not modified on branch1
+			bool result = commit.Verify();
+
+			Assert.IsTrue(result, "Verification succeeded");
+		}
+
+		#endregion Verify
+
+
+		#region IsBranchpoint
+
+		[TestMethod]
 		public void IsBranchpoint_NoBranches()
 		{
 			var commit = new Commit("abc").WithRevision(m_f1, "1.1");
@@ -107,6 +134,11 @@ namespace CTC.CvsntGitImporter.TestCode
 
 			Assert.IsTrue(commit.IsBranchpoint);
 		}
+
+		#endregion IsBranchpoint
+
+
+		#region ReplaceBranch
 
 		[TestMethod]
 		[ExpectedException(typeof(ArgumentException))]
@@ -133,5 +165,7 @@ namespace CTC.CvsntGitImporter.TestCode
 			Assert.IsTrue(commit.IsBranchpoint);
 			Assert.IsTrue(commit.Branches.Single() == branchCommit2);
 		}
+
+		#endregion ReplaceBranch
 	}
 }
