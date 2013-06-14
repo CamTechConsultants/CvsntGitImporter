@@ -16,8 +16,8 @@ namespace CTC.CvsntGitImporter
 	/// </summary>
 	class BranchResolver : TagResolverBase
 	{
-		public BranchResolver(ILogger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles, InclusionMatcher tagMatcher) :
-				base(log: log, commits: commits, allFiles: allFiles, tagMatcher: tagMatcher, branches: true)
+		public BranchResolver(ILogger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles) :
+				base(log: log, commits: commits, allFiles: allFiles, branches: true)
 		{
 		}
 

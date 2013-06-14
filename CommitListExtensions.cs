@@ -20,6 +20,11 @@ namespace CTC.CvsntGitImporter
 			return new SplitMultiBranchCommits(commits);
 		}
 
+		public static IEnumerable<Commit> FilterCommitsOnExcludedBranches(this IEnumerable<Commit> commits)
+		{
+			return commits.Where(c => c.Branch != null);
+		}
+
 		/// <summary>
 		/// Convert a list of items to a concrete IList, or return the existing IList if it already is one.
 		/// </summary>

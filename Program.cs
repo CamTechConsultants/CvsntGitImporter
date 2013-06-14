@@ -82,12 +82,13 @@ namespace CTC.CvsntGitImporter
 
 		private static void Analyse()
 		{
-			var parser = new CvsLogParser(m_switches.Sandbox, m_switches.ExtraArguments[0]);
+			var parser = new CvsLogParser(m_switches.Sandbox, m_switches.ExtraArguments[0], m_switches.TagMatcher, m_switches.BranchMatcher);
 			var builder = new CommitBuilder(parser.Parse());
 			var exclusionFilter = new ExclusionFilter(m_log, m_switches.FileMatcher, m_switches.HeadOnlyMatcher, m_switches.BranchRename);
 
 			IEnumerable<Commit> commits = builder.GetCommits()
 					.SplitMultiBranchCommits()
+					.FilterCommitsOnExcludedBranches()
 					.FilterExcludedFiles(exclusionFilter)
 					.AddCommitsToFiles()
 					.Verify(m_log)
@@ -100,7 +101,7 @@ namespace CTC.CvsntGitImporter
 			WriteExcludedFileLog(parser);
 
 			// resolve branchpoints
-			var branchResolver = new BranchResolver(m_log, commits, allFiles, m_switches.BranchMatcher);
+			var branchResolver = new BranchResolver(m_log, commits, allFiles);
 			if (!branchResolver.ResolveAndFix())
 			{
 				throw new ImportFailedException(String.Format("Unable to resolve all branches to a single commit: {0}",
@@ -109,7 +110,7 @@ namespace CTC.CvsntGitImporter
 			commits = branchResolver.Commits;
 
 			// resolve tags
-			var tagResolver = new TagResolver(m_log, commits, allFiles, m_switches.TagMatcher);
+			var tagResolver = new TagResolver(m_log, commits, allFiles);
 			if (!tagResolver.ResolveAndFix())
 			{
 				throw new ImportFailedException(String.Format("Unable to resolve all tags to a single commit: {0}",
@@ -124,8 +125,8 @@ namespace CTC.CvsntGitImporter
 						branchResolver.UnresolvedTags.StringJoin(", ")));
 			}
 
-			WriteTagLog("allbranches.log", branchResolver, m_switches.BranchRename);
-			WriteTagLog("alltags.log", tagResolver, m_switches.TagRename);
+			WriteTagLog("allbranches.log", branchResolver, parser.ExcludedBranches, m_switches.BranchRename);
+			WriteTagLog("alltags.log", tagResolver, parser.ExcludedTags, m_switches.TagRename);
 			WriteUserLog("allusers.log", commits);
 
 			var streams = commits.SplitBranchStreams(branchResolver.ResolvedCommits);
@@ -176,7 +177,7 @@ namespace CTC.CvsntGitImporter
 			}
 		}
 
-		private static void WriteTagLog(string filename, TagResolverBase resolver, Renamer renamer)
+		private static void WriteTagLog(string filename, TagResolverBase resolver, IEnumerable<string> excluded, Renamer renamer)
 		{
 			if (m_log.DebugEnabled)
 			{
@@ -194,14 +195,14 @@ namespace CTC.CvsntGitImporter
 						log.WriteLine();
 					}
 
-					if (resolver.ExcludedTags.Any())
+					if (excluded.Any())
 					{
-						var excluded = resolver.ExcludedTags
+						var excludedDisplay = excluded
 								.Select(t => "  " + PrintPossibleRename(t, renamer))
 								.ToList();
 
 						log.WriteLine("Excluded:");
-						log.Write(String.Join(Environment.NewLine, excluded));
+						log.Write(String.Join(Environment.NewLine, excludedDisplay));
 						log.WriteLine();
 					}
 				}

@@ -143,6 +143,27 @@ namespace CTC.CvsntGitImporter.TestCode
 		#endregion
 
 
+		#region GetBranch
+
+		[TestMethod]
+		public void GetBranch_Unknown()
+		{
+			var file = new FileInfo("file.txt");
+
+			Assert.IsNull(file.GetBranch(Revision.Create("1.1.2.1")));
+		}
+
+		[TestMethod]
+		public void GetBranch_Known()
+		{
+			var file = new FileInfo("file.txt").WithBranch("branch", "1.1.0.2");
+
+			Assert.AreEqual(file.GetBranch(Revision.Create("1.1.2.3")), "branch");
+		}
+
+		#endregion
+
+
 		#region GetBranchesAtRevision
 
 		[TestMethod]

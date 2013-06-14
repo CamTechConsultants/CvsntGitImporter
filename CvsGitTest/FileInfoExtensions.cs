@@ -29,7 +29,7 @@ namespace CTC.CvsntGitImporter.TestCode
 		public static FileInfo WithBranch(this FileInfo file, string branchName, string revision)
 		{
 			Assert.IsTrue(((Revision)revision).IsBranch);
-			file.AddTag(branchName, revision);
+			file.AddBranchTag(branchName, revision);
 			return file;
 		}
 

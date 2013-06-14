@@ -144,6 +144,12 @@
   <ItemGroup>
     <None Include="TestData\UserMap\duplicate.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="TestData\CvsLogParser\Tags.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="TestData\CvsLogParser\Branches.txt" />
+  </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

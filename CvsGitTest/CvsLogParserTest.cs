@@ -10,6 +10,7 @@ using CTC.CvsntGitImporter;
 using CTC.CvsntGitImporter.Utils;
 using CTC.CvsntGitImporter.TestCode.Properties;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Text.RegularExpressions;
 
 namespace CTC.CvsntGitImporter.TestCode
 {
@@ -21,6 +22,8 @@ namespace CTC.CvsntGitImporter.TestCode
 	{
 		private TempDir m_temp;
 		private string m_sandbox;
+		private InclusionMatcher m_tagMatcher;
+		private InclusionMatcher m_branchMatcher;
 
 		[TestInitialize]
 		public void Setup()
@@ -29,6 +32,8 @@ namespace CTC.CvsntGitImporter.TestCode
 			Directory.CreateDirectory(m_temp.GetPath("CVS"));
 			File.WriteAllText(m_temp.GetPath(@"CVS\Repository"), "xjtag/dev/src/Project/test");
 			m_sandbox = m_temp.Path;
+			m_tagMatcher = new InclusionMatcher();
+			m_branchMatcher = new InclusionMatcher();
 		}
 
 		[TestCleanup]
@@ -40,7 +45,7 @@ namespace CTC.CvsntGitImporter.TestCode
 		[TestMethod]
 		public void StandardFormat()
 		{
-			var parser = new CvsLogParser(m_sandbox, new StringReader(CvsLogParserResources.StandardFormat));
+			var parser = CreateParser(CvsLogParserResources.StandardFormat);
 			var revisions = parser.Parse().ToList();
 
 			Assert.AreEqual(revisions.Count(), 2);
@@ -53,12 +58,15 @@ namespace CTC.CvsntGitImporter.TestCode
 			Assert.AreEqual(r.Mergepoint, Revision.Empty);
 			Assert.AreEqual(r.Revision, Revision.Create("1.2"));
 			Assert.AreEqual(r.Time, new DateTime(2009, 3, 4, 11, 54, 43));
+
+			Assert.IsFalse(parser.ExcludedTags.Any(), "No tags excluded");
+			Assert.IsFalse(parser.ExcludedBranches.Any(), "No branches excluded");
 		}
 
 		[TestMethod]
 		public void Mergepoint()
 		{
-			var parser = new CvsLogParser(m_sandbox, new StringReader(CvsLogParserResources.Mergepoint));
+			var parser = CreateParser(CvsLogParserResources.Mergepoint);
 			var revisions = parser.Parse().ToList();
 
 			var rev = revisions.First(r => r.Revision == Revision.Create("1.2"));
@@ -68,7 +76,7 @@ namespace CTC.CvsntGitImporter.TestCode
 		[TestMethod]
 		public void StateDead()
 		{
-			var parser = new CvsLogParser(m_sandbox, new StringReader(CvsLogParserResources.StateDead));
+			var parser = CreateParser(CvsLogParserResources.StateDead);
 			var revisions = parser.Parse().ToList();
 
 			var r = revisions.First();
@@ -78,11 +86,47 @@ namespace CTC.CvsntGitImporter.TestCode
 		[TestMethod]
 		public void NoCommitId()
 		{
-			var parser = new CvsLogParser(m_sandbox, new StringReader(CvsLogParserResources.MissingCommitId));
+			var parser = CreateParser(CvsLogParserResources.MissingCommitId);
 			var revisions = parser.Parse().ToList();
 
 			Assert.AreEqual(revisions.Count, 2);
 			Assert.IsTrue(revisions.All(r => r.CommitId == ""));
+		}
+
+		[TestMethod]
+		public void ExcludeTag()
+		{
+			m_tagMatcher.AddExcludeRule(new Regex(@"^tag2"));
+			m_tagMatcher.AddIncludeRule(new Regex(@"^tag1"));
+
+			var parser = CreateParser(CvsLogParserResources.Tags);
+			parser.Parse().ToList();
+			var file = parser.Files.Single();
+
+			Assert.AreEqual(file.GetRevisionForTag("tag1"), Revision.Create("1.1"));
+			Assert.AreEqual(file.GetRevisionForTag("tag2"), Revision.Empty);
+			Assert.AreEqual(parser.ExcludedTags.Single(), "tag2");
+		}
+
+		[TestMethod]
+		public void ExcludeBranches()
+		{
+			m_branchMatcher.AddExcludeRule(new Regex(@"^branch2"));
+			m_branchMatcher.AddIncludeRule(new Regex(@"^branch1"));
+
+			var parser = CreateParser(CvsLogParserResources.Branches);
+			parser.Parse().ToList();
+			var file = parser.Files.Single();
+
+			Assert.AreEqual(file.GetBranchpointForBranch("branch1"), Revision.Create("1.1"));
+			Assert.AreEqual(file.GetBranchpointForBranch("branch2"), Revision.Empty);
+			Assert.AreEqual(parser.ExcludedBranches.Single(), "branch2");
+		}
+
+
+		private CvsLogParser CreateParser(string log)
+		{
+			return new CvsLogParser(m_sandbox, new StringReader(log), m_tagMatcher, m_branchMatcher);
 		}
 	}
 }

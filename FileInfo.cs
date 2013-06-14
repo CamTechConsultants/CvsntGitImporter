@@ -32,24 +32,35 @@ namespace CTC.CvsntGitImporter
 			this.Name = name;
 		}
 
+		/// <summary>
+		/// Add a tag to the file.
+		/// </summary>
 		public void AddTag(string name, Revision revision)
 		{
-			// work out whether it's a normal tag or a branch tag
 			if (revision.IsBranch)
-			{
-				m_revisionForBranch[name] = revision;
-				m_branchForRevision[revision.BranchStem] = name;
-			}
-			else
-			{
-				m_revisionForTag[name] = revision;
+				throw new ArgumentException(String.Format("Invalid tag revision: {0} is a branch tag revision", revision));
 
-				List<string> tags;
-				if (m_tagsForRevision.TryGetValue(revision, out tags))
-					tags.Add(name);
-				else
-					m_tagsForRevision[revision] = new List<string>(1) { name };
-			}
+			m_revisionForTag[name] = revision;
+
+			List<string> tags;
+			if (m_tagsForRevision.TryGetValue(revision, out tags))
+				tags.Add(name);
+			else
+				m_tagsForRevision[revision] = new List<string>(1) { name };
+		}
+
+		/// <summary>
+		/// Add a branch tag to the file. This is a pseudo revision that marks the revision that the branch
+		/// starts at along with the branch "number" (since multiple branches can be made at a specific revision).
+		/// E.g. revision 1.5.0.4 is a branch at revision 1.5 and its revisions will be 1.5.4.1, 1.5.4.2, etc.
+		/// </summary>
+		public void AddBranchTag(string name, Revision revision)
+		{
+			if (!revision.IsBranch)
+				throw new ArgumentException(String.Format("Invalid branch tag revision: {0}", revision));
+
+			m_revisionForBranch[name] = revision;
+			m_branchForRevision[revision.BranchStem] = name;
 		}
 
 		/// <summary>
@@ -65,14 +76,7 @@ namespace CTC.CvsntGitImporter
 			{
 				var branchStem = revision.BranchStem;
 				string branchTag;
-				if (!m_branchForRevision.TryGetValue(branchStem, out branchTag))
-				{
-					throw new RepositoryConsistencyException(String.Format(
-							"Branch with stem {0} not found on file {1} when looking for r{2}",
-							branchStem, this.Name, revision));
-				}
-
-				return branchTag;
+				return m_branchForRevision.TryGetValue(branchStem, out branchTag) ? branchTag : null;
 			}
 		}
 

@@ -68,6 +68,31 @@ namespace CTC.CvsntGitImporter.TestCode.Properties {
         ///locks: strict
         ///access list:
         ///symbolic names:
+        ///	branch2: 1.1.0.4
+        ///	branch1: 1.1.0.2
+        ///keyword substitution: kv
+        ///total revisions: 8;	selected revisions: 8
+        ///description:
+        ///----------------------------
+        ///revision 1.3
+        ///date: 2009/09/17 14:13:27;  author: johnb;  state: Exp;  lines: +0 -0;  kopt: kv;  commitid: 6d84ab244054630;  filename: BuiltInLDDTypesTest.cs;
+        ///Commit #3
+        ///------------------ [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Branches {
+            get {
+                return ResourceManager.GetString("Branches", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to RCS file: /cvs/xjtag/dev/src/Project/test/BuiltInLDDTypesTest.cs,v
+        ///Working file: BuiltInLDDTypesTest.cs
+        ///head: 1.3
+        ///branch:
+        ///locks: strict
+        ///access list:
+        ///symbolic names:
         ///	some-branch: 1.1.0.2
         ///keyword substitution: kv
         ///total revisions: 8;	selected revisions: 8
@@ -160,6 +185,34 @@ namespace CTC.CvsntGitImporter.TestCode.Properties {
         internal static string StateDead {
             get {
                 return ResourceManager.GetString("StateDead", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 
+        ///RCS file: /cvs/xjtag/dev/src/Project/test/.cvsignore,v
+        ///Working file: .cvsignore
+        ///head: 1.2
+        ///branch:
+        ///locks: strict
+        ///access list:
+        ///symbolic names:
+        ///	tag2: 1.2
+        ///	tag1: 1.1
+        ///keyword substitution: kv
+        ///total revisions: 2;	selected revisions: 2
+        ///description:
+        ///----------------------------
+        ///revision 1.2
+        ///date: 2009/03/04 11:54:43;  author: johnb;  state: Exp;  lines: +2 -1;  kopt: kv;  commitid: c0449ae6c023bd1;  filename: .cvsignore;  bugid: 4564;
+        /// (bug 4564)
+        ///----------------------------
+        ///revision 1.1
+        ///date:  [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Tags {
+            get {
+                return ResourceManager.GetString("Tags", resourceCulture);
             }
         }
     }

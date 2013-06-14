@@ -23,22 +23,28 @@ namespace CTC.CvsntGitImporter
 		private readonly string m_sandboxPath;
 		private readonly CvsLogReader m_reader;
 		private readonly List<FileInfo> m_files = new List<FileInfo>();
+		private readonly InclusionMatcher m_tagMatcher;
+		private readonly HashSet<string> m_excludedTags = new HashSet<string>();
+		private readonly InclusionMatcher m_branchMatcher;
+		private readonly HashSet<string> m_excludedBranches = new HashSet<string>();
 		private string m_repo;
 		private string m_fullRepoPath;
 
-		private CvsLogParser(string sandboxPath, CvsLogReader reader)
+		private CvsLogParser(string sandboxPath, CvsLogReader reader, InclusionMatcher tagMatcher, InclusionMatcher branchMatcher)
 		{
 			m_sandboxPath = sandboxPath;
 			m_reader = reader;
+			m_tagMatcher = tagMatcher;
+			m_branchMatcher = branchMatcher;
 		}
 
-		public CvsLogParser(string sandboxPath, string logFile)
-			: this(sandboxPath, new CvsLogReader(logFile))
+		public CvsLogParser(string sandboxPath, string logFile, InclusionMatcher tagMatcher, InclusionMatcher branchMatcher)
+			: this(sandboxPath, new CvsLogReader(logFile), tagMatcher, branchMatcher)
 		{
 		}
 
-		public CvsLogParser(string sandboxPath, TextReader reader)
-			: this(sandboxPath, new CvsLogReader(reader))
+		public CvsLogParser(string sandboxPath, TextReader reader, InclusionMatcher tagMatcher, InclusionMatcher branchMatcher)
+			: this(sandboxPath, new CvsLogReader(reader), tagMatcher, branchMatcher)
 		{
 		}
 
@@ -48,6 +54,22 @@ namespace CTC.CvsntGitImporter
 		public IEnumerable<FileInfo> Files
 		{
 			get { return m_files; }
+		}
+
+		/// <summary>
+		/// Gets a list of all the tags that were excluded.
+		/// </summary>
+		public IEnumerable<string> ExcludedTags
+		{
+			get { return m_excludedTags; }
+		}
+
+		/// <summary>
+		/// Gets a list of all the branches that were excluded.
+		/// </summary>
+		public IEnumerable<string> ExcludedBranches
+		{
+			get { return m_excludedBranches; }
 		}
 
 		/// <summary>
@@ -90,7 +112,24 @@ namespace CTC.CvsntGitImporter
 							var tagMatch = Regex.Match(line, @"^\t(\S+): (\S+)");
 							if (!tagMatch.Success)
 								throw MakeParseException("Invalid tag line: '{0}'", line);
-							currentFile.AddTag(tagMatch.Groups[1].Value, Revision.Create(tagMatch.Groups[2].Value));
+
+							var tagName = tagMatch.Groups[1].Value;
+							var tagRevision = Revision.Create(tagMatch.Groups[2].Value);
+
+							if (tagRevision.IsBranch)
+							{
+								if (m_branchMatcher.Match(tagName))
+									currentFile.AddBranchTag(tagName, tagRevision);
+								else
+									m_excludedBranches.Add(tagName);
+							}
+							else
+							{
+								if (m_tagMatcher.Match(tagName))
+									currentFile.AddTag(tagName, tagRevision);
+								else
+									m_excludedTags.Add(tagName);
+							}
 						}
 						break;
 					case State.ExpectCommitRevision:

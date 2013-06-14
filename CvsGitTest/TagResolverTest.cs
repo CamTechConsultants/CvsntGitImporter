@@ -32,7 +32,7 @@ namespace CTC.CvsntGitImporter.TestCode
 			var commits = CreateCommitThatNeedsReordering().ToList();
 			var allFiles = commits.CreateAllFiles();
 
-			var resolver = new TagResolver(m_logger, commits, allFiles, new InclusionMatcher());
+			var resolver = new TagResolver(m_logger, commits, allFiles);
 			var result = resolver.Resolve();
 
 			Assert.IsFalse(result, "Failed");
@@ -45,7 +45,7 @@ namespace CTC.CvsntGitImporter.TestCode
 			var orderBefore = commits.ToList();
 			var allFiles = commits.CreateAllFiles();
 
-			var resolver = new TagResolver(m_logger, commits, allFiles, new InclusionMatcher());
+			var resolver = new TagResolver(m_logger, commits, allFiles);
 			var result = resolver.ResolveAndFix();
 
 			Assert.IsTrue(result, "Succeeded");
@@ -58,7 +58,7 @@ namespace CTC.CvsntGitImporter.TestCode
 			var commits = CreateCommitThatNeedsSplitting().ToList();
 			var allFiles = commits.CreateAllFiles();
 
-			var resolver = new TagResolver(m_logger, commits, allFiles, new InclusionMatcher());
+			var resolver = new TagResolver(m_logger, commits, allFiles);
 			var result = resolver.Resolve();
 
 			Assert.IsFalse(result, "Failed");
@@ -71,7 +71,7 @@ namespace CTC.CvsntGitImporter.TestCode
 			var orderBefore = commits.ToList();
 			var allFiles = commits.CreateAllFiles();
 
-			var resolver = new TagResolver(m_logger, commits, allFiles, new InclusionMatcher());
+			var resolver = new TagResolver(m_logger, commits, allFiles);
 			var result = resolver.ResolveAndFix();
 
 			Assert.IsTrue(result, "Succeeded");

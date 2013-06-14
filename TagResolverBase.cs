@@ -19,21 +19,18 @@ namespace CTC.CvsntGitImporter
 		private readonly ILogger m_log;
 		private readonly IList<Commit> m_commits;
 		private readonly Dictionary<string, FileInfo> m_allFiles;
-		private readonly InclusionMatcher m_tagMatcher;
 		private readonly bool m_branches;
 
-		private readonly HashSet<string> m_excludedTags = new HashSet<string>();
 		private Dictionary<string, Commit> m_finalCommits;
 
 		private IEnumerable<string> m_problematicTags;
 
 		protected TagResolverBase(ILogger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles,
-				InclusionMatcher tagMatcher, bool branches = false)
+				bool branches = false)
 		{
 			m_log = log;
 			m_commits = commits.ToListIfNeeded();
 			m_allFiles = allFiles;
-			m_tagMatcher = tagMatcher;
 			m_branches = branches;
 		}
 
@@ -48,14 +45,6 @@ namespace CTC.CvsntGitImporter
 					throw new InvalidOperationException("Resolve not yet called");
 				return m_finalCommits.Keys.OrderBy(t => t);
 			}
-		}
-
-		/// <summary>
-		/// Gets a list of all tags being considered.
-		/// </summary>
-		public IEnumerable<string> ExcludedTags
-		{
-			get { return m_excludedTags; }
 		}
 
 		/// <summary>
@@ -80,7 +69,7 @@ namespace CTC.CvsntGitImporter
 		public IEnumerable<Commit> Commits
 		{
 			get { return m_commits; }
-		} 
+		}
 
 		/// <summary>
 		/// Resolve tags. Find what tags each commit contributes to and build a stack for each tag.
@@ -138,10 +127,7 @@ namespace CTC.CvsntGitImporter
 				{
 					foreach (var tag in GetTagsForFileRevision(file.File, file.Revision))
 					{
-						if (m_tagMatcher.Match(tag))
-							tags[tag] = commit;
-						else
-							m_excludedTags.Add(tag);
+						tags[tag] = commit;
 					}
 				}
 			}
