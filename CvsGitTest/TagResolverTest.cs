@@ -60,6 +60,26 @@ namespace CTC.CvsntGitImporter.TestCode
 			Assert.IsTrue(newCommits[3].Single().File.Name == "file1" && newCommits[3].Single().Revision.Equals(Revision.Create("1.3")));
 		}
 
+		[TestMethod]
+		public void Resolve_FileDeletedBeforeTag()
+		{
+			var file1 = new FileInfo("file1").WithTag("tag", "1.2");
+			var file2 = new FileInfo("file2");
+
+			var commits = new List<Commit>()
+			{
+				new Commit("c0").WithRevision(file1, "1.1").WithRevision(file2, "1.1"),
+				new Commit("c1").WithRevision(file2, "1.2", isDead: true),
+				new Commit("c2").WithRevision(file1, "1.2"),
+			};
+
+			var resolver = new TagResolver(m_logger, commits, commits.CreateAllFiles(), new InclusionMatcher());
+			var result = resolver.Resolve(new[] { "tag" });
+
+			Assert.IsTrue(result, "Resolve succeeded");
+			Assert.AreSame(resolver.ResolvedCommits["tag"], commits[2]);
+			Assert.IsTrue(resolver.Commits.SequenceEqual(commits), "Commits not reordered");
+		}
 
 		private static IEnumerable<Commit> CreateCommitThatNeedsReordering()
 		{
