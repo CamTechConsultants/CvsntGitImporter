@@ -192,6 +192,8 @@ namespace CTC.CvsntGitImporter
 			foreach (var fr in MergedFiles)
 			{
 				var thisFileBranches = PossibleMergedBranches(fr);
+				if (!thisFileBranches.Any())
+					continue;
 
 				if (first)
 				{
@@ -209,8 +211,8 @@ namespace CTC.CvsntGitImporter
 					{
 						var buf = new StringBuilder();
 						var branches = mergedBranches.Concat(thisFileBranches).Distinct();
-						buf.AppendFormat("Multiple branches merged from found: {0}\r\n", String.Join(", ", branches));
-						m_files.Aggregate(buf, (sb, f) => sb.AppendFormat("    {0}: {1}\r\n", f, String.Join(", ", PossibleMergedBranches(f))));
+						buf.AppendFormat("Multiple branches merged from found: {0}\r\n", FormatBranchList(branches));
+						m_files.Aggregate(buf, (sb, f) => sb.AppendFormat("    {0}: {1}\r\n", f, FormatBranchList(PossibleMergedBranches(f))));
 						AddError(buf.ToString());
 						break;
 					}
@@ -225,10 +227,17 @@ namespace CTC.CvsntGitImporter
 			if (r.Mergepoint.Equals(Revision.Empty))
 				yield break;
 
-			yield return r.File.GetBranch(r.Mergepoint);
-
-			foreach (var branch in r.File.GetBranchesAtRevision(r.Mergepoint))
+			var branch = r.File.GetBranch(r.Mergepoint);
+			if (branch != null)
 				yield return branch;
+
+			foreach (var otherBranch in r.File.GetBranchesAtRevision(r.Mergepoint))
+				yield return otherBranch;
+		}
+
+		private string FormatBranchList(IEnumerable<string> branches)
+		{
+			return String.Join(", ", branches.Select(b => b ?? "<excluded branch>"));
 		}
 
 		public override string ToString()

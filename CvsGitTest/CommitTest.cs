@@ -83,6 +83,19 @@ namespace CTC.CvsntGitImporter.TestCode
 		}
 
 		[TestMethod]
+		public void Verify_MergeFromTwoBranches_OneIsExcluded()
+		{
+			m_f1.WithBranch("branch1", "1.1.0.2");
+
+			var commit = new Commit("abc")
+				.WithRevision(m_f1, "1.2", mergepoint: "1.1.2.1")
+				.WithRevision(m_f2, "1.2", mergepoint: "1.1.2.1");
+			var result = commit.Verify();
+
+			Assert.IsTrue(result, "Verification succeeded");
+		}
+
+		[TestMethod]
 		public void Verify_MergeFromTwoBranchesAndNonMerge()
 		{
 			m_f1.WithBranch("branch1", "1.1.0.2");
