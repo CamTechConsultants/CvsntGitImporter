@@ -23,7 +23,7 @@ namespace CTC.CvsntGitImporter.TestCode
 			var revisions = new[]
 			{
 				file.CreateRevision("1.1.2.1", "branch").WithMessage("created"),
-				file.CreateRevision("1.1", "main").WithMessage("file file.txt was initially added on branch branch"),
+				file.CreateRevision("1.1", "main", isDead: true).WithMessage("file file.txt was initially added on branch branch"),
 			};
 
 			var builder = new CommitBuilder(revisions);

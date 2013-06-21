@@ -81,6 +81,16 @@ namespace CTC.CvsntGitImporter.TestCode
 		}
 		
 		[TestMethod]
+		public void FileAddedOnBranch()
+		{
+			var parser = CreateParser(CvsLogParserResources.FileAddedOnBranch);
+			var revisions = parser.Parse().ToList();
+
+			Assert.AreEqual(revisions[1].Revision.ToString(), "1.1");
+			Assert.IsTrue(revisions[1].IsDead);
+		}
+
+		[TestMethod]
 		public void NoCommitId()
 		{
 			var parser = CreateParser(CvsLogParserResources.MissingCommitId);

@@ -86,6 +86,32 @@ namespace CTC.CvsntGitImporter.TestCode.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to RCS file: /cvs/project/File.cs,v
+        ///Working file: File.cs
+        ///head: 1.2
+        ///branch:
+        ///locks: strict
+        ///access list:
+        ///symbolic names:
+        ///	branch1: 1.1.0.2
+        ///keyword substitution: kv
+        ///total revisions: 3;	selected revisions: 3
+        ///description:
+        ///----------------------------
+        ///revision 1.2
+        ///date: 2013/05/09 11:03:30;  author: john;  state: Exp;  lines: +50 -0;  kopt: kv;  commitid: 2220518b828121b1;  mergepoint: 1.1.2.1;  filename: File.cs;
+        ///3.0: Add File.
+        ///----------------------------
+        ///revision 1.1
+        ///date: 2013/05/09 11:01:16;  a [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string FileAddedOnBranch {
+            get {
+                return ResourceManager.GetString("FileAddedOnBranch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to RCS file: /cvs/xjtag/dev/src/Project/test/BuiltInLDDTypesTest.cs,v
         ///Working file: BuiltInLDDTypesTest.cs
         ///head: 1.3

@@ -59,6 +59,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="AutoBranchResolverTest.cs" />
     <Compile Include="CommitBuilderTest.cs" />
     <Compile Include="CommitExtensions.cs" />
     <Compile Include="CommitListExtensions.cs" />
@@ -151,6 +152,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="TestData\CvsLogParser\Branches.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="TestData\CvsLogParser\FileAddedOnBranch.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
