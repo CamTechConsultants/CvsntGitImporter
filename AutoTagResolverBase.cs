@@ -14,37 +14,25 @@ namespace CTC.CvsntGitImporter
 	/// <summary>
 	/// Abstract base class for TagResolver and BranchResolver.
 	/// </summary>
-	abstract class TagResolverBase
+	abstract class AutoTagResolverBase : CTC.CvsntGitImporter.ITagResolver
 	{
 		private readonly ILogger m_log;
 		private readonly IList<Commit> m_commits;
 		private readonly Dictionary<string, FileInfo> m_allFiles;
 		private readonly bool m_branches;
 
+		private HashSet<string> m_allTags;
 		private Dictionary<string, Commit> m_finalCommits;
 
 		private IEnumerable<string> m_problematicTags;
 
-		protected TagResolverBase(ILogger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles,
+		protected AutoTagResolverBase(ILogger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles,
 				bool branches = false)
 		{
 			m_log = log;
 			m_commits = commits.ToListIfNeeded();
 			m_allFiles = allFiles;
 			m_branches = branches;
-		}
-
-		/// <summary>
-		/// Gets a list of all tags being considered.
-		/// </summary>
-		public IEnumerable<string> IncludedTags
-		{
-			get
-			{
-				if (m_finalCommits == null)
-					throw new InvalidOperationException("Resolve not yet called");
-				return m_finalCommits.Keys.OrderBy(t => t);
-			}
 		}
 
 		/// <summary>
@@ -72,35 +60,33 @@ namespace CTC.CvsntGitImporter
 		}
 
 		/// <summary>
-		/// Resolve tags. Find what tags each commit contributes to and build a stack for each tag.
-		/// The last commit that contributes to a tag should be the one that we tag.
-		/// </summary>
-		/// <returns>true if all tags are resolvable, otherwise false</returns>
-		public bool Resolve()
-		{
-			m_finalCommits = FindCommitsPerTag();
-
-			var candidateCommits = FindCandidateCommits(m_finalCommits);
-			m_problematicTags = FindProblematicTags(candidateCommits);
-			return !m_problematicTags.Any();
-		}
-
-		/// <summary>
 		/// Resolve tags and try and fix those that don't immediately resolve.
 		/// </summary>
 		/// <returns>true if all tags were resolved (potentially after being fixed), or false
 		/// if fixing tags failed</returns>
-		public bool ResolveAndFix()
+		public bool Resolve(IEnumerable<string> tags)
 		{
-			if (Resolve())
-				return true;
+			m_allTags = new HashSet<string>(tags);
+			m_finalCommits = FindCommitsPerTag();
 
+			var candidateCommits = FindCandidateCommits(m_finalCommits);
+			m_problematicTags = FindProblematicTags(candidateCommits);
+
+			if (m_problematicTags.Any())
+				return AttemptFix();
+			else
+				return true;
+		}
+
+		private bool AttemptFix()
+		{
 			// analyse and hopefully fix
 			AnalyseProblematicTags(m_problematicTags, m_finalCommits);
 
 			var newFinalCommits = FindCommitsPerTag();
 			var newCandidateCommits = FindCandidateCommits(newFinalCommits);
 			var newProblematicTags = FindProblematicTags(newCandidateCommits);
+			m_problematicTags = newProblematicTags;
 			return !newProblematicTags.Any();
 		}
 
@@ -115,6 +101,14 @@ namespace CTC.CvsntGitImporter
 		protected abstract Revision GetRevisionForTag(FileInfo file, string tag);
 
 		/// <summary>
+		/// Should a tag be processed or not?
+		/// </summary>
+		protected virtual bool MatchTag(string tag)
+		{
+			return m_allTags.Contains(tag);
+		}
+
+		/// <summary>
 		/// Find the last commit for each tag.
 		/// </summary>
 		private Dictionary<string, Commit> FindCommitsPerTag()
@@ -127,7 +121,8 @@ namespace CTC.CvsntGitImporter
 				{
 					foreach (var tag in GetTagsForFileRevision(file.File, file.Revision))
 					{
-						tags[tag] = commit;
+						if (MatchTag(tag))
+							tags[tag] = commit;
 					}
 				}
 			}

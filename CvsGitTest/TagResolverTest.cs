@@ -26,27 +26,16 @@ namespace CTC.CvsntGitImporter.TestCode
 			m_logger = MockRepository.GenerateStub<ILogger>();
 		}
 
+
 		[TestMethod]
 		public void Resolve_ReorderCommits()
-		{
-			var commits = CreateCommitThatNeedsReordering().ToList();
-			var allFiles = commits.CreateAllFiles();
-
-			var resolver = new TagResolver(m_logger, commits, allFiles);
-			var result = resolver.Resolve();
-
-			Assert.IsFalse(result, "Failed");
-		}
-
-		[TestMethod]
-		public void ResolveAndFix_ReorderCommits()
 		{
 			var commits = CreateCommitThatNeedsReordering();
 			var orderBefore = commits.ToList();
 			var allFiles = commits.CreateAllFiles();
 
-			var resolver = new TagResolver(m_logger, commits, allFiles);
-			var result = resolver.ResolveAndFix();
+			var resolver = new TagResolver(m_logger, commits, allFiles, new InclusionMatcher());
+			var result = resolver.Resolve(new[] { "tag" });
 
 			Assert.IsTrue(result, "Succeeded");
 			Assert.IsTrue(resolver.Commits.SequenceEqual(orderBefore[0], orderBefore[2], orderBefore[1]), "Commits reordered");
@@ -56,23 +45,11 @@ namespace CTC.CvsntGitImporter.TestCode
 		public void Resolve_SplitCommit()
 		{
 			var commits = CreateCommitThatNeedsSplitting().ToList();
-			var allFiles = commits.CreateAllFiles();
-
-			var resolver = new TagResolver(m_logger, commits, allFiles);
-			var result = resolver.Resolve();
-
-			Assert.IsFalse(result, "Failed");
-		}
-
-		[TestMethod]
-		public void ResolveAndFix_SplitCommit()
-		{
-			var commits = CreateCommitThatNeedsSplitting().ToList();
 			var orderBefore = commits.ToList();
 			var allFiles = commits.CreateAllFiles();
 
-			var resolver = new TagResolver(m_logger, commits, allFiles);
-			var result = resolver.ResolveAndFix();
+			var resolver = new TagResolver(m_logger, commits, allFiles, new InclusionMatcher());
+			var result = resolver.Resolve(new[] { "tag" });
 
 			Assert.IsTrue(result, "Succeeded");
 			var newCommits = resolver.Commits.ToList();

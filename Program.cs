@@ -82,7 +82,7 @@ namespace CTC.CvsntGitImporter
 
 		private static void Analyse()
 		{
-			var parser = new CvsLogParser(m_switches.Sandbox, m_switches.ExtraArguments[0], m_switches.TagMatcher, m_switches.BranchMatcher);
+			var parser = new CvsLogParser(m_switches.Sandbox, m_switches.ExtraArguments[0], m_switches.BranchMatcher);
 			var builder = new CommitBuilder(parser.Parse());
 			var exclusionFilter = new ExclusionFilter(m_log, m_switches.FileMatcher, m_switches.HeadOnlyMatcher, m_switches.BranchRename);
 
@@ -100,30 +100,39 @@ namespace CTC.CvsntGitImporter
 				allFiles.Add(f.Name, f);
 			WriteExcludedFileLog(parser);
 
-			// resolve branchpoints
-			var branchResolver = new BranchResolver(m_log, commits, allFiles);
-			if (!branchResolver.ResolveAndFix())
+			var tagResolver = new TagResolver(m_log, commits, allFiles, m_switches.TagMatcher);
+
+			// if we're matching branchpoints, make a list of branchpoint tags that need to be resolved
+			if (m_switches.BranchpointRule != null)
 			{
-				throw new ImportFailedException(String.Format("Unable to resolve all branches to a single commit: {0}",
-						branchResolver.UnresolvedTags.StringJoin(", ")));
+				var allBranches = allFiles.SelectMany(pair => pair.Value.AllBranches).Distinct();
+				var rule = m_switches.BranchpointRule;
+				var branchpointTags = allBranches.Where(b => rule.IsMatch(b)).Select(b => rule.Apply(b));
+				tagResolver.ExtraTags = branchpointTags;
 			}
-			commits = branchResolver.Commits;
 
 			// resolve tags
-			var tagResolver = new TagResolver(m_log, commits, allFiles);
-			if (!tagResolver.ResolveAndFix())
+			if (!tagResolver.Resolve(allFiles.SelectMany(pair => pair.Value.AllTags).Distinct()))
 			{
 				throw new ImportFailedException(String.Format("Unable to resolve all tags to a single commit: {0}",
 						tagResolver.UnresolvedTags.StringJoin(", ")));
 			}
 			commits = tagResolver.Commits;
 
-			// recheck branches
-			if (!branchResolver.Resolve())
+			// resolve branchpoints
+			ITagResolver branchResolver;
+			var autoBranchResolver = new AutoBranchResolver(m_log, commits, allFiles);
+			if (m_switches.BranchpointRule == null)
+				branchResolver = autoBranchResolver;
+			else
+				branchResolver = new ManualBranchResolver(m_log, autoBranchResolver, tagResolver, m_switches.BranchpointRule);
+
+			if (!branchResolver.Resolve(allFiles.SelectMany(pair => pair.Value.AllBranches).Distinct()))
 			{
-				throw new ImportFailedException(String.Format("Resolving tags broke branch resolution: {0}",
+				throw new ImportFailedException(String.Format("Unable to resolve all branches to a single commit: {0}",
 						branchResolver.UnresolvedTags.StringJoin(", ")));
 			}
+			commits = branchResolver.Commits;
 
 			WriteTagLog("allbranches.log", branchResolver, parser.ExcludedBranches, m_switches.BranchRename);
 			WriteTagLog("alltags.log", tagResolver, parser.ExcludedTags, m_switches.TagRename);
@@ -132,7 +141,7 @@ namespace CTC.CvsntGitImporter
 			var streams = commits.SplitBranchStreams(branchResolver.ResolvedCommits);
 
 			// resolve merges
-			var mergeResolver = new MergeResolver(m_log, streams, branchResolver.IncludedTags);
+			var mergeResolver = new MergeResolver(m_log, streams, branchResolver.ResolvedTags());
 			mergeResolver.Resolve();
 
 			WriteBranchLogs(streams);
@@ -177,15 +186,15 @@ namespace CTC.CvsntGitImporter
 			}
 		}
 
-		private static void WriteTagLog(string filename, TagResolverBase resolver, IEnumerable<string> excluded, Renamer renamer)
+		private static void WriteTagLog(string filename, ITagResolver resolver, IEnumerable<string> excluded, Renamer renamer)
 		{
 			if (m_log.DebugEnabled)
 			{
 				using (var log = m_log.OpenDebugFile(filename))
 				{
-					if (resolver.IncludedTags.Any())
+					if (resolver.ResolvedTags().Any())
 					{
-						var included = resolver.IncludedTags
+						var included = resolver.ResolvedTags()
 								.Select(t => "  " + PrintPossibleRename(t, renamer))
 								.ToList();
 

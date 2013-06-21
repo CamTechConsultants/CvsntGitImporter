@@ -3,20 +3,16 @@
  * Copyright (c) Cambridge Technology Consultants Ltd. All rights reserved.
  */
 
-using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
 
 namespace CTC.CvsntGitImporter
 {
 	/// <summary>
-	/// Resolves tags to specific commits.
+	/// Resolves branches to specific commits.
 	/// </summary>
-	class BranchResolver : TagResolverBase
+	class AutoBranchResolver : AutoTagResolverBase
 	{
-		public BranchResolver(ILogger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles) :
+		public AutoBranchResolver(ILogger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles) :
 				base(log: log, commits: commits, allFiles: allFiles, branches: true)
 		{
 		}

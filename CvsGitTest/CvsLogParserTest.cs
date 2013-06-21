@@ -6,11 +6,10 @@
 using System;
 using System.IO;
 using System.Linq;
-using CTC.CvsntGitImporter;
-using CTC.CvsntGitImporter.Utils;
-using CTC.CvsntGitImporter.TestCode.Properties;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Text.RegularExpressions;
+using CTC.CvsntGitImporter.TestCode.Properties;
+using CTC.CvsntGitImporter.Utils;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace CTC.CvsntGitImporter.TestCode
 {
@@ -22,7 +21,6 @@ namespace CTC.CvsntGitImporter.TestCode
 	{
 		private TempDir m_temp;
 		private string m_sandbox;
-		private InclusionMatcher m_tagMatcher;
 		private InclusionMatcher m_branchMatcher;
 
 		[TestInitialize]
@@ -32,7 +30,6 @@ namespace CTC.CvsntGitImporter.TestCode
 			Directory.CreateDirectory(m_temp.GetPath("CVS"));
 			File.WriteAllText(m_temp.GetPath(@"CVS\Repository"), "xjtag/dev/src/Project/test");
 			m_sandbox = m_temp.Path;
-			m_tagMatcher = new InclusionMatcher();
 			m_branchMatcher = new InclusionMatcher();
 		}
 
@@ -94,21 +91,6 @@ namespace CTC.CvsntGitImporter.TestCode
 		}
 
 		[TestMethod]
-		public void ExcludeTag()
-		{
-			m_tagMatcher.AddExcludeRule(new Regex(@"^tag2"));
-			m_tagMatcher.AddIncludeRule(new Regex(@"^tag1"));
-
-			var parser = CreateParser(CvsLogParserResources.Tags);
-			parser.Parse().ToList();
-			var file = parser.Files.Single();
-
-			Assert.AreEqual(file.GetRevisionForTag("tag1"), Revision.Create("1.1"));
-			Assert.AreEqual(file.GetRevisionForTag("tag2"), Revision.Empty);
-			Assert.AreEqual(parser.ExcludedTags.Single(), "tag2");
-		}
-
-		[TestMethod]
 		public void ExcludeBranches()
 		{
 			m_branchMatcher.AddExcludeRule(new Regex(@"^branch2"));
@@ -126,7 +108,7 @@ namespace CTC.CvsntGitImporter.TestCode
 
 		private CvsLogParser CreateParser(string log)
 		{
-			return new CvsLogParser(m_sandbox, new StringReader(log), m_tagMatcher, m_branchMatcher);
+			return new CvsLogParser(m_sandbox, new StringReader(log), m_branchMatcher);
 		}
 	}
 }

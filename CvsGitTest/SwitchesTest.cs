@@ -17,6 +17,38 @@ namespace CTC.CvsntGitImporter.TestCode
 	[TestClass]
 	public class SwitchesTest
 	{
+		#region BranchpointRule
+
+		[TestMethod]
+		public void BranchpointRule_Unspecified()
+		{
+			var switches = new Switches();
+			switches.Parse("--sandbox", Path.GetTempPath());
+
+			Assert.IsNull(switches.BranchpointRule);
+		}
+
+		[TestMethod]
+		public void BranchpointRule_Valid()
+		{
+			var switches = new Switches();
+			switches.Parse("--sandbox", Path.GetTempPath(), "--branchpoint-rule", @"^(.*)$/$1-branchpoint");
+
+			Assert.IsNotNull(switches.BranchpointRule);
+			Assert.AreEqual("x-branchpoint", switches.BranchpointRule.Apply("x"));
+		}
+
+		[TestMethod]
+		[ExpectedException(typeof(CommandLineArgsException))]
+		public void BranchpointRule_Invalid()
+		{
+			var switches = new Switches();
+			switches.Parse("--sandbox", Path.GetTempPath(), "--branchpoint-rule", @"xxx");
+		}
+
+		#endregion BranchpointRule
+
+
 		#region CvsProcesses
 
 		[TestMethod]

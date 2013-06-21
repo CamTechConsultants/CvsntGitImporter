@@ -23,28 +23,26 @@ namespace CTC.CvsntGitImporter
 		private readonly string m_sandboxPath;
 		private readonly CvsLogReader m_reader;
 		private readonly List<FileInfo> m_files = new List<FileInfo>();
-		private readonly InclusionMatcher m_tagMatcher;
 		private readonly HashSet<string> m_excludedTags = new HashSet<string>();
 		private readonly InclusionMatcher m_branchMatcher;
 		private readonly HashSet<string> m_excludedBranches = new HashSet<string>();
 		private string m_repo;
 		private string m_fullRepoPath;
 
-		private CvsLogParser(string sandboxPath, CvsLogReader reader, InclusionMatcher tagMatcher, InclusionMatcher branchMatcher)
+		private CvsLogParser(string sandboxPath, CvsLogReader reader, InclusionMatcher branchMatcher)
 		{
 			m_sandboxPath = sandboxPath;
 			m_reader = reader;
-			m_tagMatcher = tagMatcher;
 			m_branchMatcher = branchMatcher;
 		}
 
-		public CvsLogParser(string sandboxPath, string logFile, InclusionMatcher tagMatcher, InclusionMatcher branchMatcher)
-			: this(sandboxPath, new CvsLogReader(logFile), tagMatcher, branchMatcher)
+		public CvsLogParser(string sandboxPath, string logFile, InclusionMatcher branchMatcher)
+			: this(sandboxPath, new CvsLogReader(logFile), branchMatcher)
 		{
 		}
 
-		public CvsLogParser(string sandboxPath, TextReader reader, InclusionMatcher tagMatcher, InclusionMatcher branchMatcher)
-			: this(sandboxPath, new CvsLogReader(reader), tagMatcher, branchMatcher)
+		public CvsLogParser(string sandboxPath, TextReader reader, InclusionMatcher branchMatcher)
+			: this(sandboxPath, new CvsLogReader(reader), branchMatcher)
 		{
 		}
 
@@ -125,10 +123,7 @@ namespace CTC.CvsntGitImporter
 							}
 							else
 							{
-								if (m_tagMatcher.Match(tagName))
-									currentFile.AddTag(tagName, tagRevision);
-								else
-									m_excludedTags.Add(tagName);
+								currentFile.AddTag(tagName, tagRevision);
 							}
 						}
 						break;

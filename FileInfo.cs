@@ -26,6 +26,22 @@ namespace CTC.CvsntGitImporter
 		/// </summary>
 		public readonly string Name;
 
+		/// <summary>
+		/// Gets a list of all a file's tags.
+		/// </summary>
+		public IEnumerable<string> AllTags
+		{
+			get { return m_revisionForTag.Keys; }
+		}
+
+		/// <summary>
+		/// Gets a list of all a file's branches.
+		/// </summary>
+		public IEnumerable<string> AllBranches
+		{
+			get { return m_revisionForBranch.Keys; }
+		}
+
 
 		public FileInfo(string name)
 		{

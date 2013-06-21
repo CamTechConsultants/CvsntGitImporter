@@ -69,6 +69,9 @@ namespace CTC.CvsntGitImporter
 		public List<string> HeadOnlyBranches { get; set; }
 
 
+		[SwitchDef(LongSwitch="--branchpoint-rule", ValueDescription="rule", Description="A rule to obtain a branchpoint tag for a branch")]
+		public string _BranchpointRule { get; set; }
+
 		[SwitchDef(LongSwitch="--include-tag", ValueDescription="regex", Description="A pattern to match tags that should be imported")]
 		public ObservableCollection<string> _IncludeTag { get; set; }
 
@@ -100,6 +103,11 @@ namespace CTC.CvsntGitImporter
 		/// Gets the user to use for creating tags.
 		/// </summary>
 		public User Nobody { get; private set; }
+
+		/// <summary>
+		/// A rule to translate branch names into branchpoint tag names.
+		/// </summary>
+		public RenameRule BranchpointRule;
 
 		/// <summary>
 		/// The matcher for files.
@@ -196,6 +204,18 @@ namespace CTC.CvsntGitImporter
 			}
 
 			this.Nobody = new User(_NobodyName, taggerEmail);
+
+			if (_BranchpointRule != null)
+			{
+				try
+				{
+					BranchpointRule = RenameRule.Parse(_BranchpointRule);
+				}
+				catch (ArgumentException ae)
+				{
+					throw new CommandLineArgsException("Invalid branchpoint rule: {0}", ae.Message);
+				}
+			}
 		}
 
 		public override string GetHelpText(int maxWidth)

@@ -17,6 +17,48 @@ namespace CTC.CvsntGitImporter.TestCode
 	[TestClass]
 	public class FileInfoTest
 	{
+		#region AllBranches
+
+		[TestMethod]
+		public void AllBranches_NoBranchesDefined()
+		{
+			var file = new FileInfo("file.txt");
+
+			Assert.AreEqual(file.AllBranches.Count(), 0);
+		}
+
+		[TestMethod]
+		public void AllBranches_BranchesDefined()
+		{
+			var file = new FileInfo("file.txt").WithBranch("branch2", "1.1.0.2").WithBranch("branch1", "1.1.0.4"); ;
+
+			Assert.IsTrue(file.AllBranches.OrderBy(i => i).SequenceEqual("branch1", "branch2"));
+		}
+
+		#endregion AllBranches
+
+
+		#region AllTags
+
+		[TestMethod]
+		public void AllTags_NoTagsDefined()
+		{
+			var file = new FileInfo("file.txt");
+
+			Assert.AreEqual(file.AllTags.Count(), 0);
+		}
+
+		[TestMethod]
+		public void AllTags_TagsDefined()
+		{
+			var file = new FileInfo("file.txt").WithTag("tag2", "1.1").WithTag("tag1", "1.2"); ;
+
+			Assert.IsTrue(file.AllTags.OrderBy(i => i).SequenceEqual("tag1", "tag2"));
+		}
+
+		#endregion AllTags
+
+
 		#region GetTagsForRevision
 
 		[TestMethod]

@@ -75,6 +75,7 @@
     <Compile Include="FileRevisionExtensions.cs" />
     <Compile Include="GitRepoTest.cs" />
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="ManualBranchResolverTest.cs" />
     <Compile Include="RenamerTest.cs" />
     <Compile Include="RenameRuleTest.cs" />
     <Compile Include="RepositoryBranchStateTest.cs" />

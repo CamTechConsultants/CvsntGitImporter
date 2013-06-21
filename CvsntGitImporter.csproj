@@ -46,7 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BranchResolver.cs" />
+    <Compile Include="AutoBranchResolver.cs" />
     <Compile Include="BranchStreamCollection.cs" />
     <Compile Include="Commit.cs" />
     <Compile Include="CommitBuilder.cs" />
@@ -73,8 +73,11 @@
     <Compile Include="Importer.cs" />
     <Compile Include="ImportFailedException.cs" />
     <Compile Include="InclusionMatcher.cs" />
+    <Compile Include="ITagResolver.cs" />
+    <Compile Include="ITagResolverExtensions.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="LogLevel.cs" />
+    <Compile Include="ManualBranchResolver.cs" />
     <Compile Include="MergeResolver.cs" />
     <Compile Include="ParseException.cs" />
     <Compile Include="Program.cs" />
@@ -89,7 +92,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="RenameRule.cs" />
-    <Compile Include="TagResolverBase.cs" />
+    <Compile Include="AutoTagResolverBase.cs" />
     <Compile Include="Revision.cs" />
     <Compile Include="SplitMultiBranchCommits.cs" />
     <Compile Include="Switches.cs" />
