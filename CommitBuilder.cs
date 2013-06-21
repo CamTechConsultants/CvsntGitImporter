@@ -5,6 +5,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -15,10 +16,12 @@ namespace CTC.CvsntGitImporter
 	/// </summary>
 	class CommitBuilder
 	{
+		private readonly ILogger m_log;
 		private readonly IEnumerable<FileRevision> m_fileRevisions;
 
-		public CommitBuilder(IEnumerable<FileRevision> fileRevisions)
+		public CommitBuilder(ILogger log, IEnumerable<FileRevision> fileRevisions)
 		{
+			m_log = log;
 			m_fileRevisions = fileRevisions;
 		}
 
@@ -32,38 +35,66 @@ namespace CTC.CvsntGitImporter
 							select r;
 
 			var lookup = new Dictionary<string, Commit>();
-			var commitsByMessage = new CommitsByMessage();
-
-			foreach (var revision in revisions)
+			using (var commitsByMessage = new CommitsByMessage(m_log))
 			{
-				if (revision.CommitId.Length == 0)
+				foreach (var revision in revisions)
 				{
-					commitsByMessage.Add(revision);
-				}
-				else
-				{
-					Commit commit;
-					if (lookup.TryGetValue(revision.CommitId, out commit))
+					if (revision.CommitId.Length == 0)
 					{
-						commit.Add(revision);
+						commitsByMessage.Add(revision);
 					}
 					else
 					{
-						commit = new Commit(revision.CommitId) { revision };
-						lookup.Add(commit.CommitId, commit);
+						Commit commit;
+						if (lookup.TryGetValue(revision.CommitId, out commit))
+						{
+							commit.Add(revision);
+						}
+						else
+						{
+							commit = new Commit(revision.CommitId) { revision };
+							lookup.Add(commit.CommitId, commit);
+						}
 					}
 				}
-			}
 
-			return lookup.Values.Concat(commitsByMessage.Resolve()).OrderBy(c => c.Time).ToList();
+				return lookup.Values.Concat(commitsByMessage.Resolve()).OrderBy(c => c.Time).ToList();
+			}
 		}
 
 
-		private class CommitsByMessage
+		private class CommitsByMessage : IDisposable
 		{
 			private static readonly TimeSpan MaxInterval = TimeSpan.FromSeconds(10);
+
+			private readonly TextWriter m_debugLog;
 			private readonly Dictionary<string, List<FileRevision>> m_revisions = new Dictionary<string, List<FileRevision>>();
 			private int m_nextCommitId;
+			private bool m_isDisposed = false;
+
+			public CommitsByMessage(ILogger log)
+			{
+				if (log.DebugEnabled)
+					m_debugLog = log.OpenDebugFile("CreatedCommits.log");
+				else
+					m_debugLog = TextWriter.Null;
+			}
+		
+			public void Dispose()
+			{
+				Dispose(true);
+			}
+
+			protected virtual void Dispose(bool disposing)
+			{
+				if (!m_isDisposed && disposing)
+				{
+					m_debugLog.Close();
+				}
+
+				m_isDisposed = true;
+			}
+
 
 			public void Add(FileRevision revision)
 			{
@@ -99,8 +130,17 @@ namespace CTC.CvsntGitImporter
 			private Commit MakeCommit(List<FileRevision> revisions, int start, int end)
 			{
 				var commit = new Commit(MakeCommitId(revisions[start]));
+
 				for (int i = start; i < end; i++)
+				{
 					commit.Add(revisions[i]);
+					// need to wait for the first revision to be added, so that the commit message is set
+					if (i == start)
+						m_debugLog.WriteLine("Commit {0}{1}{2}", commit.CommitId, Environment.NewLine, commit.Message);
+					m_debugLog.WriteLine("  {0} r{1}", revisions[i].File.Name, revisions[i].Revision);
+				}
+
+				m_debugLog.WriteLine();
 				return commit;
 			}
 

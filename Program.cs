@@ -83,7 +83,7 @@ namespace CTC.CvsntGitImporter
 		private static void Analyse()
 		{
 			var parser = new CvsLogParser(m_switches.Sandbox, m_switches.ExtraArguments[0], m_switches.BranchMatcher);
-			var builder = new CommitBuilder(parser.Parse());
+			var builder = new CommitBuilder(m_log, parser.Parse());
 			var exclusionFilter = new ExclusionFilter(m_log, m_switches.FileMatcher, m_switches.HeadOnlyMatcher, m_switches.BranchRename);
 
 			IEnumerable<Commit> commits = builder.GetCommits()

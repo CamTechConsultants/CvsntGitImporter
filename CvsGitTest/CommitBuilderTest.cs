@@ -7,6 +7,7 @@ using System;
 using System.Linq;
 using CTC.CvsntGitImporter;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Rhino.Mocks;
 
 namespace CTC.CvsntGitImporter.TestCode
 {
@@ -16,6 +17,13 @@ namespace CTC.CvsntGitImporter.TestCode
 	[TestClass]
 	public class CommitBuilderTest
 	{
+		private ILogger m_log;
+
+		public CommitBuilderTest()
+		{
+			m_log = MockRepository.GenerateStub<ILogger>();
+		}
+
 		[TestMethod]
 		public void FileAddedOnBranch()
 		{
@@ -26,7 +34,7 @@ namespace CTC.CvsntGitImporter.TestCode
 				file.CreateRevision("1.1", "main", isDead: true).WithMessage("file file.txt was initially added on branch branch"),
 			};
 
-			var builder = new CommitBuilder(revisions);
+			var builder = new CommitBuilder(m_log, revisions);
 			var commits = builder.GetCommits().ToList();
 
 			Assert.IsTrue(commits.Single().Single().Revision.ToString() == "1.1.2.1");
@@ -43,7 +51,7 @@ namespace CTC.CvsntGitImporter.TestCode
 				f2.CreateRevision("1.1", "commit1"),
 			};
 
-			var builder = new CommitBuilder(revisions);
+			var builder = new CommitBuilder(m_log, revisions);
 			var commits = builder.GetCommits().ToList();
 
 			Assert.IsTrue(commits.Single().Select(f => f.File.Name).SequenceEqual("file1.txt", "file2.txt"));
@@ -61,10 +69,12 @@ namespace CTC.CvsntGitImporter.TestCode
 				f2.CreateRevision("1.1", "", now).WithMessage("message"),
 			};
 
-			var builder = new CommitBuilder(revisions);
+			var builder = new CommitBuilder(m_log, revisions);
 			var commits = builder.GetCommits().ToList();
 
-			Assert.IsTrue(commits.Single().Select(f => f.File.Name).SequenceEqual("file1.txt", "file2.txt"));
+			var commit = commits.Single();
+			Assert.IsTrue(commit.Select(f => f.File.Name).SequenceEqual("file1.txt", "file2.txt"));
+			Assert.AreEqual(commit.Message, "message");
 		}
 
 		[TestMethod]
@@ -79,7 +89,7 @@ namespace CTC.CvsntGitImporter.TestCode
 				f2.CreateRevision("1.1", "", now).WithMessage("message #2"),
 			};
 
-			var builder = new CommitBuilder(revisions);
+			var builder = new CommitBuilder(m_log, revisions);
 			var commits = builder.GetCommits().ToList();
 
 			Assert.AreEqual(commits.Count, 2);
@@ -99,7 +109,7 @@ namespace CTC.CvsntGitImporter.TestCode
 				f3.CreateRevision("1.1", "", now + TimeSpan.FromMinutes(5)).WithMessage("message"),
 			};
 
-			var builder = new CommitBuilder(revisions);
+			var builder = new CommitBuilder(m_log, revisions);
 			var commits = builder.GetCommits().ToList();
 
 			Assert.AreEqual(commits.Count, 2);
