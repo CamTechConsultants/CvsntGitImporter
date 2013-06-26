@@ -57,7 +57,7 @@ namespace CTC.CvsntGitImporter.TestCode
 			var switches = new Switches();
 			switches.Parse("--sandbox", Path.GetTempPath());
 
-			Assert.AreEqual(switches.CvsProcesses, Environment.ProcessorCount);
+			Assert.AreEqual(switches.CvsProcesses, (uint)Environment.ProcessorCount);
 		}
 
 		[TestMethod]
@@ -66,7 +66,7 @@ namespace CTC.CvsntGitImporter.TestCode
 			var switches = new Switches();
 			switches.Parse("--sandbox", Path.GetTempPath(), "--cvs-processes", "42");
 
-			Assert.AreEqual(switches.CvsProcesses, 42);
+			Assert.AreEqual(switches.CvsProcesses, 42u);
 		}
 
 		[TestMethod]

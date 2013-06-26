@@ -43,7 +43,7 @@ namespace CTC.CvsntGitImporter
 		public string CvsCache { get; set; }
 
 		[SwitchDef(LongSwitch="--cvs-processes", Description="The number of CVS processes to run in parallel when importing. Defaults to the number of processors on the system")]
-		public string _CvsProcesses { get; set; }
+		public uint? _CvsProcesses { get; set; }
 
 		[SwitchDef(LongSwitch = "--partial-tag-threshold", Description = "The number of untagged files encountered before a tag is declared to be a partial tag. Set to zero to disable partial tag detection")]
 		public uint? PartialTagThreshold { get; set; }
@@ -145,7 +145,10 @@ namespace CTC.CvsntGitImporter
 		/// <summary>
 		/// Gets the number of CVS processes to run.
 		/// </summary>
-		public int CvsProcesses { get; private set; }
+		public uint CvsProcesses
+		{
+			get { return _CvsProcesses ?? (uint)Environment.ProcessorCount; }
+		}
 
 
 		public Switches()
@@ -162,7 +165,6 @@ namespace CTC.CvsntGitImporter
 			_RenameTag = new RuleCollection(r => AddRenameRule(TagRename, r));
 			_RenameBranch = new RuleCollection(r => AddRenameRule(BranchRename, r));
 
-			CvsProcesses = Environment.ProcessorCount;
 			DefaultDomain = Environment.MachineName;
 			_NobodyName = Environment.GetEnvironmentVariable("USERNAME") ?? "nobody";
 
@@ -176,14 +178,8 @@ namespace CTC.CvsntGitImporter
 			if (!this.Help && this.Sandbox == null)
 				throw new CommandLineArgsException("No CVS repository specified");
 
-			if (_CvsProcesses != null)
-			{
-				int cvsProcesses;
-				if (int.TryParse(_CvsProcesses, out cvsProcesses) && cvsProcesses > 0)
-					this.CvsProcesses = cvsProcesses;
-				else
-					throw new CommandLineArgsException("Invalid value for cvs-processes: {0}", _CvsProcesses);
-			}
+			if (CvsProcesses == 0 || CvsProcesses > Cvs.MaxProcessCount)
+				throw new CommandLineArgsException("Invalid number of CVS processes: {0}", CvsProcesses);
 
 			if (GitDir != null && DoImport && Directory.Exists(GitDir))
 			{

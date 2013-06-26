@@ -18,13 +18,15 @@ namespace CTC.CvsntGitImporter
 		private readonly ICvsRepository m_repository;
 		private readonly int m_cvsProcessCount;
 
-		public Cvs(ICvsRepository repository, int cvsProcessCount)
+		public const int MaxProcessCount = 128;
+
+		public Cvs(ICvsRepository repository, uint cvsProcessCount)
 		{
-			if (cvsProcessCount < 1)
+			if (cvsProcessCount < 1 || cvsProcessCount > MaxProcessCount)
 				throw new ArgumentOutOfRangeException("cvsProcessCount");
 
 			m_repository = repository;
-			m_cvsProcessCount = cvsProcessCount;
+			m_cvsProcessCount = (int)cvsProcessCount;
 		}
 
 		/// <summary>

@@ -60,7 +60,7 @@ namespace CTC.CvsntGitImporter.TestCode
 
 			var repo = MockRepository.GenerateStub<ICvsRepository>();
 			repo.Stub(r => r.GetCvsRevision(null)).IgnoreArguments().Do((FileRevision f) => CreateMockContent(f));
-			var cvs = new Cvs(repo, files.Length - 1);
+			var cvs = new Cvs(repo, (uint)(files.Length - 1));
 
 			var revisions = cvs.GetCommit(commit).ToList();
 			Assert.AreEqual(revisions.Count, files.Length);
