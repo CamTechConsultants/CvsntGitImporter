@@ -16,15 +16,22 @@ namespace CTC.CvsntGitImporter
 	/// </summary>
 	class CommitMoveRecord
 	{
+		private string m_tag;
 		private Commit m_finalCommit;
 		private readonly ILogger m_log;
 		private readonly List<Commit> m_commits = new List<Commit>();
 		private readonly OneToManyDictionary<string, FileRevision> m_files = new OneToManyDictionary<string, FileRevision>();
 
-		public CommitMoveRecord(Commit finalCommit, ILogger log)
+		public CommitMoveRecord(string tag, Commit finalCommit, ILogger log)
 		{
+			m_tag = tag;
 			m_finalCommit = finalCommit;
 			m_log = log;
+		}
+
+		public override string ToString()
+		{
+			return String.Format("{0}: {1}, {2} commits", m_tag, m_finalCommit.CommitId, m_commits.Count);
 		}
 
 		public void AddCommit(Commit commit, List<FileRevision> filesToMove)
@@ -38,7 +45,7 @@ namespace CTC.CvsntGitImporter
 			int destLocation = commitStream.IndexOf(m_finalCommit);
 			int searchStart = destLocation;
 
-			m_log.WriteLine("Final commit: {0}", m_finalCommit.CommitId);
+			m_log.WriteLine("{0}: Final commit: {1}", m_tag, m_finalCommit.CommitId);
 
 			using (m_log.Indent())
 			{

@@ -223,10 +223,10 @@ namespace CTC.CvsntGitImporter
 		private IEnumerable<CommitMoveRecord> AnalyseProblematicTag(string tag,Dictionary<string,Commit> finalCommits)
 		{
 			var moveRecords = new List<CommitMoveRecord>();
+			CommitMoveRecord moveRecord = null;
 			var state = new RepositoryState();
 			var filesAtTagRevision = new Dictionary<string, Commit>();
 			var finalCommit = finalCommits[tag];
-			CommitMoveRecord moveRecord = null;
 			var branch = finalCommit.Branch;
 			var commitsToMove = new List<Commit>();
 
@@ -264,7 +264,7 @@ namespace CTC.CvsntGitImporter
 				{
 					if (moveRecord == null)
 					{
-						moveRecord = new CommitMoveRecord(finalCommit, m_log);
+						moveRecord = new CommitMoveRecord(tag, finalCommit, m_log);
 						moveRecords.Add(moveRecord);
 					}
 					moveRecord.AddCommit(commit, filesToMove);
