@@ -34,6 +34,14 @@ namespace CTC.CvsntGitImporter
 		public int Index;
 
 		/// <summary>
+		/// Gets a concise string suitable for debug log files.
+		/// </summary>
+		public string ConciseFormat
+		{
+			get { return String.Format("{{{0} {1}}}", CommitId, Time); }
+		}
+
+		/// <summary>
 		/// The Commit's direct predecessor.
 		/// </summary>
 		public Commit Predecessor;

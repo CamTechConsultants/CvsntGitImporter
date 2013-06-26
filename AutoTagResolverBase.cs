@@ -268,7 +268,7 @@ namespace CTC.CvsntGitImporter
 						else if (filesAtTagRevision.ContainsKey(file.Name))
 						{
 							m_log.WriteLine("  File {0} updated to r{1} in commit {2} but tagged in commit {3}",
-									file.Name, fileRevision.Revision, commit.CommitId, filesAtTagRevision[file.Name].CommitId);
+									file.Name, fileRevision.Revision, commit.ConciseFormat, filesAtTagRevision[file.Name].ConciseFormat);
 
 							AddAndCreateList(ref filesToMove, fileRevision);
 						}

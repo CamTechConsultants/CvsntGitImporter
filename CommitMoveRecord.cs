@@ -45,7 +45,7 @@ namespace CTC.CvsntGitImporter
 			int destLocation = commitStream.IndexOf(m_finalCommit);
 			int searchStart = destLocation;
 
-			m_log.WriteLine("{0}: Final commit: {1}", m_tag, m_finalCommit.CommitId);
+			m_log.WriteLine("{0}: Final commit: {1}", m_tag, m_finalCommit.ConciseFormat);
 
 			using (m_log.Indent())
 			{
@@ -57,7 +57,7 @@ namespace CTC.CvsntGitImporter
 					if (location < 0)
 					{
 						// assume already moved
-						m_log.WriteLine("Skip moving {0} after {1}", commitToMove.CommitId, m_finalCommit.CommitId);
+						m_log.WriteLine("Skip moving {0} after {1}", commitToMove.ConciseFormat, m_finalCommit.ConciseFormat);
 						continue;
 					}
 
@@ -85,8 +85,8 @@ namespace CTC.CvsntGitImporter
 						}
 					}
 
-					m_log.WriteLine("Move {0}({1}) after {2}({3})", commitToMove.CommitId, location,
-								m_finalCommit.CommitId, destLocation);
+					m_log.WriteLine("Move {0}({1}) after {2}({3})", commitToMove.ConciseFormat, location,
+								m_finalCommit.ConciseFormat, destLocation);
 					commitStream.Move(location, destLocation);
 					destLocation--;
 				}
