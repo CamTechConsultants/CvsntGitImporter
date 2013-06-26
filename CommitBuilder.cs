@@ -68,7 +68,7 @@ namespace CTC.CvsntGitImporter
 			private static readonly TimeSpan MaxInterval = TimeSpan.FromSeconds(10);
 
 			private readonly TextWriter m_debugLog;
-			private readonly Dictionary<string, List<FileRevision>> m_revisions = new Dictionary<string, List<FileRevision>>();
+			private readonly OneToManyDictionary<string, FileRevision> m_revisions = new OneToManyDictionary<string, FileRevision>();
 			private int m_nextCommitId;
 			private bool m_isDisposed = false;
 
@@ -98,17 +98,14 @@ namespace CTC.CvsntGitImporter
 
 			public void Add(FileRevision revision)
 			{
-				List<FileRevision> list;
-				if (m_revisions.TryGetValue(revision.Message, out list))
-					list.Add(revision);
-				else
-					m_revisions.Add(revision.Message, new List<FileRevision> { revision });
+				m_revisions.Add(revision.Message, revision);
 			}
 
 			public IEnumerable<Commit> Resolve()
 			{
-				foreach (var revisionList in m_revisions.Values)
+				foreach (var msg in m_revisions.Keys)
 				{
+					var revisionList = new List<FileRevision>(m_revisions[msg]);
 					revisionList.Sort((a, b) => DateTime.Compare(a.Time, b.Time));
 					int start = 0;
 					var lastTime = revisionList[0].Time;

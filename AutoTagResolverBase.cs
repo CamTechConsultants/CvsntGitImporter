@@ -133,20 +133,12 @@ namespace CTC.CvsntGitImporter
 		/// <summary>
 		/// Build the inverse of CommitsPerTag - a lookup of commits to tags that it is supposed to be the commit for.
 		/// </summary>
-		private static Dictionary<Commit, List<string>> FindCandidateCommits(Dictionary<string, Commit> tags)
+		private static OneToManyDictionary<Commit, string> FindCandidateCommits(Dictionary<string, Commit> tags)
 		{
-			var candidateCommits = new Dictionary<Commit, List<string>>(CommitComparer.ById);
+			var candidateCommits = new OneToManyDictionary<Commit, string>(CommitComparer.ById);
 
 			foreach (var kvp in tags)
-			{
-				var commit = kvp.Value;
-
-				List<string> tagsForCommit;
-				if (candidateCommits.TryGetValue(commit, out tagsForCommit))
-					tagsForCommit.Add(kvp.Key);
-				else
-					candidateCommits[commit] = new List<string>(1) { kvp.Key };
-			}
+				candidateCommits.Add(kvp.Value, kvp.Key);
 
 			return candidateCommits;
 		}
@@ -156,7 +148,7 @@ namespace CTC.CvsntGitImporter
 		/// do not have the tag applied at the point the candidate commit for the tag is applied.
 		/// </summary>
 		/// <returns>a list of tags that do not have a single commit that represents them</returns>
-		private IEnumerable<string> FindProblematicTags(Dictionary<Commit, List<string>> candidateCommits)
+		private IEnumerable<string> FindProblematicTags(OneToManyDictionary<Commit, string> candidateCommits)
 		{
 			// now replay commits and check that all files are in the correct state for each tag
 			var state = new RepositoryState();
@@ -172,23 +164,20 @@ namespace CTC.CvsntGitImporter
 					state.Apply(commit);
 
 					// if the commit is a candidate for being tagged, then check that all files are at the correct version
-					if (candidateCommits.ContainsKey(commit))
+					foreach (var tag in candidateCommits[commit])
 					{
-						foreach (var tag in candidateCommits[commit])
+						var branchState = state[commit.Branch];
+						foreach (var filename in branchState.LiveFiles)
 						{
-							var branchState = state[commit.Branch];
-							foreach (var filename in branchState.LiveFiles)
+							var file = m_allFiles[filename];
+							if (!GetTagsForFileRevision(file, branchState[filename]).Contains(tag))
 							{
-								var file = m_allFiles[filename];
-								if (!GetTagsForFileRevision(file, branchState[filename]).Contains(tag))
-								{
-									if (GetRevisionForTag(file, tag) == Revision.Empty)
-										m_log.WriteLine("File {0} not tagged with tag {1}!", filename, tag);
+								if (GetRevisionForTag(file, tag) == Revision.Empty)
+									m_log.WriteLine("File {0} not tagged with tag {1}!", filename, tag);
 
-									m_log.WriteLine("No commit found for tag {0}  Commit: {1}  File: {2},r{3}",
-											tag, commit.CommitId, filename, branchState[filename]);
-									problematicTags.Add(tag);
-								}
+								m_log.WriteLine("No commit found for tag {0}  Commit: {1}  File: {2},r{3}",
+										tag, commit.CommitId, filename, branchState[filename]);
+								problematicTags.Add(tag);
 							}
 						}
 					}

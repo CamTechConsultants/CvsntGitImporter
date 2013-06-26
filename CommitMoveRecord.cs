@@ -19,7 +19,7 @@ namespace CTC.CvsntGitImporter
 		private Commit m_finalCommit;
 		private readonly ILogger m_log;
 		private readonly List<Commit> m_commits = new List<Commit>();
-		private readonly Dictionary<string, IEnumerable<FileRevision>> m_files = new Dictionary<string, IEnumerable<FileRevision>>();
+		private readonly OneToManyDictionary<string, FileRevision> m_files = new OneToManyDictionary<string, FileRevision>();
 
 		public CommitMoveRecord(Commit finalCommit, ILogger log)
 		{

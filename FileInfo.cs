@@ -15,7 +15,7 @@ namespace CTC.CvsntGitImporter
 	class FileInfo
 	{
 		private readonly Dictionary<string, Revision> m_revisionForTag = new Dictionary<string, Revision>();
-		private readonly Dictionary<Revision, List<string>> m_tagsForRevision = new Dictionary<Revision, List<string>>();
+		private readonly OneToManyDictionary<Revision, string> m_tagsForRevision = new OneToManyDictionary<Revision, string>();
 		private readonly Dictionary<string, Revision> m_revisionForBranch = new Dictionary<string, Revision>();
 		private readonly Dictionary<Revision, string> m_branchForRevision = new Dictionary<Revision, string>();
 		private readonly Dictionary<Revision, Commit> m_commits = new Dictionary<Revision, Commit>();
@@ -57,12 +57,7 @@ namespace CTC.CvsntGitImporter
 				throw new ArgumentException(String.Format("Invalid tag revision: {0} is a branch tag revision", revision));
 
 			m_revisionForTag[name] = revision;
-
-			List<string> tags;
-			if (m_tagsForRevision.TryGetValue(revision, out tags))
-				tags.Add(name);
-			else
-				m_tagsForRevision[revision] = new List<string>(1) { name };
+			m_tagsForRevision.Add(revision, name);
 		}
 
 		/// <summary>
@@ -127,11 +122,7 @@ namespace CTC.CvsntGitImporter
 		/// </summary>
 		public IEnumerable<string> GetTagsForRevision(Revision revision)
 		{
-			List<string> tags;
-			if (m_tagsForRevision.TryGetValue(revision, out tags))
-				return tags;
-			else
-				return Enumerable.Empty<string>();
+			return m_tagsForRevision[revision];
 		}
 
 		/// <summary>

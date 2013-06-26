@@ -79,6 +79,7 @@
     <Compile Include="LogLevel.cs" />
     <Compile Include="ManualBranchResolver.cs" />
     <Compile Include="MergeResolver.cs" />
+    <Compile Include="OneToManyDictionary.cs" />
     <Compile Include="ParseException.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
