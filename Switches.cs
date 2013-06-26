@@ -45,6 +45,9 @@ namespace CTC.CvsntGitImporter
 		[SwitchDef(LongSwitch="--cvs-processes", Description="The number of CVS processes to run in parallel when importing. Defaults to the number of processors on the system")]
 		public string _CvsProcesses { get; set; }
 
+		[SwitchDef(LongSwitch = "--partial-tag-threshold", Description = "The number of untagged files encountered before a tag is declared to be a partial tag. Set to zero to disable partial tag detection")]
+		public uint? PartialTagThreshold { get; set; }
+
 
 		[SwitchDef(LongSwitch="--default-domain", Description="The default domain name to use for unknown users")]
 		public string DefaultDomain { get; set; }

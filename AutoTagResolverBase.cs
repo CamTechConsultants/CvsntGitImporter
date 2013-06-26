@@ -34,7 +34,14 @@ namespace CTC.CvsntGitImporter
 			m_commits = commits.ToListIfNeeded();
 			m_allFiles = allFiles;
 			m_branches = branches;
+			this.PartialTagThreshold = 30;
 		}
+
+		/// <summary>
+		/// The number of untagged files that are encountered before a tag/branch is declared as partial
+		/// and is abandoned.
+		/// </summary>
+		public int PartialTagThreshold { get; set; }
 
 		/// <summary>
 		/// Gets a lookup that returns the resolved commits for each tag.
@@ -154,6 +161,7 @@ namespace CTC.CvsntGitImporter
 			// now replay commits and check that all files are in the correct state for each tag
 			var state = new RepositoryState();
 			var problematicTags = new HashSet<string>();
+			List<string> partialTags = null;
 			m_missingFiles = new OneToManyDictionary<string, string>();
 
 			m_log.DoubleRuleOff();
@@ -178,6 +186,12 @@ namespace CTC.CvsntGitImporter
 								{
 									m_log.WriteLine("File {0} not tagged with tag {1}!", filename, tag);
 									m_missingFiles.Add(tag, filename);
+									if (PartialTagThreshold > 0 && m_missingFiles[tag].Count() >= PartialTagThreshold)
+									{
+										m_log.WriteLine("Partial: {0}", tag);
+										AddAndCreateList(ref partialTags, tag);
+										break;
+									}
 								}
 
 								m_log.WriteLine("No commit found for tag {0}  Commit: {1}  File: {2},r{3}",
@@ -186,6 +200,13 @@ namespace CTC.CvsntGitImporter
 							}
 						}
 					}
+				}
+
+				if (partialTags != null)
+				{
+					throw new ImportFailedException(String.Format(
+							"Partial branches/tags found: {0}",
+							String.Join(", ", partialTags)));
 				}
 
 				if (!problematicTags.Any())
@@ -249,13 +270,14 @@ namespace CTC.CvsntGitImporter
 							m_log.WriteLine("  File {0} updated to r{1} in commit {2} but tagged in commit {3}",
 									file.Name, fileRevision.Revision, commit.CommitId, filesAtTagRevision[file.Name].CommitId);
 
-							AddToMoveList(ref filesToMove, fileRevision);
+							AddAndCreateList(ref filesToMove, fileRevision);
 						}
 						else if (state[branch][file.Name] != Revision.Empty && IsAddedFile(fileRevision, tag))
 						{
 							m_log.WriteLine("  File {0} not tagged with {1}, assuming added after tag was made",
 									file.Name, tag);
-							AddToMoveList(ref filesToMove, fileRevision);
+
+							AddAndCreateList(ref filesToMove, fileRevision);
 						}
 					}
 				}
@@ -283,12 +305,12 @@ namespace CTC.CvsntGitImporter
 			return (GetRevisionForTag(file, tag) == Revision.Empty && m_missingFiles[tag].Contains(file.Name));
 		}
 
-		private static void AddToMoveList(ref List<FileRevision> filesToMove, FileRevision fileRevision)
+		private static void AddAndCreateList<T>(ref List<T> list, T item)
 		{
-			if (filesToMove == null)
-				filesToMove = new List<FileRevision>() { fileRevision };
+			if (list == null)
+				list = new List<T>() { item };
 			else
-				filesToMove.Add(fileRevision);
+				list.Add(item);
 		}
 	}
 }
