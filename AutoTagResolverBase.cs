@@ -24,6 +24,7 @@ namespace CTC.CvsntGitImporter
 		private HashSet<string> m_allTags;
 		private Dictionary<string, Commit> m_finalCommits;
 
+		private OneToManyDictionary<string, string> m_missingFiles;
 		private IEnumerable<string> m_problematicTags;
 
 		protected AutoTagResolverBase(ILogger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles,
@@ -153,6 +154,7 @@ namespace CTC.CvsntGitImporter
 			// now replay commits and check that all files are in the correct state for each tag
 			var state = new RepositoryState();
 			var problematicTags = new HashSet<string>();
+			m_missingFiles = new OneToManyDictionary<string, string>();
 
 			m_log.DoubleRuleOff();
 			m_log.WriteLine("Finding problematic {0}...", m_branches ? "branches" : "tags");
@@ -173,7 +175,10 @@ namespace CTC.CvsntGitImporter
 							if (!GetTagsForFileRevision(file, branchState[filename]).Contains(tag))
 							{
 								if (GetRevisionForTag(file, tag) == Revision.Empty)
+								{
 									m_log.WriteLine("File {0} not tagged with tag {1}!", filename, tag);
+									m_missingFiles.Add(tag, filename);
+								}
 
 								m_log.WriteLine("No commit found for tag {0}  Commit: {1}  File: {2},r{3}",
 										tag, commit.CommitId, filename, branchState[filename]);
@@ -202,54 +207,7 @@ namespace CTC.CvsntGitImporter
 				foreach (var tag in tags)
 				{
 					m_log.WriteLine("Tag {0}:", tag);
-					var state = new RepositoryState();
-					var filesAtTagRevision = new Dictionary<string, Commit>();
-					var finalCommit = finalCommits[tag];
-					CommitMoveRecord moveRecord = null;
-					var branch = finalCommit.Branch;
-					var commitsToMove = new List<Commit>();
-
-					foreach (var commit in m_commits)
-					{
-						state.Apply(commit);
-
-						List<FileRevision> filesToMove = null;
-						foreach (var fileRevision in commit)
-						{
-							var file = fileRevision.File;
-							if (file.IsRevisionOnBranch(fileRevision.Revision, branch))
-							{
-								if (fileRevision.Revision == GetRevisionForTag(file, tag))
-								{
-									filesAtTagRevision[file.Name] = commit;
-								}
-								else if (filesAtTagRevision.ContainsKey(file.Name))
-								{
-									m_log.WriteLine("  File {0} updated to r{1} in commit {2} but tagged in commit {3}",
-											file.Name, fileRevision.Revision, commit.CommitId, filesAtTagRevision[file.Name].CommitId);
-
-									if (filesToMove == null)
-										filesToMove = new List<FileRevision>() { fileRevision };
-									else
-										filesToMove.Add(fileRevision);
-								}
-							}
-						}
-
-						if (filesToMove != null)
-						{
-							if (moveRecord == null)
-							{
-								moveRecord = new CommitMoveRecord(finalCommit, m_log);
-								moveRecords.Add(moveRecord);
-							}
-							moveRecord.AddCommit(commit, filesToMove);
-						}
-
-						if (commit == finalCommit)
-							break;
-					}
-
+					moveRecords.AddRange(AnalyseProblematicTag(tag, finalCommits));
 					m_log.RuleOff();
 				}
 
@@ -260,6 +218,77 @@ namespace CTC.CvsntGitImporter
 						record.Apply(m_commits);
 				}
 			}
+		}
+
+		private IEnumerable<CommitMoveRecord> AnalyseProblematicTag(string tag,Dictionary<string,Commit> finalCommits)
+		{
+			var moveRecords = new List<CommitMoveRecord>();
+			var state = new RepositoryState();
+			var filesAtTagRevision = new Dictionary<string, Commit>();
+			var finalCommit = finalCommits[tag];
+			CommitMoveRecord moveRecord = null;
+			var branch = finalCommit.Branch;
+			var commitsToMove = new List<Commit>();
+
+			foreach (var commit in m_commits)
+			{
+				state.Apply(commit);
+
+				List<FileRevision> filesToMove = null;
+				foreach (var fileRevision in commit)
+				{
+					var file = fileRevision.File;
+					if (file.IsRevisionOnBranch(fileRevision.Revision, branch))
+					{
+						if (fileRevision.Revision == GetRevisionForTag(file, tag))
+						{
+							filesAtTagRevision[file.Name] = commit;
+						}
+						else if (filesAtTagRevision.ContainsKey(file.Name))
+						{
+							m_log.WriteLine("  File {0} updated to r{1} in commit {2} but tagged in commit {3}",
+									file.Name, fileRevision.Revision, commit.CommitId, filesAtTagRevision[file.Name].CommitId);
+
+							AddToMoveList(ref filesToMove, fileRevision);
+						}
+						else if (state[branch][file.Name] != Revision.Empty && IsAddedFile(fileRevision, tag))
+						{
+							m_log.WriteLine("  File {0} not tagged with {1}, assuming added after tag was made",
+									file.Name, tag);
+							AddToMoveList(ref filesToMove, fileRevision);
+						}
+					}
+				}
+
+				if (filesToMove != null)
+				{
+					if (moveRecord == null)
+					{
+						moveRecord = new CommitMoveRecord(finalCommit, m_log);
+						moveRecords.Add(moveRecord);
+					}
+					moveRecord.AddCommit(commit, filesToMove);
+				}
+
+				if (commit == finalCommit)
+					break;
+			}
+
+			return moveRecords;
+		}
+
+		private bool IsAddedFile(FileRevision fileRevision, string tag)
+		{
+			var file = fileRevision.File;
+			return (GetRevisionForTag(file, tag) == Revision.Empty && m_missingFiles[tag].Contains(file.Name));
+		}
+
+		private static void AddToMoveList(ref List<FileRevision> filesToMove, FileRevision fileRevision)
+		{
+			if (filesToMove == null)
+				filesToMove = new List<FileRevision>() { fileRevision };
+			else
+				filesToMove.Add(fileRevision);
 		}
 	}
 }
