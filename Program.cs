@@ -96,8 +96,9 @@ namespace CTC.CvsntGitImporter
 
 			// build lookup of all files
 			var allFiles = new Dictionary<string, FileInfo>();
-			foreach (var f in parser.Files)
+			foreach (var f in parser.Files.Where(f => m_switches.FileMatcher.Match(f.Name)))
 				allFiles.Add(f.Name, f);
+
 			WriteExcludedFileLog(parser);
 
 			var tagResolver = new TagResolver(m_log, commits, allFiles, m_switches.TagMatcher);

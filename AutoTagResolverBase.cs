@@ -115,7 +115,7 @@ namespace CTC.CvsntGitImporter
 
 		private bool ResolveTag(string tag, out Commit candidate)
 		{
-			var state = new RepositoryState();
+			var state = RepositoryState.CreateWithFullBranchState(m_allFiles);
 			candidate = null;
 
 			foreach (var commit in m_commits)
@@ -135,10 +135,10 @@ namespace CTC.CvsntGitImporter
 
 		private bool IsCandidate(string tag, Commit commit)
 		{
-			return commit.Any(r =>
-					GetTagsForFileRevision(r.File, r.Revision).Contains(tag) ||
-					r.IsDead && GetRevisionForTag(r.File, tag) == Revision.Empty);
-		}
+				return commit.Any(r =>
+						GetTagsForFileRevision(r.File, r.Revision).Contains(tag) ||
+						r.IsDead && GetRevisionForTag(r.File, tag) == Revision.Empty);
+			}
 
 		private FileInfo m_lastMatchFailure;
 
@@ -222,7 +222,7 @@ namespace CTC.CvsntGitImporter
 		{
 			var moveRecords = new List<CommitMoveRecord>();
 			CommitMoveRecord moveRecord = null;
-			var state = new RepositoryState();
+			var state = RepositoryState.CreateWithFullBranchState(m_allFiles);
 			var filesAtTagRevision = new Dictionary<string, Commit>();
 			var finalCommit = finalCommits[tag];
 			var branch = finalCommit.Branch;
@@ -280,7 +280,7 @@ namespace CTC.CvsntGitImporter
 
 		private IEnumerable<string> FindUntaggedFiles(Commit finalCommit, string tag)
 		{
-			var state = new RepositoryState();
+			var state = RepositoryState.CreateWithFullBranchState(m_allFiles);
 
 			foreach (var commit in m_commits)
 			{

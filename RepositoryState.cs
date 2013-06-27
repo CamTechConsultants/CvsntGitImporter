@@ -14,6 +14,31 @@ namespace CTC.CvsntGitImporter
 	class RepositoryState
 	{
 		private readonly Dictionary<string, RepositoryBranchState> m_branches = new Dictionary<string, RepositoryBranchState>();
+		private readonly Dictionary<string, FileInfo> m_allFiles;
+		private readonly bool m_setupInitialBranchState;
+
+		private RepositoryState(Dictionary<string, FileInfo> allFiles, bool setupInitialBranchState)
+		{
+			m_allFiles = allFiles;
+			m_setupInitialBranchState = setupInitialBranchState;
+		}
+
+		/// <summary>
+		/// Create an instance of RepositoryState that tracks the full state of each branch, i.e. each
+		/// branch inherits all live files from its parent.
+		/// </summary>
+		public static RepositoryState CreateWithFullBranchState(Dictionary<string, FileInfo> allFiles)
+		{
+			return new RepositoryState(allFiles, true);
+		}
+
+		/// <summary>
+		/// Create an instance of RepositoryState that tracks only new files added on a branch.
+		/// </summary>
+		public static RepositoryState CreateWithBranchChangesOnly()
+		{
+			return new RepositoryState(null, false);
+		}
 
 		/// <summary>
 		/// Gets the state for a branch.
@@ -26,7 +51,7 @@ namespace CTC.CvsntGitImporter
 				if (m_branches.TryGetValue(branch, out state))
 					return state;
 
-				state = new RepositoryBranchState(branch);
+				state = CreateBranchState(branch);
 				m_branches[branch] = state;
 				return state;
 			}
@@ -39,13 +64,25 @@ namespace CTC.CvsntGitImporter
 		{
 			var state = this[commit.Branch];
 			state.Apply(commit);
+		}
 
-			// create copies of current state for any branches
-			foreach (var branch in commit.Branches.Select(c => c.Branch))
+		private RepositoryBranchState CreateBranchState(string branch)
+		{
+			var state = new RepositoryBranchState(branch);
+
+			if (m_setupInitialBranchState)
 			{
-				if (!m_branches.ContainsKey(branch))
-					m_branches[branch] = state.Copy(branch);
+				foreach (var file in m_allFiles.Values)
+				{
+					var branchRevision = file.GetBranchpointForBranch(branch);
+					if (branchRevision == Revision.Empty)
+						continue;
+
+					state.SetUnsafe(file.Name, branchRevision);
+				}
 			}
+
+			return state;
 		}
 	}
 }

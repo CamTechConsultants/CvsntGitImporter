@@ -42,8 +42,16 @@ namespace CTC.CvsntGitImporter
 							value, filename, previousRevision));
 				}
 
-				m_files[filename] = value;
+				SetUnsafe(filename, value);
 			}
+		}
+
+		/// <summary>
+		/// Set the revision for a file without any checks.
+		/// </summary>
+		public void SetUnsafe(string filename, Revision value)
+		{
+			m_files[filename] = value;
 		}
 
 		/// <summary>

@@ -19,7 +19,7 @@ namespace CTC.CvsntGitImporter
 		private readonly InclusionMatcher m_fileMatcher;
 		private readonly InclusionMatcher m_headOnly;
 		private readonly Renamer m_branchRenamer;
-		private readonly RepositoryState m_headOnlyState = new RepositoryState();
+		private readonly RepositoryState m_headOnlyState;
 
 		public ExclusionFilter(ILogger log, InclusionMatcher fileMatcher, InclusionMatcher headOnly, Renamer branchRenamer)
 		{
@@ -27,6 +27,7 @@ namespace CTC.CvsntGitImporter
 			m_fileMatcher = fileMatcher;
 			m_headOnly = headOnly;
 			m_branchRenamer = branchRenamer;
+			m_headOnlyState = RepositoryState.CreateWithBranchChangesOnly();
 		}
 
 		public RepositoryState HeadOnlyState
