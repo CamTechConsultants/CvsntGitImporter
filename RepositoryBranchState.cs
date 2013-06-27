@@ -39,7 +39,7 @@ namespace CTC.CvsntGitImporter
 				{
 					throw new RepositoryConsistencyException(String.Format(
 							"Revision r{0} in {1} did not directly precede r{2}",
-							value, previousRevision, filename));
+							value, filename, previousRevision));
 				}
 
 				m_files[filename] = value;
