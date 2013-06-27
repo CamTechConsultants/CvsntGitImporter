@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using CTC.CvsntGitImporter.Utils;
 
 namespace CTC.CvsntGitImporter
 {
@@ -20,12 +21,6 @@ namespace CTC.CvsntGitImporter
 		private readonly IList<Commit> m_commits;
 		private readonly Dictionary<string, FileInfo> m_allFiles;
 		private readonly bool m_branches;
-
-		private HashSet<string> m_allTags;
-		private Dictionary<string, Commit> m_finalCommits;
-
-		private OneToManyDictionary<string, string> m_missingFiles;
-		private IEnumerable<string> m_problematicTags;
 
 		protected AutoTagResolverBase(ILogger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles,
 				bool branches = false)
@@ -46,9 +41,10 @@ namespace CTC.CvsntGitImporter
 		/// <summary>
 		/// Gets a lookup that returns the resolved commits for each tag.
 		/// </summary>
-		public IDictionary<string, Commit> ResolvedCommits
+		public IDictionary<string, Commit> ResolvedTags
 		{
-			get { return m_finalCommits; }
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -56,7 +52,8 @@ namespace CTC.CvsntGitImporter
 		/// </summary>
 		public IEnumerable<string> UnresolvedTags
 		{
-			get { return m_problematicTags ?? Enumerable.Empty<string>(); }
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -65,37 +62,6 @@ namespace CTC.CvsntGitImporter
 		public IEnumerable<Commit> Commits
 		{
 			get { return m_commits; }
-		}
-
-		/// <summary>
-		/// Resolve tags and try and fix those that don't immediately resolve.
-		/// </summary>
-		/// <returns>true if all tags were resolved (potentially after being fixed), or false
-		/// if fixing tags failed</returns>
-		public bool Resolve(IEnumerable<string> tags)
-		{
-			m_allTags = new HashSet<string>(tags);
-			m_finalCommits = FindCommitsPerTag();
-
-			var candidateCommits = FindCandidateCommits(m_finalCommits);
-			m_problematicTags = FindProblematicTags(candidateCommits);
-
-			if (m_problematicTags.Any())
-				return AttemptFix();
-			else
-				return true;
-		}
-
-		private bool AttemptFix()
-		{
-			// analyse and hopefully fix
-			AnalyseProblematicTags(m_problematicTags, m_finalCommits);
-
-			var newFinalCommits = FindCommitsPerTag();
-			var newCandidateCommits = FindCandidateCommits(newFinalCommits);
-			var newProblematicTags = FindProblematicTags(newCandidateCommits);
-			m_problematicTags = newProblematicTags;
-			return !newProblematicTags.Any();
 		}
 
 		/// <summary>
@@ -109,114 +75,125 @@ namespace CTC.CvsntGitImporter
 		protected abstract Revision GetRevisionForTag(FileInfo file, string tag);
 
 		/// <summary>
+		/// Resolve tags and try and fix those that don't immediately resolve.
+		/// </summary>
+		/// <returns>true if all tags were resolved (potentially after being fixed), or false
+		/// if fixing tags failed</returns>
+		public virtual bool Resolve(IEnumerable<string> tags)
+		{
+			this.UnresolvedTags = Enumerable.Empty<string>();
+			this.ResolvedTags = new Dictionary<string, Commit>();
+			var problematicTags = new Dictionary<string, Commit>();
+
+			foreach (var tag in tags.Where(t => MatchTag(t)))
+			{
+				Commit commit;
+				if (ResolveTag(tag, out commit))
+					ResolvedTags[tag] = commit;
+				else
+					problematicTags.Add(tag, commit);
+			}
+
+			// attempt fix
+			if (problematicTags.Count > 0)
+			{
+				m_log.WriteLine("Problematic:");
+				using (m_log.Indent())
+				{
+					foreach (var kvp in problematicTags.OrderBy(i => i.Key, StringComparer.CurrentCultureIgnoreCase))
+						m_log.WriteLine("{0}: {1}", kvp.Key, kvp.Value.ConciseFormat);
+				}
+
+				return AttemptFix(problematicTags);
+			}
+			else
+			{
+				m_log.WriteLine("All tags resolved");
+				return true;
+			}
+		}
+
+		private bool ResolveTag(string tag, out Commit candidate)
+		{
+			var state = new RepositoryState();
+			candidate = null;
+
+			foreach (var commit in m_commits)
+			{
+				state.Apply(commit);
+				if (IsCandidate(tag, commit))
+				{
+					candidate = commit;
+
+					if (IsCommitForTag(state, tag, commit))
+						return true;
+				}
+			}
+
+			return false;
+		}
+
+		private bool IsCandidate(string tag, Commit commit)
+		{
+			return commit.Any(r =>
+					GetTagsForFileRevision(r.File, r.Revision).Contains(tag) ||
+					r.IsDead && GetRevisionForTag(r.File, tag) == Revision.Empty);
+		}
+
+		private FileInfo m_lastMatchFailure;
+
+		private bool IsCommitForTag(RepositoryState state, string tag, Commit candidate)
+		{
+			var branchState = state[candidate.Branch];
+
+			// optimisation - check the last file that failed first
+			if (m_lastMatchFailure != null && !IsFileAtTag(branchState, m_lastMatchFailure, tag))
+				return false;
+
+			foreach (var file in m_allFiles.Values)
+			{
+				if (!IsFileAtTag(branchState, file, tag))
+				{
+					m_lastMatchFailure = file;
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		protected virtual bool IsFileAtTag(RepositoryBranchState state, FileInfo file, string tag)
+		{
+			return state[file.Name] == GetRevisionForTag(file, tag);
+		}
+
+		private bool AttemptFix(Dictionary<string, Commit> tags)
+		{
+			AnalyseProblematicTags(tags);
+
+			var failedTags = new List<string>();
+			foreach (var tag in tags.Keys.Where(t => MatchTag(t)))
+			{
+				Commit commit;
+				if (ResolveTag(tag, out commit))
+					ResolvedTags[tag] = commit;
+				else
+					failedTags.Add(tag);
+			}
+
+			this.UnresolvedTags = failedTags;
+			return failedTags.Count == 0;
+		}
+
+		/// <summary>
 		/// Should a tag be processed or not?
 		/// </summary>
 		protected virtual bool MatchTag(string tag)
 		{
-			return m_allTags.Contains(tag);
+			return true;
 		}
 
-		/// <summary>
-		/// Find the last commit for each tag.
-		/// </summary>
-		private Dictionary<string, Commit> FindCommitsPerTag()
-		{
-			var tags = new Dictionary<string, Commit>();
-
-			foreach (var commit in m_commits)
-			{
-				foreach (var file in commit)
-				{
-					foreach (var tag in GetTagsForFileRevision(file.File, file.Revision))
-					{
-						if (MatchTag(tag))
-							tags[tag] = commit;
-					}
-				}
-			}
-
-			return tags;
-		}
-
-		/// <summary>
-		/// Build the inverse of CommitsPerTag - a lookup of commits to tags that it is supposed to be the commit for.
-		/// </summary>
-		private static OneToManyDictionary<Commit, string> FindCandidateCommits(Dictionary<string, Commit> tags)
-		{
-			var candidateCommits = new OneToManyDictionary<Commit, string>(CommitComparer.ById);
-
-			foreach (var kvp in tags)
-				candidateCommits.Add(kvp.Value, kvp.Key);
-
-			return candidateCommits;
-		}
-
-		/// <summary>
-		/// Replay commits and find any candidate commits where any files are not in the correct state, i.e. they
-		/// do not have the tag applied at the point the candidate commit for the tag is applied.
-		/// </summary>
-		/// <returns>a list of tags that do not have a single commit that represents them</returns>
-		private IEnumerable<string> FindProblematicTags(OneToManyDictionary<Commit, string> candidateCommits)
-		{
-			// now replay commits and check that all files are in the correct state for each tag
-			var state = new RepositoryState();
-			var problematicTags = new HashSet<string>();
-			List<string> partialTags = null;
-			m_missingFiles = new OneToManyDictionary<string, string>();
-
-			m_log.DoubleRuleOff();
-			m_log.WriteLine("Finding problematic {0}...", m_branches ? "branches" : "tags");
-
-			using (m_log.Indent())
-			{
-				foreach (var commit in m_commits)
-				{
-					state.Apply(commit);
-
-					// if the commit is a candidate for being tagged, then check that all files are at the correct version
-					foreach (var tag in candidateCommits[commit])
-					{
-						var branchState = state[commit.Branch];
-						foreach (var filename in branchState.LiveFiles)
-						{
-							var file = m_allFiles[filename];
-							if (!GetTagsForFileRevision(file, branchState[filename]).Contains(tag))
-							{
-								if (GetRevisionForTag(file, tag) == Revision.Empty)
-								{
-									m_log.WriteLine("File {0} not tagged with tag {1}!", filename, tag);
-									m_missingFiles.Add(tag, filename);
-									if (PartialTagThreshold > 0 && m_missingFiles[tag].Count() >= PartialTagThreshold)
-									{
-										m_log.WriteLine("Partial: {0}", tag);
-										AddAndCreateList(ref partialTags, tag);
-										break;
-									}
-								}
-
-								m_log.WriteLine("No commit found for tag {0}  Commit: {1}  File: {2},r{3}",
-										tag, commit.CommitId, filename, branchState[filename]);
-								problematicTags.Add(tag);
-							}
-						}
-					}
-				}
-
-				if (partialTags != null)
-				{
-					throw new ImportFailedException(String.Format(
-							"Partial branches/tags found: {0}",
-							String.Join(", ", partialTags)));
-				}
-
-				if (!problematicTags.Any())
-					m_log.WriteLine("None found");
-			}
-
-			return problematicTags;
-		}
-
-		private void AnalyseProblematicTags(IEnumerable<string> tags, Dictionary<string, Commit> finalCommits)
+		private void AnalyseProblematicTags(Dictionary<string, Commit> tags)
 		{
 			var moveRecords = new List<CommitMoveRecord>();
 
@@ -225,10 +202,10 @@ namespace CTC.CvsntGitImporter
 
 			using (m_log.Indent())
 			{
-				foreach (var tag in tags)
+				foreach (var tag in tags.Keys)
 				{
 					m_log.WriteLine("Tag {0}:", tag);
-					moveRecords.AddRange(AnalyseProblematicTag(tag, finalCommits));
+					moveRecords.AddRange(AnalyseProblematicTag(tag, tags));
 					m_log.RuleOff();
 				}
 
@@ -241,7 +218,7 @@ namespace CTC.CvsntGitImporter
 			}
 		}
 
-		private IEnumerable<CommitMoveRecord> AnalyseProblematicTag(string tag,Dictionary<string,Commit> finalCommits)
+		private IEnumerable<CommitMoveRecord> AnalyseProblematicTag(string tag, Dictionary<string, Commit> finalCommits)
 		{
 			var moveRecords = new List<CommitMoveRecord>();
 			CommitMoveRecord moveRecord = null;
@@ -250,6 +227,8 @@ namespace CTC.CvsntGitImporter
 			var finalCommit = finalCommits[tag];
 			var branch = finalCommit.Branch;
 			var commitsToMove = new List<Commit>();
+
+			var untaggedFiles = FindUntaggedFiles(finalCommit, tag).ToHashSet();
 
 			foreach (var commit in m_commits)
 			{
@@ -272,7 +251,7 @@ namespace CTC.CvsntGitImporter
 
 							AddAndCreateList(ref filesToMove, fileRevision);
 						}
-						else if (state[branch][file.Name] != Revision.Empty && IsAddedFile(fileRevision, tag))
+						else if (state[branch][file.Name] != Revision.Empty && untaggedFiles.Contains(file.Name))
 						{
 							m_log.WriteLine("  File {0} not tagged with {1}, assuming added after tag was made",
 									file.Name, tag);
@@ -299,10 +278,28 @@ namespace CTC.CvsntGitImporter
 			return moveRecords;
 		}
 
+		private IEnumerable<string> FindUntaggedFiles(Commit finalCommit, string tag)
+		{
+			var state = new RepositoryState();
+
+			foreach (var commit in m_commits)
+			{
+				state.Apply(commit);
+				if (commit == finalCommit)
+					break;
+			}
+
+			foreach (var fileName in state[finalCommit.Branch].LiveFiles)
+			{
+				if (GetRevisionForTag(m_allFiles[fileName], tag) == Revision.Empty)
+					yield return fileName;
+			}
+		}
+
 		private bool IsAddedFile(FileRevision fileRevision, string tag)
 		{
 			var file = fileRevision.File;
-			return (GetRevisionForTag(file, tag) == Revision.Empty && m_missingFiles[tag].Contains(file.Name));
+			return (GetRevisionForTag(file, tag) == Revision.Empty /*&& m_missingFiles[tag].Contains(file.Name)*/);
 		}
 
 		private static void AddAndCreateList<T>(ref List<T> list, T item)

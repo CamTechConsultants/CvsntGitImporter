@@ -19,7 +19,7 @@ namespace CTC.CvsntGitImporter
 		/// <returns></returns>
 		public static IEnumerable<string> ResolvedTags(this ITagResolver resolver)
 		{
-			return resolver.ResolvedCommits.Keys.OrderBy(t => t);
+			return resolver.ResolvedTags.Keys.OrderBy(t => t);
 		}
 	}
 }

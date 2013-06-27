@@ -24,7 +24,7 @@ namespace CTC.CvsntGitImporter
 			m_branchpointRule = branchpointRule;
 		}
 
-		public IDictionary<string, Commit> ResolvedCommits
+		public IDictionary<string, Commit> ResolvedTags
 		{
 			get { return m_resolvedCommits; }
 		}
@@ -53,7 +53,7 @@ namespace CTC.CvsntGitImporter
 					var tag = rule.Apply(branch);
 
 					Commit commit;
-					if (m_tagResolver.ResolvedCommits.TryGetValue(tag, out commit))
+					if (m_tagResolver.ResolvedTags.TryGetValue(tag, out commit))
 					{
 						m_resolvedCommits[branch] = commit;
 						m_log.WriteLine("Branch {0} -> Tag {1}", branch, tag);
@@ -69,7 +69,7 @@ namespace CTC.CvsntGitImporter
 			if (otherBranches.Any())
 			{
 				var result = m_fallback.Resolve(otherBranches);
-				foreach (var kvp in m_fallback.ResolvedCommits)
+				foreach (var kvp in m_fallback.ResolvedTags)
 					m_resolvedCommits[kvp.Key] = kvp.Value;
 				return result;
 			}

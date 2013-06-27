@@ -28,6 +28,7 @@ namespace CTC.CvsntGitImporter.TestCode
 		{
 			var file1 = new FileInfo("file1").WithBranch("branch1", "1.1.0.2");
 			var file2 = new FileInfo("file2").WithBranch("branch1", "1.1.0.2");
+			file2.BranchAddedOn = "branch1";
 
 			var commits = new List<Commit>()
 			{
@@ -41,7 +42,7 @@ namespace CTC.CvsntGitImporter.TestCode
 			var result = resolver.Resolve(new[] { "branch1" });
 
 			Assert.IsTrue(result, "Resolve succeeded");
-			Assert.AreSame(resolver.ResolvedCommits["branch1"], commits[0]);
+			Assert.AreSame(resolver.ResolvedTags["branch1"], commits[0]);
 			Assert.IsTrue(resolver.Commits.SequenceEqual(commits), "Commits not reordered");
 		}
 
@@ -63,7 +64,7 @@ namespace CTC.CvsntGitImporter.TestCode
 			var result = resolver.Resolve(new[] { "branch1" });
 
 			Assert.IsTrue(result, "Resolve succeeded");
-			Assert.AreSame(resolver.ResolvedCommits["branch1"], commits[2]);
+			Assert.AreSame(resolver.ResolvedTags["branch1"], commits[2]);
 			Assert.IsTrue(resolver.Commits.SequenceEqual(commits), "Commits not reordered");
 		}
 	}

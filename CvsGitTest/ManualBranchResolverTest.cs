@@ -37,13 +37,13 @@ namespace CTC.CvsntGitImporter.TestCode
 			{
 				{ "branch-branchpoint", commit1 },
 			};
-			m_tagResolver.Stub(tr => tr.ResolvedCommits).Return(resolvedTags);
+			m_tagResolver.Stub(tr => tr.ResolvedTags).Return(resolvedTags);
  
 			var resolver = new ManualBranchResolver(m_log, fallback, m_tagResolver, m_rule);
 			bool result = resolver.Resolve(new[] { "branch" });
 
 			Assert.IsTrue(result, "Resolved");
-			Assert.AreSame(resolver.ResolvedCommits["branch"], commit1);
+			Assert.AreSame(resolver.ResolvedTags["branch"], commit1);
 			fallback.AssertWasNotCalled(f => f.Resolve(Arg<IEnumerable<string>>.Is.Anything));
 		}
 
@@ -58,16 +58,16 @@ namespace CTC.CvsntGitImporter.TestCode
 
 			var fallback = MockRepository.GenerateMock<ITagResolver>();
 			fallback.Stub(f => f.Resolve(Arg<IEnumerable<string>>.Is.Anything)).Return(true);
-			fallback.Stub(f => f.ResolvedCommits).Return(resolvedCommits);
+			fallback.Stub(f => f.ResolvedTags).Return(resolvedCommits);
 
 			var resolvedTags = new Dictionary<string, Commit>();
-			m_tagResolver.Stub(tr => tr.ResolvedCommits).Return(resolvedTags);
+			m_tagResolver.Stub(tr => tr.ResolvedTags).Return(resolvedTags);
  
 			var resolver = new ManualBranchResolver(m_log, fallback, m_tagResolver, m_rule);
 			bool result = resolver.Resolve(new[] { "branch" });
 
 			Assert.IsTrue(result, "Resolved");
-			Assert.AreSame(resolver.ResolvedCommits["branch"], commit1);
+			Assert.AreSame(resolver.ResolvedTags["branch"], commit1);
 		}
 
 		[TestMethod]
@@ -77,11 +77,11 @@ namespace CTC.CvsntGitImporter.TestCode
 
 			var fallback = MockRepository.GenerateMock<ITagResolver>();
 			fallback.Stub(f => f.Resolve(Arg<IEnumerable<string>>.Is.Anything)).Return(false);
-			fallback.Stub(f => f.ResolvedCommits).Return(resolvedCommits);
+			fallback.Stub(f => f.ResolvedTags).Return(resolvedCommits);
 			fallback.Stub(f => f.UnresolvedTags).Return(new[] { "branch" });
 
 			var resolvedTags = new Dictionary<string, Commit>();
-			m_tagResolver.Stub(tr => tr.ResolvedCommits).Return(resolvedTags);
+			m_tagResolver.Stub(tr => tr.ResolvedTags).Return(resolvedTags);
  
 			var resolver = new ManualBranchResolver(m_log, fallback, m_tagResolver, m_rule);
 			bool result = resolver.Resolve(new[] { "branch" });

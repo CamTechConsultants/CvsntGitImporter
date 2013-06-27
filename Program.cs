@@ -138,7 +138,7 @@ namespace CTC.CvsntGitImporter
 			WriteTagLog("alltags.log", tagResolver, parser.ExcludedTags, m_switches.TagRename);
 			WriteUserLog("allusers.log", commits);
 
-			var streams = commits.SplitBranchStreams(branchResolver.ResolvedCommits);
+			var streams = commits.SplitBranchStreams(branchResolver.ResolvedTags);
 
 			// resolve merges
 			var mergeResolver = new MergeResolver(m_log, streams, branchResolver.ResolvedTags());
@@ -151,7 +151,7 @@ namespace CTC.CvsntGitImporter
 
 			// store data needed for import
 			m_streams = streams;
-			m_resolvedTags = tagResolver.ResolvedCommits;
+			m_resolvedTags = tagResolver.ResolvedTags;
 		}
 
 		private static void Import()

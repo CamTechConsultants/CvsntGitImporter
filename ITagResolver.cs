@@ -16,7 +16,7 @@ namespace CTC.CvsntGitImporter
 		/// <summary>
 		/// Gets a lookup that returns the resolved commits for each tag.
 		/// </summary>
-		IDictionary<string, Commit> ResolvedCommits { get; }
+		IDictionary<string, Commit> ResolvedTags { get; }
 
 		/// <summary>
 		/// Gets a list of any unresolved tags.

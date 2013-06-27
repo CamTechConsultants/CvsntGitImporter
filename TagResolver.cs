@@ -13,6 +13,7 @@ namespace CTC.CvsntGitImporter
 	/// </summary>
 	class TagResolver : AutoTagResolverBase
 	{
+		private readonly ILogger m_log;
 		private readonly InclusionMatcher m_tagMatcher;
 		private HashSet<string> m_extraTags;
 
@@ -25,8 +26,20 @@ namespace CTC.CvsntGitImporter
 		public TagResolver(ILogger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles, InclusionMatcher tagMatcher) :
 				base(log: log, commits: commits, allFiles: allFiles)
 		{
+			m_log = log;
 			m_tagMatcher = tagMatcher;
 			ExtraTags = Enumerable.Empty<string>();
+		}
+
+		public override bool Resolve(IEnumerable<string> tags)
+		{
+			m_log.DoubleRuleOff();
+			m_log.WriteLine("Resolving tags");
+
+			using (m_log.Indent())
+			{
+				return base.Resolve(tags);
+			}
 		}
 
 		protected override IEnumerable<string> GetTagsForFileRevision(FileInfo file, Revision revision)
