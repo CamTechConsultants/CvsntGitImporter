@@ -173,10 +173,13 @@ namespace CTC.CvsntGitImporter
 
 		public override string ToString()
 		{
-			return String.Join(".", m_parts);
+			if (m_parts.Length == 0)
+				return "<none>";
+			else
+				return String.Join(".", m_parts);
 		}
 
-		public static bool operator==(Revision a, string b)
+		public static bool operator ==(Revision a, string b)
 		{
 			return a.ToString() == b;
 		}
