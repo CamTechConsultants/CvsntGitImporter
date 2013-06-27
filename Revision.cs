@@ -19,7 +19,15 @@ namespace CTC.CvsntGitImporter
 
 		private int[] m_parts;
 
+		/// <summary>
+		/// The empty revision.
+		/// </summary>
 		public static Revision Empty = new Revision(new int[0]);
+
+		/// <summary>
+		/// The first revision of any file.
+		/// </summary>
+		public static Revision First = Revision.Create("1.1");
 
 		private Revision(string value)
 		{
@@ -127,6 +135,11 @@ namespace CTC.CvsntGitImporter
 		/// </summary>
 		public bool DirectlyPrecedes(Revision other)
 		{
+			if (other == Revision.Empty)
+				return false;
+			else if (other == Revision.First)
+				return this == Revision.Empty;
+
 			var precedingParts = new int[other.m_parts.Length];
 			Array.Copy(other.m_parts, precedingParts, other.m_parts.Length);
 

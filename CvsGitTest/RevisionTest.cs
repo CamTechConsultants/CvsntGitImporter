@@ -208,6 +208,15 @@ namespace CTC.CvsntGitImporter.TestCode
 			Assert.IsFalse(r2.DirectlyPrecedes(r1));
 		}
 
+		[TestMethod]
+		public void DirectlyPrecedes_FirstTrunkRevision_PrecededByNone()
+		{
+			var r1 = Revision.Empty;
+			var r2 = Revision.Create("1.1");
+			Assert.IsTrue(r1.DirectlyPrecedes(r2));
+			Assert.IsFalse(r2.DirectlyPrecedes(r1));
+		}
+
 		#endregion DirectlyPrecedes
 
 
