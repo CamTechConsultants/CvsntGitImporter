@@ -37,6 +37,8 @@ namespace CTC.CvsntGitImporter
 			{
 				var filename = GetLogFilePath("import.log");
 				m_writer = new StreamWriter(filename, false, Encoding.UTF8);
+
+				Console.CancelKeyPress += (_, e) => m_writer.Close();
 			}
 			catch (System.Security.SecurityException se)
 			{
