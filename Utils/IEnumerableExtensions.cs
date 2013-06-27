@@ -24,5 +24,21 @@ namespace CTC.CvsntGitImporter.Utils
 		{
 			return String.Join(separator, source);
 		}
+
+		/// <summary>
+		/// Create a HashSet from a list of items.
+		/// </summary>
+		public static HashSet<T> ToHashSet<T>(this IEnumerable<T> source)
+		{
+			return new HashSet<T>(source);
+		}
+
+		/// <summary>
+		/// Create a HashSet from a list of items.
+		/// </summary>
+		public static HashSet<T> ToHashSet<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer)
+		{
+			return new HashSet<T>(source, comparer);
+		}
 	}
 }
