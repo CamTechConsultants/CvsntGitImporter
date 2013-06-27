@@ -6,6 +6,7 @@
 using System;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace CTC.CvsntGitImporter
 {
@@ -35,6 +36,18 @@ namespace CTC.CvsntGitImporter
 		public string Branch
 		{
 			get { return this.File.GetBranch(this.Revision); }
+		}
+
+		/// <summary>
+		/// Is this file revision merely recording on the trunk that the file was actually added on another
+		/// branch?
+		/// </summary>
+		public bool IsAddedOnAnotherBranch
+		{
+			get
+			{
+				return Revision == "1.1" && IsDead && Regex.IsMatch(Message, @"file .* was initially added on branch ");
+			}
 		}
 
 		public FileRevision(FileInfo file, Revision revision, Revision mergepoint, DateTime time, string author,

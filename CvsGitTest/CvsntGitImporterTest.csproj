@@ -74,6 +74,7 @@
     <Compile Include="FileInfoExtensions.cs" />
     <Compile Include="FileInfoTest.cs" />
     <Compile Include="FileRevisionExtensions.cs" />
+    <Compile Include="FileRevisionTest.cs" />
     <Compile Include="GitRepoTest.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="ManualBranchResolverTest.cs" />

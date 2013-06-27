@@ -31,7 +31,7 @@ namespace CTC.CvsntGitImporter
 		public IEnumerable<Commit> GetCommits()
 		{
 			var revisions = from r in m_fileRevisions
-							where !(r.Revision == "1.1" && r.IsDead && Regex.IsMatch(r.Message, @"file .* was initially added on branch "))
+							where !r.IsAddedOnAnotherBranch
 							select r;
 
 			var lookup = new Dictionary<string, Commit>();
