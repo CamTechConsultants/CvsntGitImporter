@@ -30,16 +30,16 @@ namespace CTC.CvsntGitImporter
 		/// </summary>
 		public IEnumerable<Commit> GetCommits()
 		{
-			var revisions = from r in m_fileRevisions
-							where !r.IsAddedOnAnotherBranch
-							select r;
-
 			var lookup = new Dictionary<string, Commit>();
 			using (var commitsByMessage = new CommitsByMessage(m_log))
 			{
-				foreach (var revision in revisions)
+				foreach (var revision in m_fileRevisions)
 				{
-					if (revision.CommitId.Length == 0)
+					if (revision.IsAddedOnAnotherBranch)
+					{
+						revision.File.BranchAddedOn = GetBranchAddedOn(revision.Message);
+					}
+					else if (revision.CommitId.Length == 0)
 					{
 						commitsByMessage.Add(revision);
 					}
@@ -62,6 +62,18 @@ namespace CTC.CvsntGitImporter
 			}
 		}
 
+		private static string GetBranchAddedOn(string message)
+		{
+			var match = Regex.Match(message, @"initially added on branch (\S+)");
+			if (!match.Success)
+			{
+				throw new ArgumentException(String.Format(
+						"Trying to extract branch name from message, but message in incorrect format: '{0}'",
+						message));
+			}
+
+			return match.Groups[1].Value;
+		}
 
 		private class CommitsByMessage : IDisposable
 		{

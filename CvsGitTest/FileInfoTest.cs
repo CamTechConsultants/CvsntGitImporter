@@ -59,6 +59,18 @@ namespace CTC.CvsntGitImporter.TestCode
 		#endregion AllTags
 
 
+		#region BranchAddedOn
+
+		[TestMethod]
+		public void BranchCreatedOn_DefaultsToMain()
+		{
+			var file = new FileInfo("file");
+			Assert.AreEqual(file.BranchAddedOn, "MAIN");
+		}
+
+		#endregion BranchAddedOn
+
+
 		#region GetTagsForRevision
 
 		[TestMethod]

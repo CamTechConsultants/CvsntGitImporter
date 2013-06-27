@@ -27,6 +27,11 @@ namespace CTC.CvsntGitImporter
 		public readonly string Name;
 
 		/// <summary>
+		/// The name of the branch that the file was created on.
+		/// </summary>
+		public string BranchAddedOn = "MAIN";
+
+		/// <summary>
 		/// Gets a list of all a file's tags.
 		/// </summary>
 		public IEnumerable<string> AllTags

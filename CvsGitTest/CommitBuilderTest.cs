@@ -37,7 +37,25 @@ namespace CTC.CvsntGitImporter.TestCode
 			var builder = new CommitBuilder(m_log, revisions);
 			var commits = builder.GetCommits().ToList();
 
-			Assert.IsTrue(commits.Single().Single().Revision.ToString() == "1.1.2.1");
+			var fileRevision = commits.Single().Single();
+			Assert.IsTrue(fileRevision.Revision.ToString() == "1.1.2.1");
+			Assert.AreEqual(fileRevision.File.BranchAddedOn, "branch");
+		}
+
+		[TestMethod]
+		public void FileAddedOnTrunk_BranchAddedOnUnchanged()
+		{
+			var file = new FileInfo("file.txt");
+			var revisions = new[]
+			{
+				file.CreateRevision("1.1", "main", isDead: true).WithMessage("created"),
+			};
+
+			var builder = new CommitBuilder(m_log, revisions);
+			var commits = builder.GetCommits().ToList();
+
+			var fileRevision = commits.Single().Single();
+			Assert.AreEqual(fileRevision.File.BranchAddedOn, "MAIN");
 		}
 
 		[TestMethod]
