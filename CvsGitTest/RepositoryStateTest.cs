@@ -39,5 +39,24 @@ namespace CTC.CvsntGitImporter.TestCode
 			Assert.AreEqual(state["branch"]["file2"].ToString(), "1.1");
 			Assert.AreEqual(state["branch"]["file3"].ToString(), "1.2");
 		}
+
+		[TestMethod]
+		public void WithFullBranchState_FileAddedOnBranch()
+		{
+			var f1 = new FileInfo("file1").WithBranch("branch", "1.1.0.2");
+			var f2 = new FileInfo("file2").WithBranch("branch", "1.1.0.2");
+
+			var mainCommit = new Commit("c1").WithRevision(f1, "1.1");
+			var commits = new[] { mainCommit };
+			var allFiles = commits.CreateAllFiles();
+			allFiles.Add(f2.Name, f2);
+
+			var state = RepositoryState.CreateWithFullBranchState(allFiles);
+			state.Apply(mainCommit);
+
+			Assert.AreEqual(state["branch"].LiveFiles.Single(), "file1");
+			Assert.AreEqual(state["branch"]["file1"].ToString(), "1.1");
+			Assert.AreSame(state["branch"]["file2"], Revision.Empty);
+		}
 	}
 }

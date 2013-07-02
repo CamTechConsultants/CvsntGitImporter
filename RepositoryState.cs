@@ -74,11 +74,15 @@ namespace CTC.CvsntGitImporter
 			{
 				foreach (var file in m_allFiles.Values)
 				{
-					var branchRevision = file.GetBranchpointForBranch(branch);
-					if (branchRevision == Revision.Empty)
+					var branchpointRevision = file.GetBranchpointForBranch(branch);
+					if (branchpointRevision == Revision.Empty)
 						continue;
 
-					state.SetUnsafe(file.Name, branchRevision);
+					var sourceBranch = file.GetBranch(branchpointRevision);
+					var sourceBranchRevision = this[sourceBranch][file.Name];
+
+					if (sourceBranchRevision != Revision.Empty)
+						state.SetUnsafe(file.Name, branchpointRevision);
 				}
 			}
 
