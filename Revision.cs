@@ -13,7 +13,7 @@ namespace CTC.CvsntGitImporter
 	/// <summary>
 	/// Represents a CVS revision number.
 	/// </summary>
-	class Revision
+	class Revision : IComparable<Revision>
 	{
 		private static Dictionary<string, Revision> m_cache = new Dictionary<string, Revision>();
 
@@ -221,6 +221,22 @@ namespace CTC.CvsntGitImporter
 		public override int GetHashCode()
 		{
 			return m_parts.GetHashCode();
+		}
+
+		public int CompareTo(Revision other)
+		{
+			if (other == Revision.Empty)
+				return (this == Revision.Empty) ? 0 : 1;
+
+			int commonLen = Math.Min(this.m_parts.Length, other.m_parts.Length);
+			for (int i = 0; i < commonLen; i++)
+			{
+				int partCmp = this.m_parts[i].CompareTo(other.m_parts[i]);
+				if (partCmp != 0)
+					return partCmp;
+			}
+
+			return this.m_parts.Length.CompareTo(other.m_parts.Length);
 		}
 
 
