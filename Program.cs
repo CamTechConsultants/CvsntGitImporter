@@ -98,6 +98,7 @@ namespace CTC.CvsntGitImporter
 			var allFiles = new Dictionary<string, FileInfo>();
 			foreach (var f in parser.Files.Where(f => m_switches.FileMatcher.Match(f.Name)))
 				allFiles.Add(f.Name, f);
+			WriteAllCommitsLog(commits);
 
 			WriteExcludedFileLog(parser);
 
@@ -184,6 +185,26 @@ namespace CTC.CvsntGitImporter
 						.OrderBy(i => i, StringComparer.OrdinalIgnoreCase);
 
 				m_log.WriteDebugFile("headonly_files.log", headOnly);
+			}
+		}
+
+		private static void WriteAllCommitsLog(IEnumerable<Commit> commits)
+		{
+			if (!m_log.DebugEnabled)
+				return;
+
+			using (var log = m_log.OpenDebugFile("AllCommits.log"))
+			{
+				foreach (var commit in commits)
+				{
+					log.WriteLine("Commit {0}", commit.CommitId);
+					log.WriteLine(commit.Message);
+					log.WriteLine("{0} | {1} | {2}", commit.Branch, commit.Author, commit.Time);
+
+					foreach (var r in commit)
+						log.WriteLine("  {0} r{1}", r.File.Name, r.Revision);
+					log.WriteLine();
+				}
 			}
 		}
 
