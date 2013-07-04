@@ -108,11 +108,46 @@ namespace CTC.CvsntGitImporter.TestCode
 		{
 			var dict = new OneToManyDictionary<string, int>();
 			dict.Add("key", 42);
+			dict.Add("key", 43);
+
+			var values = dict["key"];
+
+			Assert.IsTrue(values.SequenceEqual(42, 43));
+		}
+
+		[TestMethod]
+		public void Add_ExistingKey_DuplicateValuesIgnored()
+		{
+			var dict = new OneToManyDictionary<string, int>();
+			dict.Add("key", 42);
 			dict.Add("key", 42);
 
 			var values = dict["key"];
 
-			Assert.IsTrue(values.SequenceEqual(42, 42));
+			Assert.IsTrue(values.SequenceEqual(42));
+		}
+
+		[TestMethod]
+		public void AddRange_NewKey_CreatesList()
+		{
+			var dict = new OneToManyDictionary<string, int>();
+			dict.AddRange("key", new[] { 42, 43 });
+
+			var values = dict["key"];
+
+			Assert.IsTrue(values.SequenceEqual(42, 43));
+		}
+
+		[TestMethod]
+		public void AddRange_ExistingKey_AppendsToList()
+		{
+			var dict = new OneToManyDictionary<string, int>();
+			dict.Add("key", 42);
+			dict.AddRange("key", new[] { 43, 44 });
+
+			var values = dict["key"];
+
+			Assert.IsTrue(values.SequenceEqual(42, 43, 44));
 		}
 
 		[TestMethod]
@@ -128,6 +163,43 @@ namespace CTC.CvsntGitImporter.TestCode
 			var dict = new OneToManyDictionary<string, int>();
 			dict.Add("key", 42);
 			Assert.IsTrue(dict.ContainsKey("key"));
+		}
+
+		[TestMethod]
+		public void Remove_KeyNotFound()
+		{
+			var dict = new OneToManyDictionary<string, int>();
+			dict.Remove("blah");
+		}
+
+		[TestMethod]
+		public void Remove_KeyExists_RemovesAllItems()
+		{
+			var dict = new OneToManyDictionary<string, int>();
+			dict.Add("key", 42);
+			dict.Add("key", 43);
+
+			dict.Remove("key");
+
+			Assert.IsFalse(dict.ContainsKey("key"));
+		}
+
+		[TestMethod]
+		public void Count_Empty()
+		{
+			var dict = new OneToManyDictionary<string, int>();
+
+			Assert.AreEqual(dict.Count, 0);
+		}
+
+		[TestMethod]
+		public void Count()
+		{
+			var dict = new OneToManyDictionary<string, int>();
+			dict.Add("x", 42);
+			dict.Add("y", 66);
+
+			Assert.AreEqual(dict.Count, 2);
 		}
 	}
 }

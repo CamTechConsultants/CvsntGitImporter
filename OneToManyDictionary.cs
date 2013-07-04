@@ -15,7 +15,7 @@ namespace CTC.CvsntGitImporter
 	/// that do not exist. For example, the indexer returns an empty list if a value does not exist.</remarks>
 	class OneToManyDictionary<TKey, TValue>
 	{
-		private readonly Dictionary<TKey, List<TValue>> m_dict;
+		private readonly Dictionary<TKey, HashSet<TValue>> m_dict;
 
 		public OneToManyDictionary() : this(EqualityComparer<TKey>.Default)
 		{
@@ -23,7 +23,7 @@ namespace CTC.CvsntGitImporter
 
 		public OneToManyDictionary(IEqualityComparer<TKey> comparer)
 		{
-			m_dict = new Dictionary<TKey, List<TValue>>(comparer);
+			m_dict = new Dictionary<TKey, HashSet<TValue>>(comparer);
 		}
 
 		/// <summary>
@@ -34,15 +34,15 @@ namespace CTC.CvsntGitImporter
 		{
 			get
 			{
-				List<TValue> list;
-				if (m_dict.TryGetValue(key, out list))
-					return list.AsReadOnly();
+				HashSet<TValue> values;
+				if (m_dict.TryGetValue(key, out values))
+					return values;
 				else
 					return Enumerable.Empty<TValue>();
 			}
 			set
 			{
-				m_dict[key] = new List<TValue>(value);
+				m_dict[key] = new HashSet<TValue>(value);
 			}
 		}
 
@@ -55,15 +55,35 @@ namespace CTC.CvsntGitImporter
 		}
 
 		/// <summary>
+		/// Gets the number of keys in the collection.
+		/// </summary>
+		public int Count
+		{
+			get { return m_dict.Count; }
+		}
+
+		/// <summary>
 		/// Add a value for a key.
 		/// </summary>
 		public void Add(TKey key, TValue value)
 		{
-			List<TValue> list;
-			if (m_dict.TryGetValue(key, out list))
-				list.Add(value);
+			HashSet<TValue> values;
+			if (m_dict.TryGetValue(key, out values))
+				values.Add(value);
 			else
-				m_dict[key] = new List<TValue>(1) { value };
+				m_dict[key] = new HashSet<TValue>() { value };
+		}
+
+		/// <summary>
+		/// Add a list of values for a key.
+		/// </summary>
+		public void AddRange(TKey key, IEnumerable<TValue> values)
+		{
+			HashSet<TValue> existingValues;
+			if (m_dict.TryGetValue(key, out existingValues))
+				existingValues.AddRange(values);
+			else
+				m_dict[key] = new HashSet<TValue>(values);
 		}
 
 		/// <summary>
@@ -72,6 +92,14 @@ namespace CTC.CvsntGitImporter
 		public bool ContainsKey(TKey key)
 		{
 			return m_dict.ContainsKey(key);
+		}
+
+		/// <summary>
+		/// Remove a key from the collection.
+		/// </summary>
+		public void Remove(TKey key)
+		{
+			m_dict.Remove(key);
 		}
 	}
 }
