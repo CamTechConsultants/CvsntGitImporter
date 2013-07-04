@@ -19,65 +19,83 @@ namespace CTC.CvsntGitImporter.TestCode
 	{
 		#region Move
 
+		private static List<Commit> MakeListOfCommits()
+		{
+			return new List<Commit>()
+			{
+				new Commit("c0") { Index = 10 },
+				new Commit("c1") { Index = 11 },
+				new Commit("c2") { Index = 12 },
+				new Commit("c3") { Index = 13 },
+				new Commit("c4") { Index = 14 },
+			};
+		}
+
 		[TestMethod]
 		public void Move_Forwards_FirstItem()
 		{
-			var list = new List<int>() { 1, 2, 3, 4, 5 };
+			var list = MakeListOfCommits();
 			list.Move(0, 3);
 
-			Assert.IsTrue(list.SequenceEqual(2, 3, 4, 1, 5));
+			Assert.IsTrue(list.Select(c => c.CommitId).SequenceEqual("c1", "c2", "c3", "c0", "c4"));
+			Assert.IsTrue(list.Select(c => c.Index).SequenceEqual(Enumerable.Range(10, 5)));
 		}
 
 		[TestMethod]
 		public void Move_Forwards_ToEnd()
 		{
-			var list = new List<int>() { 1, 2, 3, 4, 5 };
+			var list = MakeListOfCommits();
 			list.Move(2, 4);
 
-			Assert.IsTrue(list.SequenceEqual(1, 2, 4, 5, 3));
+			Assert.IsTrue(list.Select(c => c.CommitId).SequenceEqual("c0", "c1", "c3", "c4", "c2"));
+			Assert.IsTrue(list.Select(c => c.Index).SequenceEqual(Enumerable.Range(10, 5)));
 		}
 
 		[TestMethod]
 		public void Move_Forwards_ToSelf()
 		{
-			var list = new List<int>() { 1, 2, 3, 4, 5 };
+			var list = MakeListOfCommits();
 			list.Move(2, 2);
 
-			Assert.IsTrue(list.SequenceEqual(1, 2, 3, 4, 5));
+			Assert.IsTrue(list.Select(c => c.CommitId).SequenceEqual("c0", "c1", "c2", "c3", "c4"));
+			Assert.IsTrue(list.Select(c => c.Index).SequenceEqual(Enumerable.Range(10, 5)));
 		}
 
 		[TestMethod]
 		public void Move_Backwards_LastItem()
 		{
-			var list = new List<int>() { 1, 2, 3, 4, 5 };
+			var list = MakeListOfCommits();
 			list.Move(4, 2);
 
-			Assert.IsTrue(list.SequenceEqual(1, 2, 5, 3, 4));
+			Assert.IsTrue(list.Select(c => c.CommitId).SequenceEqual("c0", "c1", "c4", "c2", "c3"));
+			Assert.IsTrue(list.Select(c => c.Index).SequenceEqual(Enumerable.Range(10, 5)));
 		}
 
 		[TestMethod]
 		public void Move_Backwards_ToStart()
 		{
-			var list = new List<int>() { 1, 2, 3, 4, 5 };
+			var list = MakeListOfCommits();
 			list.Move(2, 0);
 
-			Assert.IsTrue(list.SequenceEqual(3, 1, 2, 4, 5));
+			Assert.IsTrue(list.Select(c => c.CommitId).SequenceEqual("c2", "c0", "c1", "c3", "c4"));
+			Assert.IsTrue(list.Select(c => c.Index).SequenceEqual(Enumerable.Range(10, 5)));
 		}
 
 		[TestMethod]
 		public void Move_Backwards_ToSelf()
 		{
-			var list = new List<int>() { 1, 2, 3, 4, 5 };
+			var list = MakeListOfCommits();
 			list.Move(2, 2);
 
-			Assert.IsTrue(list.SequenceEqual(1, 2, 3, 4, 5));
+			Assert.IsTrue(list.Select(c => c.CommitId).SequenceEqual("c0", "c1", "c2", "c3", "c4"));
+			Assert.IsTrue(list.Select(c => c.Index).SequenceEqual(Enumerable.Range(10, 5)));
 		}
 
 		[TestMethod]
 		[ExpectedException(typeof(ArgumentOutOfRangeException))]
 		public void Move_SourceOutOfRange()
 		{
-			var list = new List<int>() { 1, 2, 3, 4, 5 };
+			var list = MakeListOfCommits();
 			list.Move(6, 2);
 		}
 
@@ -85,7 +103,7 @@ namespace CTC.CvsntGitImporter.TestCode
 		[ExpectedException(typeof(ArgumentOutOfRangeException))]
 		public void Move_DestOutOfRange()
 		{
-			var list = new List<int>() { 1, 2, 3, 4, 5 };
+			var list = MakeListOfCommits();
 			list.Move(3, 6);
 		}
 

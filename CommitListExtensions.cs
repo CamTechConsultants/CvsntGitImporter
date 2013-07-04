@@ -99,7 +99,7 @@ namespace CTC.CvsntGitImporter
 		/// <summary>
 		/// Move an item in a list forwards, shuffling all the items inbetween backwards.
 		/// </summary>
-		public static void Move<T>(this IList<T> list, int sourceIndex, int destIndex)
+		public static void Move(this IList<Commit> list, int sourceIndex, int destIndex)
 		{
 			if (sourceIndex < 0 || sourceIndex >= list.Count)
 				throw new ArgumentOutOfRangeException("sourceIndex");
@@ -110,21 +110,26 @@ namespace CTC.CvsntGitImporter
 				return;
 
 			var moveItem = list[sourceIndex];
+			var saveDestIndex = list[destIndex].Index;
+
 			if (destIndex > sourceIndex)
 			{
+				for (int i = destIndex; i > sourceIndex; i--)
+					list[i].Index = list[i - 1].Index;
+
 				for (int i = sourceIndex; i < destIndex; i++)
-				{
 					list[i] = list[i + 1];
-				}
 			}
 			else
 			{
+				for (int i = destIndex; i < sourceIndex; i++)
+					list[i].Index = list[i + 1].Index;
+
 				for (int i = sourceIndex; i > destIndex; i--)
-				{
 					list[i] = list[i - 1];
-				}
 			}
 
+			moveItem.Index = saveDestIndex;
 			list[destIndex] = moveItem;
 		}
 

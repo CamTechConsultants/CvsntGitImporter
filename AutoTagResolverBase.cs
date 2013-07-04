@@ -5,28 +5,27 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using CTC.CvsntGitImporter.Utils;
 
 namespace CTC.CvsntGitImporter
 {
 	/// <summary>
 	/// Abstract base class for TagResolver and BranchResolver.
 	/// </summary>
-	abstract class AutoTagResolverBase : CTC.CvsntGitImporter.ITagResolver
+	abstract class AutoTagResolverBase : ITagResolver
 	{
 		private readonly ILogger m_log;
-		private readonly IList<Commit> m_commits;
+		private readonly IList<Commit> m_allCommits;
 		private readonly Dictionary<string, FileInfo> m_allFiles;
 		private readonly bool m_branches;
+		private readonly List<string> m_unresolvedTags = new List<string>();
 
 		protected AutoTagResolverBase(ILogger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles,
 				bool branches = false)
 		{
 			m_log = log;
-			m_commits = commits.ToListIfNeeded();
+			m_allCommits = commits.ToListIfNeeded();
 			m_allFiles = allFiles;
 			m_branches = branches;
 			this.PartialTagThreshold = 30;
@@ -52,8 +51,7 @@ namespace CTC.CvsntGitImporter
 		/// </summary>
 		public IEnumerable<string> UnresolvedTags
 		{
-			get;
-			private set;
+			get { return m_unresolvedTags; }
 		}
 
 		/// <summary>
@@ -61,7 +59,7 @@ namespace CTC.CvsntGitImporter
 		/// </summary>
 		public IEnumerable<Commit> Commits
 		{
-			get { return m_commits; }
+			get { return m_allCommits; }
 		}
 
 		/// <summary>
@@ -74,6 +72,7 @@ namespace CTC.CvsntGitImporter
 		/// </summary>
 		protected abstract Revision GetRevisionForTag(FileInfo file, string tag);
 
+
 		/// <summary>
 		/// Resolve tags and try and fix those that don't immediately resolve.
 		/// </summary>
@@ -81,225 +80,364 @@ namespace CTC.CvsntGitImporter
 		/// if fixing tags failed</returns>
 		public virtual bool Resolve(IEnumerable<string> tags)
 		{
-			this.UnresolvedTags = Enumerable.Empty<string>();
+			SetCommitIndices(m_allCommits);
+
+			m_unresolvedTags.Clear();
 			this.ResolvedTags = new Dictionary<string, Commit>();
-			var problematicTags = new Dictionary<string, Commit>();
 
-			foreach (var tag in tags.Where(t => MatchTag(t)))
+			foreach (var tag in tags)
 			{
-				Commit commit;
-				if (ResolveTag(tag, out commit))
-					ResolvedTags[tag] = commit;
-				else
-					problematicTags.Add(tag, commit);
-			}
+				m_log.WriteLine("Resolve {0}", tag);
 
-			// attempt fix
-			if (problematicTags.Count > 0)
-			{
-				m_log.WriteLine("Problematic:");
 				using (m_log.Indent())
 				{
-					foreach (var kvp in problematicTags.OrderBy(i => i.Key, StringComparer.CurrentCultureIgnoreCase))
-						m_log.WriteLine("{0}: {1}", kvp.Key, kvp.Value.ConciseFormat);
+					var commit = ResolveTag(tag);
+					if (commit == null)
+					{
+						m_unresolvedTags.Add(tag);
+						m_log.WriteLine("Unresolved");
+					}
+					else
+					{
+						ResolvedTags[tag] = commit;
+						m_log.WriteLine("Resolved: {0}", commit.ConciseFormat);
+					}
 				}
+			}
 
-				return AttemptFix(problematicTags);
-			}
-			else
-			{
-				m_log.WriteLine("All tags resolved");
-				return true;
-			}
+			CheckCommitIndices(m_allCommits);
+			return m_unresolvedTags.Count == 0;
 		}
 
-		private bool ResolveTag(string tag, out Commit candidate)
+		private Commit ResolveTag(string tag)
 		{
 			var state = RepositoryState.CreateWithFullBranchState(m_allFiles);
-			candidate = null;
+			var moveRecord = new CommitMoveRecord(tag, m_log);
+			Commit curCandidate = null;
 
-			foreach (var commit in m_commits)
+			var lastCandidate = FindLastCandidate(tag);
+			if (lastCandidate == null)
 			{
-				state.Apply(commit);
-				if (IsCandidate(tag, commit))
-				{
-					candidate = commit;
-
-					if (IsCommitForTag(state, tag, commit))
-						return true;
-				}
+				m_log.WriteLine("No commits");
+				return null;
 			}
 
-			return false;
+			var relevantCommits = FilterCommits(lastCandidate.Branch);
+			
+			foreach (var commit in relevantCommits)
+			{
+				state.Apply(commit);
+
+				if (IsCandidate(tag, commit))
+					curCandidate = commit;
+
+				if (curCandidate != null)
+				{
+					List<FileInfo> filesToMove;
+					var cmp = CompareCommitToTag(state, commit, tag, out filesToMove);
+
+					if (cmp == CommitTagMatch.Ahead)
+					{
+						// the commit has one or more files that are later
+						moveRecord.AddCommit(commit, filesToMove);
+					}
+					else if (cmp == CommitTagMatch.ExactMatch)
+					{
+						break;
+					}
+				}
+
+				if (curCandidate == lastCandidate)
+					break;
+			}
+
+			// now check added/removed files
+			var candidateBranchState = GetBranchStateForCommit(curCandidate, relevantCommits);
+			CheckAddedRemovedFiles(tag, candidateBranchState, relevantCommits, moveRecord, ref curCandidate);
+
+			// perform any moves
+			moveRecord.FinalCommit = curCandidate;
+			if (moveRecord.Commits.Any())
+				moveRecord.Apply(m_allCommits);
+
+			CheckCommitIndices(m_allCommits);
+			return curCandidate;
+		}
+
+		private Commit FindLastCandidate(string tag)
+		{
+			var candidateCommits = from c in m_allCommits
+						   where IsCandidate(tag, c)
+						   select c;
+
+			return candidateCommits.LastOrDefault();
+		}
+
+		private List<Commit> FilterCommits(string branch)
+		{
+			return (from c in m_allCommits
+					where c.Any(r => r.File.IsRevisionOnBranch(r.Revision, branch))
+					select c).ToList();
 		}
 
 		private bool IsCandidate(string tag, Commit commit)
 		{
-				return commit.Any(r =>
-						GetTagsForFileRevision(r.File, r.Revision).Contains(tag) ||
-						r.IsDead && GetRevisionForTag(r.File, tag) == Revision.Empty);
+			return commit.Any(r => GetTagsForFileRevision(r.File, r.Revision).Contains(tag));
+		}
+
+		private enum CommitTagMatch
+		{
+			/// <summary>
+			/// The commit has at least one file whose revision precedes the revision at the tag
+			/// (but none that exceed).
+			/// </summary>
+			Behind,
+			/// <summary>
+			/// The commit is an exact match for the tag. All live files are at the tag version.
+			/// </summary>
+			ExactMatch,
+			/// <summary>
+			/// The commit contains at least one file whose revision exceeds the revision at the tag.
+			/// </summary>
+			Ahead,
+		}
+
+		private CommitTagMatch CompareCommitToTag(RepositoryState state, Commit commit, string tag, out List<FileInfo> filesAhead)
+		{
+			var branchState = state[commit.Branch];
+			var result = CommitTagMatch.ExactMatch;
+			filesAhead = null;
+
+			foreach (var fr in commit.Where(r => !r.IsDead))
+			{
+				var file = fr.File;
+				var tagRevision = GetRevisionForTag(file, tag);
+				
+				// ignore commits on untagged files for now
+				if (tagRevision == Revision.Empty)
+					continue;
+
+				var cmp = branchState[file.Name].CompareTo(tagRevision);
+				if (cmp < 0)
+					result = CommitTagMatch.Behind;
+				else if (cmp > 0)
+					AddAndCreateList(ref filesAhead, file);
 			}
 
-		private FileInfo m_lastMatchFailure;
+			result = (filesAhead == null) ? result : CommitTagMatch.Ahead;
 
-		private bool IsCommitForTag(RepositoryState state, string tag, Commit candidate)
+			if (result == CommitTagMatch.ExactMatch)
+			{
+				// if no files are ahead in the commit, now check whether the whole tree is at the correct version
+				foreach (var file in m_allFiles.Values)
+				{
+					if (GetRevisionForTag(file, tag) != branchState[file.Name])
+					{
+						result = CommitTagMatch.Behind;
+						break;
+					}
+				}
+			}
+
+			return result;
+		}
+
+		private RepositoryBranchState GetBranchStateForCommit(Commit targetCommit, List<Commit> commits)
 		{
-			var branchState = state[candidate.Branch];
+			var state = RepositoryState.CreateWithFullBranchState(m_allFiles);
 
-			// optimisation - check the last file that failed first
-			if (m_lastMatchFailure != null && !IsFileAtTag(branchState, m_lastMatchFailure, tag))
-				return false;
+			foreach (var commit in commits)
+			{
+				state.Apply(commit);
+				if (commit == targetCommit)
+					return state[targetCommit.Branch];
+			}
+
+			throw new InvalidOperationException("Did not find target commit in commit stream");
+		}
+
+		private void CheckAddedRemovedFiles(string tag, RepositoryBranchState candidateBranchState, List<Commit> commits,
+				CommitMoveRecord moveRecord, ref Commit candidate)
+		{
+			List<FileInfo> missingFiles = null;
+			List<FileInfo> extraFiles = null;
+			var liveFiles = new HashSet<string>(candidateBranchState.LiveFiles);
 
 			foreach (var file in m_allFiles.Values)
 			{
-				if (!IsFileAtTag(branchState, file, tag))
+				if (GetRevisionForTag(file, tag) == Revision.Empty)
 				{
-					m_lastMatchFailure = file;
-					return false;
+					if (liveFiles.Contains(file.Name))
+					{
+						AddAndCreateList(ref extraFiles, file);
+						m_log.WriteLine("Extra:   {0}", file.Name);
+					}
 				}
-			}
-
-			return true;
-		}
-
-		protected virtual bool IsFileAtTag(RepositoryBranchState state, FileInfo file, string tag)
-		{
-			return state[file.Name] == GetRevisionForTag(file, tag);
-		}
-
-		private bool AttemptFix(Dictionary<string, Commit> tags)
-		{
-			AnalyseProblematicTags(tags);
-
-			var failedTags = new List<string>();
-			foreach (var tag in tags.Keys.Where(t => MatchTag(t)))
-			{
-				Commit commit;
-				if (ResolveTag(tag, out commit))
-					ResolvedTags[tag] = commit;
 				else
-					failedTags.Add(tag);
-			}
-
-			this.UnresolvedTags = failedTags;
-			return failedTags.Count == 0;
-		}
-
-		/// <summary>
-		/// Should a tag be processed or not?
-		/// </summary>
-		protected virtual bool MatchTag(string tag)
-		{
-			return true;
-		}
-
-		private void AnalyseProblematicTags(Dictionary<string, Commit> tags)
-		{
-			var moveRecords = new List<CommitMoveRecord>();
-
-			m_log.DoubleRuleOff();
-			m_log.WriteLine("Analysing problematic {0}...", m_branches ? "branches" : "tags");
-
-			using (m_log.Indent())
-			{
-				foreach (var tag in tags.Keys)
 				{
-					m_log.WriteLine("Tag {0}:", tag);
-					moveRecords.AddRange(AnalyseProblematicTag(tag, tags));
-					m_log.RuleOff();
-				}
-
-				if (moveRecords.Count > 0)
-				{
-					m_log.WriteLine("Moving commits...");
-					foreach (var record in moveRecords)
-						record.Apply(m_commits);
-				}
-			}
-		}
-
-		private IEnumerable<CommitMoveRecord> AnalyseProblematicTag(string tag, Dictionary<string, Commit> finalCommits)
-		{
-			var moveRecords = new List<CommitMoveRecord>();
-			CommitMoveRecord moveRecord = null;
-			var state = RepositoryState.CreateWithFullBranchState(m_allFiles);
-			var filesAtTagRevision = new Dictionary<string, Commit>();
-			var finalCommit = finalCommits[tag];
-			var branch = finalCommit.Branch;
-			var commitsToMove = new List<Commit>();
-
-			var untaggedFiles = FindUntaggedFiles(finalCommit, tag).ToHashSet();
-
-			foreach (var commit in m_commits)
-			{
-				state.Apply(commit);
-
-				List<FileRevision> filesToMove = null;
-				foreach (var fileRevision in commit)
-				{
-					var file = fileRevision.File;
-					if (file.IsRevisionOnBranch(fileRevision.Revision, branch))
+					if (!liveFiles.Contains(file.Name))
 					{
-						if (fileRevision.Revision == GetRevisionForTag(file, tag))
-						{
-							filesAtTagRevision[file.Name] = commit;
-						}
-						else if (filesAtTagRevision.ContainsKey(file.Name))
-						{
-							m_log.WriteLine("  File {0} updated to r{1} in commit {2} but tagged in commit {3}",
-									file.Name, fileRevision.Revision, commit.ConciseFormat, filesAtTagRevision[file.Name].ConciseFormat);
-
-							AddAndCreateList(ref filesToMove, fileRevision);
-						}
-						else if (state[branch][file.Name] != Revision.Empty && untaggedFiles.Contains(file.Name))
-						{
-							m_log.WriteLine("  File {0} not tagged with {1}, assuming added after tag was made",
-									file.Name, tag);
-
-							AddAndCreateList(ref filesToMove, fileRevision);
-						}
+						AddAndCreateList(ref missingFiles, file);
+						m_log.WriteLine("Missing: {0}", file.Name);
 					}
 				}
+			}
 
-				if (filesToMove != null)
+			if (missingFiles != null)
+				HandleMissingFiles(tag, commits, missingFiles, moveRecord, ref candidate);
+			if (extraFiles != null)
+				HandleExtraFiles(tag, commits, extraFiles, moveRecord, ref candidate);
+		}
+
+		protected virtual void HandleMissingFiles(string tag, List<Commit> commits, IEnumerable<FileInfo> files,
+				CommitMoveRecord moveRecord, ref Commit candidate)
+		{
+			int candidateIndex = commits.IndexOfFromEnd(candidate);
+			string tagBranch = candidate.Branch;
+
+			foreach (var file in files)
+			{
+				var tagRevision = GetRevisionForTag(file, tag);
+
+				// search forwards for the file being added
+				int addCommitIndex = -1;
+				if (candidateIndex < commits.Count - 1)
 				{
-					if (moveRecord == null)
-					{
-						moveRecord = new CommitMoveRecord(tag, finalCommit, m_log);
-						moveRecords.Add(moveRecord);
-					}
-					moveRecord.AddCommit(commit, filesToMove);
+					addCommitIndex = FindCommitForwards(commits, candidateIndex + 1,
+							c => c.Any(r =>
+								r.File == file &&
+								r.Revision == tagRevision &&
+								r.File.IsRevisionOnBranch(r.Revision, tagBranch)));
 				}
 
-				if (commit == finalCommit)
-					break;
-			}
+				if (addCommitIndex >= 0)
+				{
+					// add any intermediate commits to the list of those that need moving
+					for (int i = candidateIndex + 1; i < addCommitIndex; i++)
+						moveRecord.AddCommit(commits[i], file);
+					candidate = commits[addCommitIndex];
+				}
+				else
+				{
+					// search backwards for the file being deleted
+					int deleteCommitIndex = -1;
+					if (candidateIndex > 0)
+					{
+						deleteCommitIndex = FindCommitBackwards(commits, candidateIndex,
+								c => c.Any(r =>
+									r.File == file &&
+									r.IsDead &&
+									r.File.IsRevisionOnBranch(r.Revision, tagBranch)));
+					}
 
-			return moveRecords;
+					if (deleteCommitIndex < 0)
+					{
+						throw new RepositoryConsistencyException(String.Format(
+								"Tag {0}: file {1} is tagged but a commit for it could not be found", tag, file));
+					}
+
+					moveRecord.AddCommit(commits[deleteCommitIndex], file);
+				}
+			}
 		}
 
-		private IEnumerable<string> FindUntaggedFiles(Commit finalCommit, string tag)
+		private void HandleExtraFiles(string tag, List<Commit> commits, IEnumerable<FileInfo> files,
+				CommitMoveRecord moveRecord, ref Commit candidate)
 		{
-			var state = RepositoryState.CreateWithFullBranchState(m_allFiles);
+			int candidateIndex = commits.IndexOfFromEnd(candidate);
+			string tagBranch = candidate.Branch;
 
-			foreach (var commit in m_commits)
+			foreach (var file in files)
 			{
-				state.Apply(commit);
-				if (commit == finalCommit)
-					break;
-			}
+				var tagRevision = GetRevisionForTag(file, tag);
 
-			foreach (var fileName in state[finalCommit.Branch].LiveFiles)
-			{
-				if (GetRevisionForTag(m_allFiles[fileName], tag) == Revision.Empty)
-					yield return fileName;
+				// search backwards for the file being added
+				int addCommitIndex = -1;
+				if (candidateIndex > 0)
+				{
+					addCommitIndex = FindLastCommitBackwards(commits, candidateIndex - 1,
+							c => c.Any(r =>
+								r.File == file &&
+								!r.IsDead &&
+								r.File.IsRevisionOnBranch(r.Revision, tagBranch)));
+				}
+
+				// search forwards for the file being deleted
+				int deleteCommitIndex = -1;
+				if (candidateIndex < commits.Count - 1)
+				{
+					deleteCommitIndex = FindCommitForwards(commits, candidateIndex,
+							c => c.Any(r =>
+								r.File == file &&
+								r.IsDead &&
+								r.File.IsRevisionOnBranch(r.Revision, tagBranch)));
+				}
+
+				if (deleteCommitIndex < 0 && addCommitIndex < 0)
+				{
+					throw new RepositoryConsistencyException(String.Format(
+							"Tag {0}: file {1} is not tagged but a commit removing it could not be found", tag, file));
+				}
+
+				// pick the closest of the two
+				int addDistance = (addCommitIndex < 0) ? int.MaxValue : candidateIndex - addCommitIndex;
+				int deleteDistance = (deleteCommitIndex < 0) ? int.MaxValue : deleteCommitIndex - candidateIndex;
+
+				if (addDistance <= deleteDistance)
+				{
+					moveRecord.AddCommit(commits[addCommitIndex], file);
+					for (int i = addCommitIndex + 1; i <= candidateIndex; i++)
+					{
+						if (commits[i].Any(r => r.File == file))
+							moveRecord.AddCommit(commits[i], file);
+					}
+				}
+				else
+				{
+					candidate = commits[deleteCommitIndex];
+				}
 			}
 		}
 
-		private bool IsAddedFile(FileRevision fileRevision, string tag)
+		private static int FindCommitForwards(List<Commit> commits, int startIndex, Predicate<Commit> match)
 		{
-			var file = fileRevision.File;
-			return (GetRevisionForTag(file, tag) == Revision.Empty /*&& m_missingFiles[tag].Contains(file.Name)*/);
+			for (int i = startIndex; i < commits.Count; i++)
+			{
+				if (match(commits[i]))
+					return i;
+			}
+
+			return -1;
+		}
+
+		private static int FindCommitBackwards(List<Commit> commits, int startIndex, Predicate<Commit> match)
+		{
+			for (int i = startIndex; i >= 0; i--)
+			{
+				if (match(commits[i]))
+					return i;
+			}
+
+			return -1;
+		}
+
+		private static int FindLastCommitBackwards(List<Commit> commits, int startIndex, Predicate<Commit> match)
+		{
+			int result = -1;
+
+			for (int i = startIndex; i >= 0; i--)
+			{
+				if (match(commits[i]))
+					result = i;
+			}
+
+			return result;
+		}
+
+		private static void SetCommitIndices(IList<Commit> commits)
+		{
+			for (int i = 0; i < commits.Count; i++)
+				commits[i].Index = i;
 		}
 
 		private static void AddAndCreateList<T>(ref List<T> list, T item)
@@ -308,6 +446,16 @@ namespace CTC.CvsntGitImporter
 				list = new List<T>() { item };
 			else
 				list.Add(item);
+		}
+
+		[Conditional("DEBUG")]
+		private static void CheckCommitIndices(IList<Commit> commits)
+		{
+			for (int i = 0; i < commits.Count; i++)
+			{
+				if (commits[i].Index != i)
+					Debug.Fail("Commit indices out of sync");
+			}
 		}
 	}
 }

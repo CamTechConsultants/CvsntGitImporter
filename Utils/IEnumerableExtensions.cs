@@ -40,5 +40,42 @@ namespace CTC.CvsntGitImporter.Utils
 		{
 			return new HashSet<T>(source, comparer);
 		}
+
+		/// <summary>
+		/// Remove repeated items from a list.
+		/// </summary>
+		public static IEnumerable<T> RemoveRepeats<T>(this IEnumerable<T> source)
+		{
+			return RemoveRepeats(source, EqualityComparer<T>.Default);
+		}
+
+		/// <summary>
+		/// Remove repeated items from a list.
+		/// </summary>
+		public static IEnumerable<T> RemoveRepeats<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer)
+		{
+			if (source == null)
+				throw new ArgumentNullException("source");
+			else if (comparer == null)
+				throw new ArgumentNullException("comparer");
+
+			return RemoveRepeatsEnumerator(source, comparer);
+		}
+
+		private static IEnumerable<T> RemoveRepeatsEnumerator<T>(IEnumerable<T> source, IEqualityComparer<T> comparer)
+		{
+			bool first = true;
+			T lastItem = default(T);
+
+			foreach (var item in source)
+			{
+				if (first || !comparer.Equals(item, lastItem))
+				{
+					yield return item;
+					lastItem = item;
+					first = false;
+				}
+			}
+		}
 	}
 }

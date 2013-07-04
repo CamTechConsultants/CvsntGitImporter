@@ -28,6 +28,27 @@ namespace CTC.CvsntGitImporter.TestCode
 
 
 		[TestMethod]
+		public void Resolve_NonExistentTag()
+		{
+			var file1 = new FileInfo("file1");
+			var file2 = new FileInfo("file2");
+
+			var commits = new List<Commit>()
+			{
+				new Commit("c0").WithRevision(file1, "1.1").WithRevision(file2, "1.1"),
+				new Commit("c1").WithRevision(file1, "1.2"),
+			};
+			var allFiles = commits.CreateAllFiles();
+
+			var resolver = new TagResolver(m_logger, commits, allFiles);
+			var result = resolver.Resolve(new[] { "tag" });
+
+			Assert.IsFalse(result, "Failed");
+			Assert.IsFalse(resolver.ResolvedTags.ContainsKey("tag"));
+			Assert.AreEqual(resolver.UnresolvedTags.Single(), "tag");
+		}
+
+		[TestMethod]
 		public void Resolve_NoReorderingNeeded()
 		{
 			var file1 = new FileInfo("file1").WithTag("tag", "1.2");
@@ -43,7 +64,7 @@ namespace CTC.CvsntGitImporter.TestCode
 			};
 			var allFiles = commits.CreateAllFiles();
 
-			var resolver = new TagResolver(m_logger, commits, allFiles, new InclusionMatcher());
+			var resolver = new TagResolver(m_logger, commits, allFiles);
 			var result = resolver.Resolve(new[] { "tag" });
 
 			Assert.IsTrue(result, "Succeeded");
@@ -54,11 +75,19 @@ namespace CTC.CvsntGitImporter.TestCode
 		[TestMethod]
 		public void Resolve_ReorderCommits()
 		{
-			var commits = CreateCommitThatNeedsReordering();
+			var file1 = new FileInfo("file1").WithTag("tag", "1.1");
+			var file2 = new FileInfo("file2").WithTag("tag", "1.2");
+
+			var commits = new List<Commit>()
+			{
+				new Commit("c0").WithRevision(file1, "1.1").WithRevision(file2, "1.1"),
+				new Commit("c1").WithRevision(file1, "1.2"),
+				new Commit("c2").WithRevision(file2, "1.2"),
+			};
 			var target = commits.ElementAt(2);
 			var allFiles = commits.CreateAllFiles();
 
-			var resolver = new TagResolver(m_logger, commits, allFiles, new InclusionMatcher());
+			var resolver = new TagResolver(m_logger, commits, allFiles);
 			var result = resolver.Resolve(new[] { "tag" });
 
 			Assert.IsTrue(result, "Succeeded");
@@ -67,12 +96,73 @@ namespace CTC.CvsntGitImporter.TestCode
 		}
 
 		[TestMethod]
+		public void Resolve_ReorderCommits_TwoFilesThatDontMove()
+		{
+			var file1 = new FileInfo("file1").WithTag("tag", "1.1");
+			var file2 = new FileInfo("file2").WithTag("tag", "1.3");
+
+			var commits = new List<Commit>()
+			{
+				new Commit("c0").WithRevision(file1, "1.1").WithRevision(file2, "1.1"),
+				new Commit("c1").WithRevision(file1, "1.2"),
+				new Commit("c2").WithRevision(file2, "1.2"),
+				new Commit("c3").WithRevision(file2, "1.3"),
+
+			};
+
+			var allFiles = commits.CreateAllFiles();
+			var resolver = new TagResolver(m_logger, commits, allFiles);
+			var result = resolver.Resolve(new[] { "tag" });
+
+			Assert.IsTrue(result, "Succeeded");
+			Assert.IsTrue(resolver.Commits.Select(c => c.CommitId).SequenceEqual("c0", "c2", "c3", "c1"), "Commits reordered");
+			Assert.AreSame(resolver.ResolvedTags["tag"].CommitId, "c3");
+		}
+
+		[TestMethod]
 		public void Resolve_SplitCommit()
 		{
-			var commits = CreateCommitThatNeedsSplitting().ToList();
+			var file1 = new FileInfo("file1").WithTag("tag", "1.2");
+			var file2 = new FileInfo("file2").WithTag("tag", "1.3");
+
+			var commits = new List<Commit>()
+			{
+				new Commit("c0").WithRevision(file1, "1.1").WithRevision(file2, "1.1"),
+				new Commit("c1").WithRevision(file1, "1.2"),
+				new Commit("c2").WithRevision(file1, "1.3").WithRevision(file2, "1.2"),
+				new Commit("c3").WithRevision(file2, "1.3"),
+			};
 			var allFiles = commits.CreateAllFiles();
 
-			var resolver = new TagResolver(m_logger, commits, allFiles, new InclusionMatcher());
+			var resolver = new TagResolver(m_logger, commits, allFiles);
+			var result = resolver.Resolve(new[] { "tag" });
+
+			Assert.IsTrue(result, "Succeeded");
+			var newCommits = resolver.Commits.ToList();
+			Assert.AreEqual(newCommits.Count, 5);
+			Assert.AreEqual(newCommits[0].CommitId, "c0");
+			Assert.AreEqual(newCommits[1].CommitId, "c1");
+			Assert.IsTrue(newCommits[2].Single().File.Name == "file2" && newCommits[2].Single().Revision.Equals(Revision.Create("1.2")));
+			Assert.AreEqual(newCommits[3].CommitId, "c3");
+			Assert.IsTrue(newCommits[4].Single().File.Name == "file1" && newCommits[3].Single().Revision.Equals(Revision.Create("1.3")));
+			Assert.AreEqual(resolver.ResolvedTags["tag"].CommitId, "c3");
+		}
+
+		[TestMethod]
+		public void Resolve_SplitCommit_SplitCandidate()
+		{
+			var file1 = new FileInfo("file1").WithTag("tag", "1.2");
+			var file2 = new FileInfo("file2").WithTag("tag", "1.2");
+
+			var commits = new List<Commit>()
+			{
+				new Commit("c0").WithRevision(file1, "1.1").WithRevision(file2, "1.1"),
+				new Commit("c1").WithRevision(file1, "1.2"),
+				new Commit("c2").WithRevision(file1, "1.3").WithRevision(file2, "1.2"),
+			};
+			var allFiles = commits.CreateAllFiles();
+
+			var resolver = new TagResolver(m_logger, commits, allFiles);
 			var result = resolver.Resolve(new[] { "tag" });
 
 			Assert.IsTrue(result, "Succeeded");
@@ -87,11 +177,21 @@ namespace CTC.CvsntGitImporter.TestCode
 		[TestMethod]
 		public void Resolve_ReorderWithCreatedFileInTheMiddle()
 		{
-			var commits = CreateCommitThatNeedsReordering(addFileInMiddle: true).ToList();
+			var file1 = new FileInfo("file1").WithTag("tag", "1.1");
+			var file2 = new FileInfo("file2").WithTag("tag", "1.2");
+			var file3 = new FileInfo("file3");
+
+			var commits = new List<Commit>()
+			{
+				new Commit("c0").WithRevision(file1, "1.1").WithRevision(file2, "1.1"),
+				new Commit("c1").WithRevision(file1, "1.2").WithRevision(file3, "1.1"),
+				new Commit("c2").WithRevision(file2, "1.2"),
+			};
+
 			var target = commits.ElementAt(2);
 			var allFiles = commits.CreateAllFiles();
 
-			var resolver = new TagResolver(m_logger, commits, allFiles, new InclusionMatcher());
+			var resolver = new TagResolver(m_logger, commits, allFiles);
 			var result = resolver.Resolve(new[] { "tag" });
 
 			Assert.IsTrue(result, "Succeeded");
@@ -103,11 +203,21 @@ namespace CTC.CvsntGitImporter.TestCode
 		[TestMethod]
 		public void Resolve_ReorderWithCreatedAndModifiedFileInTheMiddle()
 		{
-			var commits = CreateCommitWithAddedAndModifiedFileInTheMiddle().ToList();
+			var file1 = new FileInfo("file1").WithTag("tag", "1.1");
+			var file2 = new FileInfo("file2").WithTag("tag", "1.2");
+			var file3 = new FileInfo("file3");
+
+			var commits = new List<Commit>()
+			{
+				new Commit("c0").WithRevision(file1, "1.1").WithRevision(file2, "1.1"),
+				new Commit("c1").WithRevision(file3, "1.1"),  // file3 added
+				new Commit("c2").WithRevision(file3, "1.2"),  // file3 modified
+				new Commit("c3").WithRevision(file2, "1.2"),  // this is the target commit for "tag"
+			};
 			var target = commits.ElementAt(3);
 			var allFiles = commits.CreateAllFiles();
 
-			var resolver = new TagResolver(m_logger, commits, allFiles, new InclusionMatcher());
+			var resolver = new TagResolver(m_logger, commits, allFiles);
 			var result = resolver.Resolve(new[] { "tag" });
 
 			Assert.IsTrue(result, "Succeeded");
@@ -117,7 +227,55 @@ namespace CTC.CvsntGitImporter.TestCode
 		}
 
 		[TestMethod]
-		public void Resolve_FileDeletedBeforeTag()
+		public void Resolve_TaggedFileDeletedBeforeTag()
+		{
+			var file1 = new FileInfo("file1").WithTag("tag", "1.2");
+			var file2 = new FileInfo("file2").WithTag("tag", "1.1");
+
+			var commits = new List<Commit>()
+			{
+				new Commit("c0").WithRevision(file1, "1.1").WithRevision(file2, "1.1"),
+				new Commit("c1").WithRevision(file2, "1.2", isDead: true),
+				new Commit("c2").WithRevision(file1, "1.2"),
+			};
+			var target = commits.ElementAt(2);
+
+			var resolver = new TagResolver(m_logger, commits, commits.CreateAllFiles());
+			var result = resolver.Resolve(new[] { "tag" });
+
+			Assert.IsTrue(result, "Resolve succeeded");
+			Assert.IsTrue(resolver.Commits.Select(c => c.CommitId).SequenceEqual("c0", "c2", "c1"), "Commits reordered");
+			Assert.AreEqual(resolver.ResolvedTags["tag"].CommitId, "c2");
+		}
+
+		[TestMethod]
+		public void Resolve_TaggedFileDeletedAtTag()
+		{
+			var file1 = new FileInfo("file1").WithTag("tag", "1.2");
+			var file2 = new FileInfo("file2").WithTag("tag", "1.1");
+
+			var commits = new List<Commit>()
+			{
+				new Commit("c0").WithRevision(file1, "1.1").WithRevision(file2, "1.1"),
+				new Commit("c1").WithRevision(file1, "1.2").WithRevision(file2, "1.2", isDead: true),
+			};
+
+			var resolver = new TagResolver(m_logger, commits, commits.CreateAllFiles());
+			var result = resolver.Resolve(new[] { "tag" });
+
+			Assert.IsTrue(result, "Resolve succeeded");
+			var resolvedCommits = resolver.Commits.ToList();
+			Assert.AreEqual(resolvedCommits.Count, 3, "Commit is split");
+
+			Assert.AreEqual(resolvedCommits[0].CommitId, "c0");
+			Assert.AreEqual(resolvedCommits[1].Single().File.Name, "file1");
+			Assert.AreEqual(resolvedCommits[1].Single().Revision.ToString(), "1.2");
+			Assert.AreEqual(resolvedCommits[2].Single().File.Name, "file2");
+			Assert.IsTrue(resolvedCommits[2].Single().IsDead);
+		}
+
+		[TestMethod]
+		public void Resolve_UntaggedFileDeletedBeforeTag()
 		{
 			var file1 = new FileInfo("file1").WithTag("tag", "1.2");
 			var file2 = new FileInfo("file2");
@@ -130,7 +288,7 @@ namespace CTC.CvsntGitImporter.TestCode
 			};
 			var target = commits.ElementAt(2);
 
-			var resolver = new TagResolver(m_logger, commits, commits.CreateAllFiles(), new InclusionMatcher());
+			var resolver = new TagResolver(m_logger, commits, commits.CreateAllFiles());
 			var result = resolver.Resolve(new[] { "tag" });
 
 			Assert.IsTrue(result, "Resolve succeeded");
@@ -139,7 +297,7 @@ namespace CTC.CvsntGitImporter.TestCode
 		}
 
 		[TestMethod]
-		public void Resolve_FileDeletedBeforeTag_ReorderingRequired()
+		public void Resolve_UntaggedFileDeletedBeforeTag_ReorderingRequired()
 		{
 			var file1 = new FileInfo("file1").WithTag("tag", "1.1");
 			var file2 = new FileInfo("file2");
@@ -154,12 +312,62 @@ namespace CTC.CvsntGitImporter.TestCode
 			};
 			var target = commits.ElementAt(3);
 
-			var resolver = new TagResolver(m_logger, commits, commits.CreateAllFiles(), new InclusionMatcher());
+			var resolver = new TagResolver(m_logger, commits, commits.CreateAllFiles());
 			var result = resolver.Resolve(new[] { "tag" });
 
 			Assert.IsTrue(result, "Resolve succeeded");
 			Assert.AreSame(resolver.ResolvedTags["tag"], target);
 			Assert.IsTrue(resolver.Commits.Select(c => c.CommitId).SequenceEqual("c0", "c1", "c3", "c2"));
+		}
+
+		[TestMethod]
+		public void Resolve_UntaggedFileDeletedOnBranchBeforeTag_ReorderingRequired()
+		{
+			var file1 = new FileInfo("file1").WithTag("tag", "1.1");
+			var file2 = new FileInfo("file2").WithTag("tag", "1.2");
+			var file3 = new FileInfo("file3").WithBranch("branch", "1.1.0.2");
+
+			var commits = new List<Commit>()
+			{
+				new Commit("c0").WithRevision(file1, "1.1").WithRevision(file2, "1.1").WithRevision(file3, "1.1"),
+				new Commit("c1").WithRevision(file3, "1.1.2.1"),
+				new Commit("c2").WithRevision(file3, "1.1.2.2", isDead: true),                    // delete on branch
+				new Commit("c3").WithRevision(file3, "1.2", isDead: true, mergepoint: "1.1.2.2"), // merge deletion
+				new Commit("c4").WithRevision(file1, "1.2"),
+				new Commit("c5").WithRevision(file2, "1.2"),
+			};
+
+			var resolver = new TagResolver(m_logger, commits, commits.CreateAllFiles());
+			var result = resolver.Resolve(new[] { "tag" });
+
+			Assert.IsTrue(result, "Resolve succeeded");
+			Assert.AreSame(resolver.ResolvedTags["tag"].CommitId, "c5");
+			Assert.IsTrue(resolver.Commits.Select(c => c.CommitId).SequenceEqual("c0", "c1", "c2", "c3", "c5", "c4"));
+		}
+
+		[TestMethod]
+		public void Resolve_FileDeletedOnBranchBeforeTag_ReorderingRequired()
+		{
+			var file1 = new FileInfo("file1").WithTag("tag", "1.1");
+			var file2 = new FileInfo("file2").WithTag("tag", "1.2");
+			var file3 = new FileInfo("file3").WithBranch("branch", "1.1.0.2");
+
+			var commits = new List<Commit>()
+			{
+				new Commit("c0").WithRevision(file1, "1.1").WithRevision(file2, "1.1").WithRevision(file3, "1.1"),
+				new Commit("c1").WithRevision(file3, "1.1.2.1"),
+				new Commit("c2").WithRevision(file3, "1.1.2.2", isDead: true),                    // delete on branch
+				new Commit("c3").WithRevision(file3, "1.2", isDead: true, mergepoint: "1.1.2.2"), // merge deletion
+				new Commit("c4").WithRevision(file1, "1.2"),
+				new Commit("c5").WithRevision(file2, "1.2"),
+			};
+
+			var resolver = new TagResolver(m_logger, commits, commits.CreateAllFiles());
+			var result = resolver.Resolve(new[] { "tag" });
+
+			Assert.IsTrue(result, "Resolve succeeded");
+			Assert.AreSame(resolver.ResolvedTags["tag"].CommitId, "c5");
+			Assert.IsTrue(resolver.Commits.Select(c => c.CommitId).SequenceEqual("c0", "c1", "c2", "c3", "c5", "c4"));
 		}
 
 		[TestMethod]
@@ -178,7 +386,7 @@ namespace CTC.CvsntGitImporter.TestCode
 			};
 			var target = commits.ElementAt(2);
 
-			var resolver = new TagResolver(m_logger, commits, commits.CreateAllFiles(), new InclusionMatcher());
+			var resolver = new TagResolver(m_logger, commits, commits.CreateAllFiles());
 			var result = resolver.Resolve(new[] { "tag" });
 
 			Assert.IsTrue(result, "Resolve succeeded");
@@ -199,7 +407,7 @@ namespace CTC.CvsntGitImporter.TestCode
 			};
 			var target = commits.ElementAt(1);
 
-			var resolver = new TagResolver(m_logger, commits, commits.CreateAllFiles(), new InclusionMatcher());
+			var resolver = new TagResolver(m_logger, commits, commits.CreateAllFiles());
 			var result = resolver.Resolve(new[] { "tag" });
 
 			Assert.IsTrue(result, "Resolve succeeded");
@@ -223,7 +431,7 @@ namespace CTC.CvsntGitImporter.TestCode
 			};
 			var target = commits.ElementAt(2);
 
-			var resolver = new TagResolver(m_logger, commits, commits.CreateAllFiles(), new InclusionMatcher());
+			var resolver = new TagResolver(m_logger, commits, commits.CreateAllFiles());
 			var result = resolver.Resolve(new[] { "tag" });
 
 			Assert.IsTrue(result, "Resolve succeeded");
@@ -231,73 +439,97 @@ namespace CTC.CvsntGitImporter.TestCode
 			Assert.IsTrue(resolver.Commits.Select(c => c.CommitId).SequenceEqual("c0", "c2", "c1", "c3"));
 		}
 
-
-		private static IEnumerable<Commit> CreateCommitThatNeedsReordering(bool addFileInMiddle = false)
+		[TestMethod]
+		public void Resolve_FileCreatedAndDeletedAfterTag_ReorderingRequired()
 		{
 			var file1 = new FileInfo("file1").WithTag("tag", "1.1");
 			var file2 = new FileInfo("file2").WithTag("tag", "1.2");
 			var file3 = new FileInfo("file3");
 
-			var commits = new List<Commit>();
+			var commits = new List<Commit>()
+			{
+				new Commit("c0").WithRevision(file1, "1.1").WithRevision(file2, "1.1"),
+				new Commit("c1").WithRevision(file1, "1.2"),
+				new Commit("c2").WithRevision(file2, "1.2"),
+				new Commit("c3").WithRevision(file3, "1.1"),
+				new Commit("c4").WithRevision(file3, "1.2", isDead: true),
+			};
+			var target = commits.ElementAt(2);
 
-			commits.Add(new Commit("c0")
-					.WithRevision(file1, "1.1")
-					.WithRevision(file2, "1.1"));
+			var resolver = new TagResolver(m_logger, commits, commits.CreateAllFiles());
+			var result = resolver.Resolve(new[] { "tag" });
 
-			var commit1 = new Commit("c1")
-					.WithRevision(file1, "1.2");
-			if (addFileInMiddle)
-				commit1.WithRevision(file3, "1.1");
-			commits.Add(commit1);
-
-			commits.Add(new Commit("c2")
-					.WithRevision(file2, "1.2"));
-
-			return commits;
+			Assert.IsTrue(result, "Resolve succeeded");
+			Assert.AreSame(resolver.ResolvedTags["tag"], target);
+			Assert.IsTrue(resolver.Commits.Select(c => c.CommitId).SequenceEqual("c0", "c2", "c1", "c3", "c4"));
 		}
 
-		private static IEnumerable<Commit> CreateCommitWithAddedAndModifiedFileInTheMiddle()
+		[TestMethod]
+		public void Resolve_FileModifiedOnTrunkAfterBranchContainingTag()
 		{
-			var file1 = new FileInfo("file1").WithTag("tag", "1.1");
-			var file2 = new FileInfo("file2").WithTag("tag", "1.2");
+			var file1 = new FileInfo("file1").WithTag("tag", "1.1.2.1").WithBranch("branch", "1.1.0.2");
+			var file2 = new FileInfo("file2").WithTag("tag", "1.1.2.1").WithBranch("branch", "1.1.0.2");
+
+			var commits = new List<Commit>()
+			{
+				new Commit("c0").WithRevision(file1, "1.1").WithRevision(file2, "1.1"),
+				new Commit("c1").WithRevision(file1, "1.1.2.1"),
+				new Commit("c2").WithRevision(file1, "1.2"),
+				new Commit("c3").WithRevision(file2, "1.1.2.1"),
+			};
+
+			var resolver = new TagResolver(m_logger, commits, commits.CreateAllFiles());
+			var result = resolver.Resolve(new[] { "tag" });
+
+			Assert.IsTrue(result, "Resolve succeeded");
+			Assert.AreSame(resolver.ResolvedTags["tag"].CommitId, "c3");
+			Assert.IsTrue(resolver.Commits.Select(c => c.CommitId).SequenceEqual("c0", "c1", "c2", "c3"));
+		}
+
+		[TestMethod]
+		public void Resolve_FileModifiedOnTrunkBeforeAnyCommitsOnBranch()
+		{
+			var file1 = new FileInfo("file1").WithTag("tag", "1.1.2.1").WithBranch("branch", "1.1.0.2");
+			var file2 = new FileInfo("file2").WithTag("tag", "1.1").WithBranch("branch", "1.1.0.2");
+
+			var commits = new List<Commit>()
+			{
+				new Commit("c0").WithRevision(file1, "1.1").WithRevision(file2, "1.1"),
+				new Commit("c1").WithRevision(file1, "1.2"),
+				new Commit("c2").WithRevision(file1, "1.1.2.1"),
+			};
+
+			var resolver = new TagResolver(m_logger, commits, commits.CreateAllFiles());
+			var result = resolver.Resolve(new[] { "tag" });
+
+			Assert.IsTrue(result, "Resolve succeeded");
+			Assert.AreSame(resolver.ResolvedTags["tag"].CommitId, "c2");
+			Assert.IsTrue(resolver.Commits.Select(c => c.CommitId).SequenceEqual("c0", "c1", "c2"));
+		}
+
+		[TestMethod]
+		public void Resolve_FileCreatedAndDeletedOnDifferentBranch_ReorderingRequired()
+		{
+			var file1 = new FileInfo("file1").WithTag("tag", "1.1.2.1").WithBranch("branch", "1.1.0.2");
+			var file2 = new FileInfo("file2").WithTag("tag", "1.1.2.2").WithBranch("branch", "1.1.0.2");
 			var file3 = new FileInfo("file3");
 
-			var commits = new List<Commit>();
+			var commits = new List<Commit>()
+			{
+				new Commit("c0").WithRevision(file1, "1.1").WithRevision(file2, "1.1"),
+				new Commit("c1").WithRevision(file1, "1.1.2.1").WithRevision(file2, "1.1.2.1"),
+				new Commit("c2").WithRevision(file1, "1.1.2.2"),
+				new Commit("c3").WithRevision(file2, "1.1.2.2"),
+				new Commit("c4").WithRevision(file3, "1.1"),
+				new Commit("c5").WithRevision(file3, "1.2", isDead: true),
+			};
 
-			commits.Add(new Commit("c0")
-					.WithRevision(file1, "1.1")
-					.WithRevision(file2, "1.1"));
+			var resolver = new TagResolver(m_logger, commits, commits.CreateAllFiles());
+			var result = resolver.Resolve(new[] { "tag" });
 
-			commits.Add(new Commit("c1")
-					.WithRevision(file3, "1.1"));  // file3 added
-
-			commits.Add(new Commit("c2")
-					.WithRevision(file3, "1.2"));  // file3 modified
-
-			// this is the target commit for "tag"
-			commits.Add(new Commit("c3")
-					.WithRevision(file2, "1.2"));
-
-			return commits;
-		}
-
-		private static IEnumerable<Commit> CreateCommitThatNeedsSplitting()
-		{
-			var file1 = new FileInfo("file1").WithTag("tag", "1.2");
-			var file2 = new FileInfo("file2").WithTag("tag", "1.2");
-
-			var commit0 = new Commit("c0")
-					.WithRevision(file1, "1.1")
-					.WithRevision(file2, "1.1");
-
-			var commit1 = new Commit("c1")
-					.WithRevision(file1, "1.2");
-
-			var commit2 = new Commit("c2")
-					.WithRevision(file1, "1.3")
-					.WithRevision(file2, "1.2");
-
-			return new[] { commit0, commit1, commit2 };
+			Assert.IsTrue(result, "Resolve succeeded");
+			Assert.AreSame(resolver.ResolvedTags["tag"].CommitId, "c3");
+			Assert.IsTrue(resolver.Commits.Select(c => c.CommitId).SequenceEqual("c0", "c1", "c3", "c2", "c4", "c5"));
 		}
 	}
 }

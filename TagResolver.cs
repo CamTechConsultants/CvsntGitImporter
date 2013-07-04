@@ -14,21 +14,11 @@ namespace CTC.CvsntGitImporter
 	class TagResolver : AutoTagResolverBase
 	{
 		private readonly ILogger m_log;
-		private readonly InclusionMatcher m_tagMatcher;
-		private HashSet<string> m_extraTags;
 
-		public IEnumerable<string> ExtraTags
-		{
-			get { return m_extraTags; }
-			set { m_extraTags = new HashSet<string>(value); }
-		}
-
-		public TagResolver(ILogger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles, InclusionMatcher tagMatcher) :
+		public TagResolver(ILogger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles) :
 				base(log: log, commits: commits, allFiles: allFiles)
 		{
 			m_log = log;
-			m_tagMatcher = tagMatcher;
-			ExtraTags = Enumerable.Empty<string>();
 		}
 
 		public override bool Resolve(IEnumerable<string> tags)
@@ -50,11 +40,6 @@ namespace CTC.CvsntGitImporter
 		protected override Revision GetRevisionForTag(FileInfo file, string tag)
 		{
 			return file.GetRevisionForTag(tag);
-		}
-
-		protected override bool MatchTag(string tag)
-		{
-			return m_tagMatcher.Match(tag) || m_extraTags.Contains(tag);
 		}
 	}
 }

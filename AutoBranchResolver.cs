@@ -4,6 +4,7 @@
  */
 
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CTC.CvsntGitImporter
 {
@@ -41,9 +42,11 @@ namespace CTC.CvsntGitImporter
 			return file.GetBranchpointForBranch(tag);
 		}
 
-		protected override bool IsFileAtTag(RepositoryBranchState state, FileInfo file, string tag)
+		protected override void HandleMissingFiles(string tag, List<Commit> commits, IEnumerable<FileInfo> files,
+				CommitMoveRecord moveRecord, ref Commit candidate)
 		{
-			return base.IsFileAtTag(state, file, tag) || file.BranchAddedOn == tag;
+			var filteredFiles = files.Where(f => f.BranchAddedOn != tag);
+			base.HandleMissingFiles(tag, commits, filteredFiles, moveRecord, ref candidate);
 		}
 	}
 }

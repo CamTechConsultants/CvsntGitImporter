@@ -38,7 +38,7 @@ namespace CTC.CvsntGitImporter
 		/// </summary>
 		public string ConciseFormat
 		{
-			get { return String.Format("{{{0} {1}}}", CommitId, Time); }
+			get { return String.Format("{{{0}[{1}] {2}}}", CommitId, Index, Time); }
 		}
 
 		/// <summary>
@@ -250,9 +250,10 @@ namespace CTC.CvsntGitImporter
 
 		public override string ToString()
 		{
-			return String.Format("{0} {1}({2})",
+			return String.Format("{0} time={1} {2}({3})",
 					CommitId,
-					(Index == 0) ? "" : String.Format("Index={0} ", Index),
+					Time,
+					(Index == 0) ? "" : String.Format("index={0} ", Index),
 					String.Join(", ", m_files));
 		}
 

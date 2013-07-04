@@ -16,43 +16,68 @@ namespace CTC.CvsntGitImporter
 	/// </summary>
 	class CommitMoveRecord
 	{
-		private string m_tag;
-		private Commit m_finalCommit;
+		private readonly string m_tag;
 		private readonly ILogger m_log;
-		private readonly List<Commit> m_commits = new List<Commit>();
-		private readonly OneToManyDictionary<string, FileRevision> m_files = new OneToManyDictionary<string, FileRevision>();
+		private readonly OneToManyDictionary<Commit, FileInfo> m_files = new OneToManyDictionary<Commit, FileInfo>(CommitComparer.ById);
+		private Commit m_finalCommit;
 
-		public CommitMoveRecord(string tag, Commit finalCommit, ILogger log)
+		public CommitMoveRecord(string tag, ILogger log)
 		{
 			m_tag = tag;
-			m_finalCommit = finalCommit;
 			m_log = log;
+		}
+
+		public Commit FinalCommit
+		{
+			get
+			{
+				return m_finalCommit;
+			}
+			set
+			{
+				m_finalCommit = value;
+
+				// if the final commit is in the list of ones to be moved and does not need splitting, then remove it
+				if (value.Count() == m_files[value].Count())
+					m_files.Remove(value);
+			}
+		}
+
+		public IEnumerable<Commit> Commits
+		{
+			get { return m_files.Keys; }
 		}
 
 		public override string ToString()
 		{
-			return String.Format("{0}: {1}, {2} commits", m_tag, m_finalCommit.CommitId, m_commits.Count);
+			return String.Format("{0}: {1}, {2} commits", m_tag, m_finalCommit.CommitId, m_files.Count);
 		}
 
-		public void AddCommit(Commit commit, List<FileRevision> filesToMove)
+		public void AddCommit(Commit commit, IEnumerable<FileInfo> filesToMove)
 		{
-			m_commits.Add(commit);
-			m_files[commit.CommitId] = filesToMove;
+			m_files.AddRange(commit, filesToMove);
+		}
+
+		public void AddCommit(Commit commit, FileInfo fileToMove)
+		{
+			m_files.Add(commit, fileToMove);
 		}
 
 		public void Apply(IList<Commit> commitStream)
 		{
 			int destLocation = commitStream.IndexOf(m_finalCommit);
 			int searchStart = destLocation;
+			var commits = m_files.Keys.OrderBy(c => c.Index).ToList();
 
-			m_log.WriteLine("{0}: Final commit: {1}", m_tag, m_finalCommit.ConciseFormat);
+			Dump();
+			m_log.WriteLine("Applying:");
 
 			using (m_log.Indent())
 			{
 				// handle in reverse order
-				for (int i = m_commits.Count - 1; i >= 0; i--)
+				for (int i = commits.Count - 1; i >= 0; i--)
 				{
-					var commitToMove = m_commits[i];
+					var commitToMove = commits[i];
 					int location = commitStream.IndexOfFromEnd(commitToMove, searchStart);
 					if (location < 0)
 					{
@@ -62,26 +87,31 @@ namespace CTC.CvsntGitImporter
 					}
 
 					// does the commit need splitting?
-					var fileRevisions = m_files[commitToMove.CommitId];
-					if (fileRevisions.Count() < commitToMove.Count())
+					var files = m_files[commitToMove];
+					if (files.Count() < commitToMove.Count())
 					{
 						m_log.WriteLine("Split {0}", commitToMove.CommitId);
 
 						using (m_log.Indent())
 						{
-							// commit1 is the files that do not need moving
-							var commit1 = CreateCommitSubset(commitToMove, "1", commitToMove.Except(fileRevisions));
+							int index = commitToMove.Index;
+							Commit splitCommitNeedMove;
+							Commit splitCommitNoMove;
+							SplitCommit(commitToMove, files, out splitCommitNeedMove, out splitCommitNoMove);
 
-							// commit2 is the files that do need moving
-							var commit2 = CreateCommitSubset(commitToMove, "2", fileRevisions);
-
-							commitStream[location] = commit1;
-							commitStream.Insert(++location, commit2);
+							commitStream[location] = splitCommitNoMove;
+							commitStream.Insert(location + 1, splitCommitNeedMove);
 							destLocation++;
 
-							commitToMove = commit2;
 							if (m_finalCommit == commitToMove)
-								m_finalCommit = commit2;
+								m_finalCommit = splitCommitNeedMove;
+							commitToMove = splitCommitNeedMove;
+
+							// update Commit indices
+							for (int j = location; j < commitStream.Count; j++)
+								commitStream[j].Index = index++;
+
+							location++;
 						}
 					}
 
@@ -93,21 +123,42 @@ namespace CTC.CvsntGitImporter
 			}
 		}
 
-		private Commit CreateCommitSubset(Commit parent, string suffix, IEnumerable<FileRevision> revisions)
+		private void Dump()
 		{
-			var commit = new Commit(parent.CommitId + "-" + suffix);
-			m_log.WriteLine("New commit {0}", commit.CommitId);
+			if (m_log.DebugEnabled)
+			{
+				m_log.WriteLine("{0}: Final commit: {1}", m_tag, m_finalCommit.ConciseFormat);
+				using (m_log.Indent())
+				{
+					foreach (var commit in m_files.Keys.OrderBy(c => c.Index))
+					{
+						m_log.WriteLine("{0}", commit.ConciseFormat);
+						using (m_log.Indent())
+						{
+							foreach (var f in m_files[commit].OrderBy(f => f.Name))
+								m_log.WriteLine("{0} should be at r{1}", f.Name, f.GetRevisionForTag(m_tag));
+						}
+					}
+				}
+			}
+		}
+
+		private void SplitCommit(Commit parent, IEnumerable<FileInfo> files, out Commit included, out Commit excluded)
+		{
+			included = new Commit(parent.CommitId + "-1");
+			excluded = new Commit(parent.CommitId + "-2");
+			m_log.WriteLine("New commit {0}", included.CommitId);
+			m_log.WriteLine("New commit {0}", excluded.CommitId);
 
 			using (m_log.Indent())
 			{
-				foreach (var f in revisions)
+				foreach (var revision in parent)
 				{
-					m_log.WriteLine("{0}", f);
-					commit.Add(f);
+					Commit commit = files.Contains(revision.File) ? included : excluded;
+					m_log.WriteLine("  {0}: add {1}", commit.CommitId, revision.File.Name);
+					commit.Add(revision);
 				}
 			}
-
-			return commit;
 		}
 	}
 }

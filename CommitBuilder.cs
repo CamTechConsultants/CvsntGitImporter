@@ -64,7 +64,7 @@ namespace CTC.CvsntGitImporter
 
 		private static string GetBranchAddedOn(string message)
 		{
-			var match = Regex.Match(message, @"initially added on branch (\S+)");
+			var match = Regex.Match(message, @"initially added on branch (\S+)\.");
 			if (!match.Success)
 			{
 				throw new ArgumentException(String.Format(
