@@ -95,21 +95,22 @@ namespace CTC.CvsntGitImporter
 					.ToListIfNeeded();
 
 			// build lookup of all files
-			var allFiles = new FileCollection(parser.Files.Where(f => m_switches.FileMatcher.Match(f.Name)));
+			var allFiles = new FileCollection(parser.Files);
+			var includedFiles = new FileCollection(parser.Files.Where(f => m_switches.FileMatcher.Match(f.Name)));
 
 			WriteAllCommitsLog(commits);
 			WriteExcludedFileLog(parser);
 
-			var tagResolver = new TagResolver(m_log, commits, allFiles);
+			var tagResolver = new TagResolver(m_log, commits, includedFiles);
 			if (m_switches.PartialTagThreshold != null)
 				tagResolver.PartialTagThreshold = (int)m_switches.PartialTagThreshold.Value;
-			var allTags = allFiles.SelectMany(f => f.AllTags).Where(t => m_switches.TagMatcher.Match(t));
+			var allTags = includedFiles.SelectMany(f => f.AllTags).Where(t => m_switches.TagMatcher.Match(t));
 
 			// if we're matching branchpoints, make a list of branchpoint tags that need to be resolved
 			var branchpointTags = Enumerable.Empty<string>();
 			if (m_switches.BranchpointRule != null)
 			{
-				var allBranches = allFiles.SelectMany(f => f.AllBranches).Distinct();
+				var allBranches = includedFiles.SelectMany(f => f.AllBranches).Distinct();
 				var rule = m_switches.BranchpointRule;
 				branchpointTags = allBranches.Where(b => rule.IsMatch(b)).Select(b => rule.Apply(b));
 				allTags = allTags.Concat(branchpointTags);
@@ -138,7 +139,7 @@ namespace CTC.CvsntGitImporter
 
 			// resolve branchpoints
 			ITagResolver branchResolver;
-			var autoBranchResolver = new AutoBranchResolver(m_log, commits, allFiles);
+			var autoBranchResolver = new AutoBranchResolver(m_log, commits, includedFiles);
 			if (m_switches.PartialTagThreshold != null)
 				autoBranchResolver.PartialTagThreshold = (int)m_switches.PartialTagThreshold.Value;
 			if (m_switches.BranchpointRule == null)
@@ -146,7 +147,7 @@ namespace CTC.CvsntGitImporter
 			else
 				branchResolver = new ManualBranchResolver(m_log, autoBranchResolver, tagResolver, m_switches.BranchpointRule);
 
-			if (!branchResolver.Resolve(allFiles.SelectMany(f => f.AllBranches).Distinct()))
+			if (!branchResolver.Resolve(includedFiles.SelectMany(f => f.AllBranches).Distinct()))
 			{
 				var unresolvedTags = branchResolver.UnresolvedTags.OrderBy(i => i);
 
