@@ -42,17 +42,17 @@ namespace CTC.CvsntGitImporter
 		}
 
 		/// <summary>
-		/// The Commit's direct predecessor.
+		/// The commit's direct predecessor.
 		/// </summary>
 		public Commit Predecessor;
 
 		/// <summary>
-		/// The Commit's direct predecessor.
+		/// The commit's direct predecessor.
 		/// </summary>
 		public Commit Successor;
 
 		/// <summary>
-		/// Gets a list of branches that this Commit is a branchpoint for.
+		/// Gets a list of branches that this commit is a branchpoint for.
 		/// </summary>
 		public IEnumerable<Commit> Branches
 		{
@@ -67,6 +67,9 @@ namespace CTC.CvsntGitImporter
 			get { return m_branches != null && m_branches.Any(); }
 		}
 
+		/// <summary>
+		/// Gets the date and time of the commit.
+		/// </summary>
 		public DateTime Time
 		{
 			get
@@ -134,6 +137,9 @@ namespace CTC.CvsntGitImporter
 		/// </summary>
 		public Commit MergeFrom;
 
+		/// <summary>
+		/// Gets any errors in this commit after verification.
+		/// </summary>
 		public IEnumerable<string> Errors
 		{
 			get { return m_errors ?? Enumerable.Empty<string>(); }
@@ -230,7 +236,7 @@ namespace CTC.CvsntGitImporter
 			return !Errors.Any();
 		}
 
-		private IEnumerable<string> PossibleMergedBranches(FileRevision r)
+		private static IEnumerable<string> PossibleMergedBranches(FileRevision r)
 		{
 			if (r.Mergepoint.Equals(Revision.Empty))
 				yield break;
@@ -243,9 +249,19 @@ namespace CTC.CvsntGitImporter
 				yield return otherBranch;
 		}
 
-		private string FormatBranchList(IEnumerable<string> branches)
+		private static string FormatBranchList(IEnumerable<string> branches)
 		{
 			return String.Join(", ", branches.Select(b => b ?? "<excluded branch>"));
+		}
+
+		private void AddError(string format, params object[] args)
+		{
+			var msg = String.Format(format, args);
+
+			if (m_errors == null)
+				m_errors = new List<string>() { msg };
+			else
+				m_errors.Add(msg);
 		}
 
 		public override string ToString()
@@ -266,16 +282,6 @@ namespace CTC.CvsntGitImporter
 		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
 		{
 			return m_files.GetEnumerator();
-		}
-
-		private void AddError(string format, params object[] args)
-		{
-			var msg = String.Format(format, args);
-
-			if (m_errors == null)
-				m_errors = new List<string>() { msg };
-			else
-				m_errors.Add(msg);
 		}
 	}
 }

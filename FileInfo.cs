@@ -111,8 +111,6 @@ namespace CTC.CvsntGitImporter
 		/// <summary>
 		/// Get the revision for the branchpoint for a branch.
 		/// </summary>
-		/// <param name="tag"></param>
-		/// <returns></returns>
 		public Revision GetBranchpointForBranch(string branch)
 		{
 			Revision branchRevision;
