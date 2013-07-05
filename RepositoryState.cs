@@ -14,10 +14,10 @@ namespace CTC.CvsntGitImporter
 	class RepositoryState
 	{
 		private readonly Dictionary<string, RepositoryBranchState> m_branches = new Dictionary<string, RepositoryBranchState>();
-		private readonly Dictionary<string, FileInfo> m_allFiles;
+		private readonly FileCollection m_allFiles;
 		private readonly bool m_setupInitialBranchState;
 
-		private RepositoryState(Dictionary<string, FileInfo> allFiles, bool setupInitialBranchState)
+		private RepositoryState(FileCollection allFiles, bool setupInitialBranchState)
 		{
 			m_allFiles = allFiles;
 			m_setupInitialBranchState = setupInitialBranchState;
@@ -27,7 +27,7 @@ namespace CTC.CvsntGitImporter
 		/// Create an instance of RepositoryState that tracks the full state of each branch, i.e. each
 		/// branch inherits all live files from its parent.
 		/// </summary>
-		public static RepositoryState CreateWithFullBranchState(Dictionary<string, FileInfo> allFiles)
+		public static RepositoryState CreateWithFullBranchState(FileCollection allFiles)
 		{
 			return new RepositoryState(allFiles, true);
 		}
@@ -72,7 +72,7 @@ namespace CTC.CvsntGitImporter
 
 			if (m_setupInitialBranchState)
 			{
-				foreach (var file in m_allFiles.Values)
+				foreach (var file in m_allFiles)
 				{
 					var branchpointRevision = file.GetBranchpointForBranch(branch);
 					if (branchpointRevision == Revision.Empty)

@@ -15,7 +15,7 @@ namespace CTC.CvsntGitImporter
 	{
 		private readonly ILogger m_log;
 
-		public AutoBranchResolver(ILogger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles) :
+		public AutoBranchResolver(ILogger log, IEnumerable<Commit> commits, FileCollection allFiles) :
 				base(log: log, commits: commits, allFiles: allFiles, branches: true)
 		{
 			m_log = log;

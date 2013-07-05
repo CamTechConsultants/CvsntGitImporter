@@ -64,7 +64,7 @@ namespace CTC.CvsntGitImporter
 		/// Create extra commits for files that have been marked as "head-only".
 		/// </summary>
 		public void CreateHeadOnlyCommits(IEnumerable<string> headOnlyBranches, BranchStreamCollection streams,
-				Dictionary<string, FileInfo> allFiles)
+				FileCollection allFiles)
 		{
 			var branches = SortBranches(headOnlyBranches, streams);
 			var branchMerges = new Dictionary<string, string>();
@@ -91,7 +91,7 @@ namespace CTC.CvsntGitImporter
 			}
 		}
 
-		private void CreateHeadOnlyCommit(string branch, BranchStreamCollection streams, Dictionary<string, FileInfo> allFiles, string branchMergeFrom)
+		private void CreateHeadOnlyCommit(string branch, BranchStreamCollection streams, FileCollection allFiles, string branchMergeFrom)
 		{
 			var repoState = m_headOnlyState[branch];
 			var commitId = String.Format("headonly-{0}", branch);

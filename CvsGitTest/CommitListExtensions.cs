@@ -14,14 +14,9 @@ namespace CTC.CvsntGitImporter.TestCode
 	/// </summary>
 	static class CommitListExtensions
 	{
-		public static Dictionary<string, FileInfo> CreateAllFiles(this IEnumerable<Commit> commits)
+		public static FileCollection CreateAllFiles(this IEnumerable<Commit> commits, params FileInfo[] extraFiles)
 		{
-			var allFiles = new Dictionary<string, FileInfo>();
-
-			foreach (var f in commits.SelectMany(c => c.Select(r => r.File)).Distinct())
-				allFiles.Add(f.Name, f);
-
-			return allFiles;
+			return new FileCollection(commits.SelectMany(c => c.Select(r => r.File)).Concat(extraFiles).Distinct());
 		}
 	}
 }

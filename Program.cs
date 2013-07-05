@@ -95,23 +95,21 @@ namespace CTC.CvsntGitImporter
 					.ToListIfNeeded();
 
 			// build lookup of all files
-			var allFiles = new Dictionary<string, FileInfo>();
-			foreach (var f in parser.Files.Where(f => m_switches.FileMatcher.Match(f.Name)))
-				allFiles.Add(f.Name, f);
-			WriteAllCommitsLog(commits);
+			var allFiles = new FileCollection(parser.Files.Where(f => m_switches.FileMatcher.Match(f.Name)));
 
+			WriteAllCommitsLog(commits);
 			WriteExcludedFileLog(parser);
 
 			var tagResolver = new TagResolver(m_log, commits, allFiles);
 			if (m_switches.PartialTagThreshold != null)
 				tagResolver.PartialTagThreshold = (int)m_switches.PartialTagThreshold.Value;
-			var allTags = allFiles.SelectMany(pair => pair.Value.AllTags).Where(t => m_switches.TagMatcher.Match(t));
+			var allTags = allFiles.SelectMany(f => f.AllTags).Where(t => m_switches.TagMatcher.Match(t));
 
 			// if we're matching branchpoints, make a list of branchpoint tags that need to be resolved
 			var branchpointTags = Enumerable.Empty<string>();
 			if (m_switches.BranchpointRule != null)
 			{
-				var allBranches = allFiles.SelectMany(pair => pair.Value.AllBranches).Distinct();
+				var allBranches = allFiles.SelectMany(f => f.AllBranches).Distinct();
 				var rule = m_switches.BranchpointRule;
 				branchpointTags = allBranches.Where(b => rule.IsMatch(b)).Select(b => rule.Apply(b));
 				allTags = allTags.Concat(branchpointTags);
@@ -148,7 +146,7 @@ namespace CTC.CvsntGitImporter
 			else
 				branchResolver = new ManualBranchResolver(m_log, autoBranchResolver, tagResolver, m_switches.BranchpointRule);
 
-			if (!branchResolver.Resolve(allFiles.SelectMany(pair => pair.Value.AllBranches).Distinct()))
+			if (!branchResolver.Resolve(allFiles.SelectMany(f => f.AllBranches).Distinct()))
 			{
 				var unresolvedTags = branchResolver.UnresolvedTags.OrderBy(i => i);
 

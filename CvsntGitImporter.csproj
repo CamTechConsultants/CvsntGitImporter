@@ -60,6 +60,7 @@
     <Compile Include="CvsRepository.cs" />
     <Compile Include="CvsRepositoryCache.cs" />
     <Compile Include="ExclusionFilter.cs" />
+    <Compile Include="FileCollection.cs" />
     <Compile Include="FileContent.cs" />
     <Compile Include="FileContentData.cs" />
     <Compile Include="FuncExtensions.cs" />

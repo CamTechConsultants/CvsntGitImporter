@@ -219,12 +219,9 @@ namespace CTC.CvsntGitImporter.TestCode
 		}
 
 
-		private static Dictionary<string, FileInfo> AllFiles(params FileInfo[] files)
+		private static FileCollection AllFiles(params FileInfo[] files)
 		{
-			var allFiles = new Dictionary<string, FileInfo>();
-			foreach (var f in files)
-				allFiles.Add(f.Name, f);
-			return allFiles;
+			return new FileCollection(files);
 		}
 	}
 }

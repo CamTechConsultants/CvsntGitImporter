@@ -48,8 +48,7 @@ namespace CTC.CvsntGitImporter.TestCode
 
 			var mainCommit = new Commit("c1").WithRevision(f1, "1.1");
 			var commits = new[] { mainCommit };
-			var allFiles = commits.CreateAllFiles();
-			allFiles.Add(f2.Name, f2);
+			var allFiles = commits.CreateAllFiles(f2);
 
 			var state = RepositoryState.CreateWithFullBranchState(allFiles);
 			state.Apply(mainCommit);

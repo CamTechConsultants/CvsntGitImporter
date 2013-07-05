@@ -17,11 +17,11 @@ namespace CTC.CvsntGitImporter
 	{
 		private readonly ILogger m_log;
 		private readonly IList<Commit> m_allCommits;
-		private readonly Dictionary<string, FileInfo> m_allFiles;
+		private readonly FileCollection m_allFiles;
 		private readonly bool m_branches;
 		private readonly List<string> m_unresolvedTags = new List<string>();
 
-		protected AutoTagResolverBase(ILogger log, IEnumerable<Commit> commits, Dictionary<string, FileInfo> allFiles,
+		protected AutoTagResolverBase(ILogger log, IEnumerable<Commit> commits, FileCollection allFiles,
 				bool branches = false)
 		{
 			m_log = log;
@@ -232,7 +232,7 @@ namespace CTC.CvsntGitImporter
 			if (result == CommitTagMatch.ExactMatch)
 			{
 				// if no files are ahead in the commit, now check whether the whole tree is at the correct version
-				foreach (var file in m_allFiles.Values)
+				foreach (var file in m_allFiles)
 				{
 					if (GetRevisionForTag(file, tag) != branchState[file.Name])
 					{
@@ -266,7 +266,7 @@ namespace CTC.CvsntGitImporter
 			List<FileInfo> extraFiles = null;
 			var liveFiles = new HashSet<string>(candidateBranchState.LiveFiles);
 
-			foreach (var file in m_allFiles.Values)
+			foreach (var file in m_allFiles)
 			{
 				if (GetRevisionForTag(file, tag) == Revision.Empty)
 				{
