@@ -32,7 +32,7 @@ namespace CTC.CvsntGitImporter.TestCode
 		public void SingleMerge_NoReordering()
 		{
 			var streams = CreateSingleMerge();
-			var resolver = new MergeResolver(m_logger, streams, new[] { "MAIN", "branch" });
+			var resolver = new MergeResolver(m_logger, streams);
 			resolver.Resolve();
 
 			Assert.IsTrue(streams["MAIN"].ToList().Select(c => c.CommitId).SequenceEqual("initial", "merge"));
@@ -43,7 +43,7 @@ namespace CTC.CvsntGitImporter.TestCode
 		public void SingleMerge_MergesFilledIn()
 		{
 			var streams = CreateSingleMerge();
-			var resolver = new MergeResolver(m_logger, streams, new[] { "MAIN", "branch" });
+			var resolver = new MergeResolver(m_logger, streams);
 			resolver.Resolve();
 
 			Assert.IsTrue(streams["MAIN"].Successor.CommitId == "merge" && streams["MAIN"].Successor.MergeFrom.CommitId == "branch");
@@ -55,7 +55,7 @@ namespace CTC.CvsntGitImporter.TestCode
 		public void MultipleMerges_NoReordering()
 		{
 			var streams = CreateMultipleMerges();
-			var resolver = new MergeResolver(m_logger, streams, new[] { "MAIN", "branch" });
+			var resolver = new MergeResolver(m_logger, streams);
 			resolver.Resolve();
 
 			Assert.IsTrue(streams["MAIN"].ToList().Select(c => c.CommitId).SequenceEqual("initial", "merge1", "merge2"));
@@ -66,7 +66,7 @@ namespace CTC.CvsntGitImporter.TestCode
 		public void MultipleMerges_MergesFilledIn()
 		{
 			var streams = CreateMultipleMerges();
-			var resolver = new MergeResolver(m_logger, streams, new[] { "MAIN", "branch" });
+			var resolver = new MergeResolver(m_logger, streams);
 			resolver.Resolve();
 
 			var main0 = streams["MAIN"];
@@ -83,7 +83,7 @@ namespace CTC.CvsntGitImporter.TestCode
 		public void CrossedMerge_Reordered()
 		{
 			var streams = CreateCrossedMerges();
-			var resolver = new MergeResolver(m_logger, streams, new[] { "MAIN", "branch" });
+			var resolver = new MergeResolver(m_logger, streams);
 			resolver.Resolve();
 
 			Assert.IsTrue(streams["MAIN"].ToList().Select(c => c.CommitId).SequenceEqual("initial", "merge1", "merge2"));
@@ -94,7 +94,7 @@ namespace CTC.CvsntGitImporter.TestCode
 		public void CrossedMerge_MergesFilledIn()
 		{
 			var streams = CreateCrossedMerges();
-			var resolver = new MergeResolver(m_logger, streams, new[] { "MAIN", "branch" });
+			var resolver = new MergeResolver(m_logger, streams);
 			resolver.Resolve();
 
 			var main0 = streams["MAIN"];
@@ -128,7 +128,7 @@ namespace CTC.CvsntGitImporter.TestCode
 			};
 
 			var streams = new BranchStreamCollection(commits, branchpoints);
-			var resolver = new MergeResolver(m_logger, streams, new[] { "MAIN", "branch" });
+			var resolver = new MergeResolver(m_logger, streams);
 			resolver.Resolve();
 
 			Assert.IsTrue(streams["MAIN"].ToList().Select(c => c.CommitId).SequenceEqual("initial1", "initial2", "initial3", "merge1", "merge2"));
@@ -138,8 +138,19 @@ namespace CTC.CvsntGitImporter.TestCode
 		[TestMethod]
 		public void SingleMergeOnExcludedBranch_NoMergeFilledIn()
 		{
-			var streams = CreateSingleMerge();
-			var resolver = new MergeResolver(m_logger, streams, new[] { "MAIN" });
+			var commits = new List<Commit>()
+			{
+				new Commit("initial").WithRevision(m_file, "1.1"),
+				new Commit("merge").WithRevision(m_file, "1.2", mergepoint: "1.1.2.1"),
+			};
+
+			var branchpoints = new Dictionary<string, Commit>()
+			{
+				{ "branch", commits[0] }
+			};
+
+			var streams = new BranchStreamCollection(commits, branchpoints);
+			var resolver = new MergeResolver(m_logger, streams);
 			resolver.Resolve();
 
 			Assert.IsTrue(streams["MAIN"].ToList().All(c => c.MergeFrom == null));
@@ -163,7 +174,7 @@ namespace CTC.CvsntGitImporter.TestCode
 			};
 
 			var streams = new BranchStreamCollection(commits, branchpoints);
-			var resolver = new MergeResolver(m_logger, streams, new[] { "MAIN", "branch" });
+			var resolver = new MergeResolver(m_logger, streams);
 			resolver.Resolve();
 
 			Assert.IsTrue(streams["MAIN"].ToList().All(c => c.MergeFrom == null));

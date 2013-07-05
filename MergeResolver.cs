@@ -17,13 +17,11 @@ namespace CTC.CvsntGitImporter
 	{
 		private readonly ILogger m_log;
 		private readonly BranchStreamCollection m_streams;
-		private readonly HashSet<string> m_includedBranches;
 
-		public MergeResolver(ILogger log, BranchStreamCollection streams, IEnumerable<string> includedBranches)
+		public MergeResolver(ILogger log, BranchStreamCollection streams)
 		{
 			m_log = log;
 			m_streams = streams;
-			m_includedBranches = new HashSet<string>(includedBranches);
 		}
 
 		public void Resolve()
@@ -72,11 +70,12 @@ namespace CTC.CvsntGitImporter
 				// get the last commit on the source branch for all the merged files
 				var commitSource = commitDest.MergedFiles
 						.Select(f => f.File.GetCommit(f.Mergepoint))
+						.Where(c => c != null)
 						.OrderByDescending(c => c.Index)
-						.First();
+						.FirstOrDefault();
 
 				// ignore excluded branches
-				if (!m_includedBranches.Contains(commitSource.Branch))
+				if (commitSource == null)
 					continue;
 
 				var commitBranchRoot = m_streams[commitSource.Branch];

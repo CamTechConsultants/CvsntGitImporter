@@ -171,7 +171,7 @@ namespace CTC.CvsntGitImporter
 			var streams = commits.SplitBranchStreams(branchResolver.ResolvedTags);
 
 			// resolve merges
-			var mergeResolver = new MergeResolver(m_log, streams, branchResolver.ResolvedTags());
+			var mergeResolver = new MergeResolver(m_log, streams);
 			mergeResolver.Resolve();
 
 			WriteBranchLogs(streams);
