@@ -40,8 +40,12 @@ namespace CTC.CvsntGitImporter
 			int failures = 0;
 			foreach (var branch in m_streams.Branches)
 			{
-				var branchRoot = m_streams[branch];
-				failures += ProcessBranch(branchRoot);
+				m_log.WriteLine("{0}", branch);
+				using (m_log.Indent())
+				{
+					var branchRoot = m_streams[branch];
+					failures += ProcessBranch(branchRoot);
+				}
 			}
 
 			if (failures > 0)
@@ -81,11 +85,8 @@ namespace CTC.CvsntGitImporter
 				var commitBranchRoot = m_streams[commitSource.Branch];
 				if (commitBranchRoot.Predecessor == null || commitBranchRoot.Predecessor.Branch != commitDest.Branch)
 				{
-					using (m_log.Indent())
-					{
-						m_log.WriteLine("Warning: ignoring merge to commit {0} on {1} - merged commit {2} is on {3} which is not branched off from {4}",
-								commitDest.CommitId, commitDest.Branch, commitSource.CommitId, commitSource.Branch, commitDest.Branch);
-					}
+					m_log.WriteLine("Warning: ignoring merge to commit {0} - merged commit {1} is on {2} which is not branched off from {3}",
+							commitDest.CommitId, commitSource.CommitId, commitSource.Branch, commitDest.Branch);
 					continue;
 				}
 
