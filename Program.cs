@@ -106,19 +106,33 @@ namespace CTC.CvsntGitImporter
 			var allTags = allFiles.SelectMany(pair => pair.Value.AllTags).Where(t => m_switches.TagMatcher.Match(t));
 
 			// if we're matching branchpoints, make a list of branchpoint tags that need to be resolved
+			var branchpointTags = Enumerable.Empty<string>();
 			if (m_switches.BranchpointRule != null)
 			{
 				var allBranches = allFiles.SelectMany(pair => pair.Value.AllBranches).Distinct();
 				var rule = m_switches.BranchpointRule;
-				var branchpointTags = allBranches.Where(b => rule.IsMatch(b)).Select(b => rule.Apply(b));
+				branchpointTags = allBranches.Where(b => rule.IsMatch(b)).Select(b => rule.Apply(b));
 				allTags = allTags.Concat(branchpointTags);
 			}
 
 			// resolve tags
 			if (!tagResolver.Resolve(allTags.Distinct()))
 			{
-				throw new ImportFailedException(String.Format("Unable to resolve all tags to a single commit: {0}",
-						tagResolver.UnresolvedTags.StringJoin(", ")));
+				// ignore branchpoint tags that are unresolved
+				var unresolvedTags = tagResolver.UnresolvedTags.Except(branchpointTags).OrderBy(i => i);
+
+				if (unresolvedTags.Any())
+				{
+					m_log.WriteLine("Unresolved tags:");
+					using (m_log.Indent())
+					{
+						foreach (var tag in unresolvedTags)
+							m_log.WriteLine("{0}", tag);
+					}
+
+					throw new ImportFailedException(String.Format("Unable to resolve all tags to a single commit: {0}",
+							unresolvedTags.StringJoin(", ")));
+				}
 			}
 			commits = tagResolver.Commits;
 
@@ -132,6 +146,15 @@ namespace CTC.CvsntGitImporter
 
 			if (!branchResolver.Resolve(allFiles.SelectMany(pair => pair.Value.AllBranches).Distinct()))
 			{
+				var unresolvedTags = branchResolver.UnresolvedTags.OrderBy(i => i);
+
+				m_log.WriteLine("Unresolved branches:");
+				using (m_log.Indent())
+				{
+					foreach (var tag in unresolvedTags)
+						m_log.WriteLine("{0}", tag);
+				}
+
 				throw new ImportFailedException(String.Format("Unable to resolve all branches to a single commit: {0}",
 						branchResolver.UnresolvedTags.StringJoin(", ")));
 			}
