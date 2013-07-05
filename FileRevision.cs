@@ -46,7 +46,7 @@ namespace CTC.CvsntGitImporter
 		{
 			get
 			{
-				return Revision == "1.1" && IsDead && Regex.IsMatch(Message, @"file .* was initially added on branch ");
+				return Revision == Revision.First && IsDead && Regex.IsMatch(Message, @"file .* was initially added on branch ");
 			}
 		}
 

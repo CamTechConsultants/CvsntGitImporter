@@ -13,7 +13,7 @@ namespace CTC.CvsntGitImporter
 	/// <summary>
 	/// Represents a CVS revision number.
 	/// </summary>
-	class Revision : IComparable<Revision>
+	class Revision : IComparable<Revision>, IEquatable<Revision>
 	{
 		private static Dictionary<string, Revision> m_cache = new Dictionary<string, Revision>();
 
@@ -204,10 +204,7 @@ namespace CTC.CvsntGitImporter
 
 		public bool Equals(Revision other)
 		{
-			if (other == null)
-				return false;
-
-			return PartsEqual(this.m_parts, other.m_parts);
+			return Object.ReferenceEquals(this, other);
 		}
 
 		public override bool Equals(object obj)
