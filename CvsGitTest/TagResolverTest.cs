@@ -531,5 +531,28 @@ namespace CTC.CvsntGitImporter.TestCode
 			Assert.AreSame(resolver.ResolvedTags["tag"].CommitId, "c3");
 			Assert.IsTrue(resolver.Commits.Select(c => c.CommitId).SequenceEqual("c0", "c1", "c3", "c2", "c4", "c5"));
 		}
+
+		[TestMethod]
+		public void Resolve_PartialBranchDetection()
+		{
+			var file1 = new FileInfo("file1").WithTag("tag", "1.2");
+			var file2 = new FileInfo("file2");
+			var file3 = new FileInfo("file3");
+			var file4 = new FileInfo("file4");
+
+			var commits = new List<Commit>()
+			{
+				new Commit("c0").WithRevision(file1, "1.1").WithRevision(file2, "1.1"),
+				new Commit("c1").WithRevision(file3, "1.1").WithRevision(file4, "1.1"),
+				new Commit("c2").WithRevision(file1, "1.2"),
+			};
+
+			var resolver = new TagResolver(m_logger, commits, commits.CreateAllFiles()) { PartialTagThreshold = 2 };
+			var result = resolver.Resolve(new[] { "tag" });
+
+			Assert.IsFalse(result, "Resolve failed");
+			Assert.IsFalse(resolver.ResolvedTags.ContainsKey("tag"));
+			Assert.AreEqual(resolver.UnresolvedTags.Single(), "tag");
+		}
 	}
 }

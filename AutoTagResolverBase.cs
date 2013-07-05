@@ -156,9 +156,12 @@ namespace CTC.CvsntGitImporter
 			CheckAddedRemovedFiles(tag, candidateBranchState, relevantCommits, moveRecord, ref curCandidate);
 
 			// perform any moves
-			moveRecord.FinalCommit = curCandidate;
-			if (moveRecord.Commits.Any())
-				moveRecord.Apply(m_allCommits);
+			if (curCandidate != null)
+			{
+				moveRecord.FinalCommit = curCandidate;
+				if (moveRecord.Commits.Any())
+					moveRecord.Apply(m_allCommits);
+			}
 
 			CheckCommitIndices(m_allCommits);
 			return curCandidate;
@@ -285,8 +288,18 @@ namespace CTC.CvsntGitImporter
 
 			if (missingFiles != null)
 				HandleMissingFiles(tag, commits, missingFiles, moveRecord, ref candidate);
+
 			if (extraFiles != null)
+			{
+				if (extraFiles.Count > PartialTagThreshold)
+				{
+					m_log.WriteLine("Partial tag - {0} extra files", extraFiles.Count);
+					candidate = null;
+					return;
+				}
+
 				HandleExtraFiles(tag, commits, extraFiles, moveRecord, ref candidate);
+			}
 		}
 
 		protected virtual void HandleMissingFiles(string tag, List<Commit> commits, IEnumerable<FileInfo> files,

@@ -103,6 +103,8 @@ namespace CTC.CvsntGitImporter
 			WriteExcludedFileLog(parser);
 
 			var tagResolver = new TagResolver(m_log, commits, allFiles);
+			if (m_switches.PartialTagThreshold != null)
+				tagResolver.PartialTagThreshold = (int)m_switches.PartialTagThreshold.Value;
 			var allTags = allFiles.SelectMany(pair => pair.Value.AllTags).Where(t => m_switches.TagMatcher.Match(t));
 
 			// if we're matching branchpoints, make a list of branchpoint tags that need to be resolved
@@ -139,6 +141,8 @@ namespace CTC.CvsntGitImporter
 			// resolve branchpoints
 			ITagResolver branchResolver;
 			var autoBranchResolver = new AutoBranchResolver(m_log, commits, allFiles);
+			if (m_switches.PartialTagThreshold != null)
+				autoBranchResolver.PartialTagThreshold = (int)m_switches.PartialTagThreshold.Value;
 			if (m_switches.BranchpointRule == null)
 				branchResolver = autoBranchResolver;
 			else
