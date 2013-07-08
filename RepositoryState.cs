@@ -64,6 +64,20 @@ namespace CTC.CvsntGitImporter
 		{
 			var state = this[commit.Branch];
 			state.Apply(commit);
+
+			// find any file revisions that are branchpoints for branches and update the state of those branches
+			var branches = commit
+					.SelectMany(f => f.File.GetBranchesAtRevision(f.Revision))
+					.Distinct()
+					.Where(b => m_branches.ContainsKey(b));
+
+			foreach (var branch in branches)
+			{
+				var tempCommit = new Commit("");
+				foreach (var fr in commit.Where(f => f.File.GetBranchesAtRevision(f.Revision).Contains(branch)))
+					tempCommit.Add(fr);
+				this[branch].Apply(tempCommit);
+			}
 		}
 
 		private RepositoryBranchState CreateBranchState(string branch)
@@ -79,10 +93,13 @@ namespace CTC.CvsntGitImporter
 						continue;
 
 					var sourceBranch = file.GetBranch(branchpointRevision);
-					var sourceBranchRevision = this[sourceBranch][file.Name];
+					if (sourceBranch != null)
+					{
+						var sourceBranchRevision = this[sourceBranch][file.Name];
 
-					if (sourceBranchRevision != Revision.Empty)
-						state.SetUnsafe(file.Name, branchpointRevision);
+						if (sourceBranchRevision != Revision.Empty)
+							state.SetUnsafe(file.Name, branchpointRevision);
+					}
 				}
 			}
 
