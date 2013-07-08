@@ -274,6 +274,13 @@ namespace CTC.CvsntGitImporter
 					{
 						AddAndCreateList(ref extraFiles, file);
 						m_log.WriteLine("Extra:   {0}", file.Name);
+
+						if (extraFiles.Count > PartialTagThreshold)
+						{
+							m_log.WriteLine("Partial tag - {0} extra files", extraFiles.Count);
+							candidate = null;
+							return;
+						}
 					}
 				}
 				else
@@ -290,16 +297,7 @@ namespace CTC.CvsntGitImporter
 				HandleMissingFiles(tag, commits, missingFiles, moveRecord, ref candidate);
 
 			if (extraFiles != null)
-			{
-				if (extraFiles.Count > PartialTagThreshold)
-				{
-					m_log.WriteLine("Partial tag - {0} extra files", extraFiles.Count);
-					candidate = null;
-					return;
-				}
-
 				HandleExtraFiles(tag, commits, extraFiles, moveRecord, ref candidate);
-			}
 		}
 
 		protected virtual void HandleMissingFiles(string tag, List<Commit> commits, IEnumerable<FileInfo> files,
