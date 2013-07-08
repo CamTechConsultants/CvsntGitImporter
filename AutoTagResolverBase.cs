@@ -161,6 +161,7 @@ namespace CTC.CvsntGitImporter
 			}
 
 			// now check added/removed files
+			m_log.WriteLine("Candidate: {0}", curCandidate.ConciseFormat);
 			var candidateBranchState = GetBranchStateForCommit(curCandidate, relevantCommits);
 			CheckAddedRemovedFiles(tag, candidateBranchState, relevantCommits, moveRecord, ref curCandidate);
 

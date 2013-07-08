@@ -127,7 +127,7 @@ namespace CTC.CvsntGitImporter
 		{
 			if (m_log.DebugEnabled)
 			{
-				m_log.WriteLine("{0}: Final commit: {1}", m_tag, m_finalCommit.ConciseFormat);
+				m_log.WriteLine("Commits requiring moving");
 				using (m_log.Indent())
 				{
 					foreach (var commit in m_files.Keys.OrderBy(c => c.Index))
