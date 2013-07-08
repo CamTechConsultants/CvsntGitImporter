@@ -272,6 +272,16 @@ namespace CTC.CvsntGitImporter.TestCode
 			Assert.IsFalse(r2.Precedes(r1));
 		}
 
+		[TestMethod]
+		public void Precedes_ParallelBranches()
+		{
+			var r1 = Revision.Create("1.1.2.1");
+			var r2 = Revision.Create("1.4.2.1");
+
+			Assert.IsFalse(r1.Precedes(r2));
+			Assert.IsFalse(r2.Precedes(r1));
+		}
+
 		#endregion Precedes
 
 

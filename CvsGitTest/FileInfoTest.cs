@@ -194,6 +194,40 @@ namespace CTC.CvsntGitImporter.TestCode
 			Assert.IsFalse(file.IsRevisionOnBranch(Revision.Create("1.1"), "branch2"));
 		}
 
+		[TestMethod]
+		public void IsRevisionOnBranch_BranchFromBranch_OnParentBranch()
+		{
+			var file = new FileInfo("file.txt")
+					.WithBranch("branch1", "1.1.0.2")
+					.WithBranch("branch2", "1.4.0.2")
+					.WithBranch("branch3", "1.4.2.1.0.2"); // branch from branch2
+
+			Assert.IsTrue(file.IsRevisionOnBranch(Revision.Create("1.4.2.1"), "branch3"));
+			Assert.IsFalse(file.IsRevisionOnBranch(Revision.Create("1.4.2.2"), "branch3"));
+		}
+
+		[TestMethod]
+		public void IsRevisionOnBranch_BranchFromBranch_OnBranch()
+		{
+			var file = new FileInfo("file.txt")
+					.WithBranch("branch1", "1.1.0.2")
+					.WithBranch("branch2", "1.4.0.2")
+					.WithBranch("branch3", "1.4.2.1.0.2"); // branch from branch2
+
+			Assert.IsTrue(file.IsRevisionOnBranch(Revision.Create("1.4.2.1.2.1"), "branch3"));
+		}
+
+		[TestMethod]
+		public void IsRevisionOnBranch_BranchFromBranch_NotOnBranch()
+		{
+			var file = new FileInfo("file.txt")
+					.WithBranch("branch1", "1.1.0.2")
+					.WithBranch("branch2", "1.4.0.2")
+					.WithBranch("branch3", "1.4.2.1.0.2"); // branch from branch2
+
+			Assert.IsFalse(file.IsRevisionOnBranch(Revision.Create("1.1.2.1"), "branch3"));
+		}
+
 		#endregion
 
 

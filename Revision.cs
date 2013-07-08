@@ -163,25 +163,17 @@ namespace CTC.CvsntGitImporter
 			if (this.m_parts.Length > other.m_parts.Length)
 				return false;
 
-			var truncatedParts = new int[m_parts.Length];
-			Array.Copy(other.m_parts, truncatedParts, truncatedParts.Length);
+			var length = this.m_parts.Length;
+			var truncatedParts = new int[length];
+			Array.Copy(other.m_parts, truncatedParts, length);
 
-			int i;
-			for (i = truncatedParts.Length - 1; i >= 0; i--)
+			for (int i = 0; i < length - 1; i++)
 			{
-				if (i % 2 == 1)
-				{
-					if (m_parts[i] > truncatedParts[i])
-						return false;
-				}
-				else
-				{
-					if (m_parts[i] != truncatedParts[i])
-						return false;
-				}
+				if (this.m_parts[i] != other.m_parts[i])
+					return false;
 			}
 
-			return true;
+			return this.m_parts[length - 1] <= other.m_parts[length - 1];
 		}
 
 		public override string ToString()
