@@ -226,10 +226,11 @@ namespace CTC.CvsntGitImporter
 				if (tagRevision == Revision.Empty)
 					continue;
 
-				var cmp = branchState[file.Name].CompareTo(tagRevision);
-				if (cmp < 0)
+				var curStateRevision = branchState[file.Name];
+
+				if (curStateRevision.Precedes(tagRevision))
 					result = CommitTagMatch.Behind;
-				else if (cmp > 0)
+				else if (tagRevision.Precedes(curStateRevision))
 					AddAndCreateList(ref filesAhead, file);
 			}
 
