@@ -99,6 +99,7 @@
     <Compile Include="Revision.cs" />
     <Compile Include="SplitMultiBranchCommits.cs" />
     <Compile Include="Switches.cs" />
+    <Compile Include="TagResolutionException.cs" />
     <Compile Include="TagResolver.cs" />
     <Compile Include="UnixTime.cs" />
     <Compile Include="User.cs" />

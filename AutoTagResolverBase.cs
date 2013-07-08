@@ -91,7 +91,16 @@ namespace CTC.CvsntGitImporter
 
 				using (m_log.Indent())
 				{
-					var commit = ResolveTag(tag);
+					Commit commit = null;
+					try
+					{
+						commit = ResolveTag(tag);
+					}
+					catch (TagResolutionException tre)
+					{
+						m_log.WriteLine("{0}", tre.Message);
+					}
+
 					if (commit == null)
 					{
 						m_unresolvedTags.Add(tag);
@@ -156,12 +165,9 @@ namespace CTC.CvsntGitImporter
 			CheckAddedRemovedFiles(tag, candidateBranchState, relevantCommits, moveRecord, ref curCandidate);
 
 			// perform any moves
-			if (curCandidate != null)
-			{
-				moveRecord.FinalCommit = curCandidate;
-				if (moveRecord.Commits.Any())
-					moveRecord.Apply(m_allCommits);
-			}
+			moveRecord.FinalCommit = curCandidate;
+			if (moveRecord.Commits.Any())
+				moveRecord.Apply(m_allCommits);
 
 			CheckCommitIndices(m_allCommits);
 			return curCandidate;
@@ -276,11 +282,7 @@ namespace CTC.CvsntGitImporter
 						m_log.WriteLine("Extra:   {0}", file.Name);
 
 						if (extraFiles.Count > PartialTagThreshold)
-						{
-							m_log.WriteLine("Partial tag - {0} extra files", extraFiles.Count);
-							candidate = null;
-							return;
-						}
+							throw new TagResolutionException(String.Format("Tag {0} appears to be a partial tag", tag));
 					}
 				}
 				else
@@ -343,7 +345,7 @@ namespace CTC.CvsntGitImporter
 
 					if (deleteCommitIndex < 0)
 					{
-						throw new RepositoryConsistencyException(String.Format(
+						throw new TagResolutionException(String.Format(
 								"Tag {0}: file {1} is tagged but a commit for it could not be found", tag, file));
 					}
 
@@ -386,7 +388,7 @@ namespace CTC.CvsntGitImporter
 
 				if (deleteCommitIndex < 0 && addCommitIndex < 0)
 				{
-					throw new RepositoryConsistencyException(String.Format(
+					throw new TagResolutionException(String.Format(
 							"Tag {0}: file {1} is not tagged but a commit removing it could not be found", tag, file));
 				}
 
