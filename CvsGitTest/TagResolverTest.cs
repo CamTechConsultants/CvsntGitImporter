@@ -533,6 +533,50 @@ namespace CTC.CvsntGitImporter.TestCode
 		}
 
 		[TestMethod]
+		public void Resolve_FileCreatedOnTrunkAndBackported()
+		{
+			var file1 = new FileInfo("file1").WithTag("tag", "1.1").WithBranch("branch", "1.1.0.2");
+			var file2 = new FileInfo("file2").WithTag("tag", "1.1.2.1").WithBranch("branch", "1.1.0.2");
+			var file3 = new FileInfo("file3").WithTag("tag", "1.1.2.1").WithBranch("branch", "1.1.0.2");
+
+			var commits = new List<Commit>()
+			{
+				new Commit("c0").WithRevision(file1, "1.1").WithRevision(file2, "1.1"),
+				new Commit("c1").WithRevision(file2, "1.1.2.1"),
+				new Commit("c2").WithRevision(file3, "1.1").WithRevision(file1, "1.2"),   // add file3 on trunk, but also take file1 to r1.2
+				new Commit("c3").WithRevision(file3, "1.1.2.1"),                          // backport file3
+			};
+
+			var resolver = new TagResolver(m_logger, commits, commits.CreateAllFiles());
+			var result = resolver.Resolve(new[] { "tag" });
+
+			Assert.IsTrue(result, "Resolve succeeded");
+			Assert.AreEqual(resolver.ResolvedTags["tag"].CommitId, "c3");
+			Assert.IsTrue(resolver.Commits.Select(c => c.CommitId).SequenceEqual("c0", "c1", "c2", "c3"), "No reordering");
+		}
+
+		[TestMethod]
+		public void Resolve_FileDeletedOnTrunkAfterBranchMadeButBeforeAnyCommitsOnBranch()
+		{
+			var file1 = new FileInfo("file1").WithTag("tag", "1.1.2.2").WithBranch("branch", "1.1.0.2");
+			var file2 = new FileInfo("file2").WithTag("tag", "1.1").WithBranch("branch", "1.1.0.2");
+
+			var commits = new List<Commit>()
+			{
+				new Commit("c0").WithRevision(file1, "1.1").WithRevision(file2, "1.1"),
+				new Commit("c1").WithRevision(file2, "1.2", isDead: true),
+				new Commit("c2").WithRevision(file1, "1.1.2.2"),
+			};
+
+			var resolver = new TagResolver(m_logger, commits, commits.CreateAllFiles());
+			var result = resolver.Resolve(new[] { "tag" });
+
+			Assert.IsTrue(result, "Resolve succeeded");
+			Assert.AreEqual(resolver.ResolvedTags["tag"].CommitId, "c2");
+			Assert.IsTrue(resolver.Commits.Select(c => c.CommitId).SequenceEqual("c0", "c1", "c2"), "No reordering");
+		}
+
+		[TestMethod]
 		public void Resolve_PartialBranchDetection()
 		{
 			var file1 = new FileInfo("file1").WithTag("tag", "1.2");

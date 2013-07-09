@@ -124,14 +124,15 @@ namespace CTC.CvsntGitImporter
 			var moveRecord = new CommitMoveRecord(tag, m_log);
 			Commit curCandidate = null;
 
-			var lastCandidate = FindLastCandidate(tag);
+			Queue<string> branchPath;
+			var lastCandidate = FindLastCandidate(tag, out branchPath);
 			if (lastCandidate == null)
 			{
 				m_log.WriteLine("No commits");
 				return null;
 			}
 
-			var relevantCommits = FilterCommits(lastCandidate.Branch);
+			var relevantCommits = FilterCommits(branchPath);
 			
 			foreach (var commit in relevantCommits)
 			{
@@ -174,20 +175,56 @@ namespace CTC.CvsntGitImporter
 			return curCandidate;
 		}
 
-		private Commit FindLastCandidate(string tag)
+		private Commit FindLastCandidate(string tag, out Queue<string> branchPath)
 		{
 			var candidateCommits = from c in m_allCommits
-						   where IsCandidate(tag, c)
-						   select c;
+								   where IsCandidate(tag, c)
+								   select c;
 
-			return candidateCommits.LastOrDefault();
+			Commit lastCandidate = null;
+			string lastBranch = null;
+			branchPath = new Queue<string>();
+
+			foreach (var c in candidateCommits)
+			{
+				lastCandidate = c;
+				if (c.Branch != lastBranch)
+				{
+					if (branchPath.Contains(c.Branch))
+					{
+						throw new TagResolutionException(String.Format("Tag {0} does not have a clean branch path: {1}->{2} (last commit: {3})",
+								tag, String.Join("->", branchPath), c.Branch, c.ConciseFormat));
+					}
+
+					branchPath.Enqueue(c.Branch);
+					lastBranch = c.Branch;
+				}
+			}
+
+			return lastCandidate;
 		}
 
-		private List<Commit> FilterCommits(string branch)
+		private List<Commit> FilterCommits(Queue<string> branchPath)
 		{
-			return (from c in m_allCommits
-					where c.Any(r => r.File.IsRevisionOnBranch(r.Revision, branch))
-					select c).ToList();
+			var finalBranch = branchPath.Last();
+			var currentBranch = branchPath.Dequeue();
+			var filteredCommits = new List<Commit>();
+
+			foreach (var commit in m_allCommits)
+			{
+				if (commit.Branch != currentBranch)
+				{
+					if (branchPath.Count > 0 && commit.Branch == branchPath.Peek())
+						currentBranch = branchPath.Dequeue();
+					else
+						continue;
+				}
+
+				if (commit.Any(r => r.File.IsRevisionOnBranch(r.Revision, finalBranch)))
+					filteredCommits.Add(commit);
+			}
+
+			return filteredCommits;
 		}
 
 		private bool IsCandidate(string tag, Commit commit)
