@@ -101,67 +101,11 @@ namespace CTC.CvsntGitImporter
 			WriteAllCommitsLog(commits);
 			WriteExcludedFileLog(parser);
 
-			var tagResolver = new TagResolver(m_log, commits, includedFiles);
-			if (m_switches.PartialTagThreshold != null)
-				tagResolver.PartialTagThreshold = (int)m_switches.PartialTagThreshold.Value;
-			var allTags = includedFiles.SelectMany(f => f.AllTags).Where(t => m_switches.TagMatcher.Match(t));
-
-			// if we're matching branchpoints, make a list of branchpoint tags that need to be resolved
-			var branchpointTags = Enumerable.Empty<string>();
-			if (m_switches.BranchpointRule != null)
-			{
-				var allBranches = includedFiles.SelectMany(f => f.AllBranches).Distinct();
-				var rule = m_switches.BranchpointRule;
-				branchpointTags = allBranches.Where(b => rule.IsMatch(b)).Select(b => rule.Apply(b));
-				allTags = allTags.Concat(branchpointTags);
-			}
-
-			// resolve tags
-			if (!tagResolver.Resolve(allTags.Distinct()))
-			{
-				// ignore branchpoint tags that are unresolved
-				var unresolvedTags = tagResolver.UnresolvedTags.Except(branchpointTags).OrderBy(i => i);
-
-				if (unresolvedTags.Any())
-				{
-					m_log.WriteLine("Unresolved tags:");
-					using (m_log.Indent())
-					{
-						foreach (var tag in unresolvedTags)
-							m_log.WriteLine("{0}", tag);
-					}
-
-					throw new ImportFailedException(String.Format("Unable to resolve all tags to a single commit: {0}",
-							unresolvedTags.StringJoin(", ")));
-				}
-			}
-			commits = tagResolver.Commits;
-
-			// resolve branchpoints
-			ITagResolver branchResolver;
-			var autoBranchResolver = new AutoBranchResolver(m_log, commits, includedFiles);
-			if (m_switches.PartialTagThreshold != null)
-				autoBranchResolver.PartialTagThreshold = (int)m_switches.PartialTagThreshold.Value;
-			if (m_switches.BranchpointRule == null)
-				branchResolver = autoBranchResolver;
-			else
-				branchResolver = new ManualBranchResolver(m_log, autoBranchResolver, tagResolver, m_switches.BranchpointRule);
-
-			if (!branchResolver.Resolve(includedFiles.SelectMany(f => f.AllBranches).Distinct()))
-			{
-				var unresolvedTags = branchResolver.UnresolvedTags.OrderBy(i => i);
-
-				m_log.WriteLine("Unresolved branches:");
-				using (m_log.Indent())
-				{
-					foreach (var tag in unresolvedTags)
-						m_log.WriteLine("{0}", tag);
-				}
-
-				throw new ImportFailedException(String.Format("Unable to resolve all branches to a single commit: {0}",
-						branchResolver.UnresolvedTags.StringJoin(", ")));
-			}
+			var branchResolver = ResolveBranches(commits, includedFiles);
 			commits = branchResolver.Commits;
+
+			var tagResolver = ResolveTags(commits, includedFiles);
+			commits = tagResolver.Commits;
 
 			WriteTagLog("allbranches.log", branchResolver, parser.ExcludedBranches, m_switches.BranchRename);
 			WriteTagLog("alltags.log", tagResolver, parser.ExcludedTags, m_switches.TagRename);
@@ -180,7 +124,88 @@ namespace CTC.CvsntGitImporter
 
 			// store data needed for import
 			m_streams = streams;
+		}
+
+		private static ITagResolver ResolveBranches(IEnumerable<Commit> commits, FileCollection includedFiles)
+		{
+			ITagResolver branchResolver;
+			var autoBranchResolver = new AutoBranchResolver(m_log, commits, includedFiles);
+			if (m_switches.PartialTagThreshold != null)
+				autoBranchResolver.PartialTagThreshold = (int)m_switches.PartialTagThreshold.Value;
+			branchResolver = autoBranchResolver;
+
+			// if we're matching branchpoints, resolve those tags first
+			if (m_switches.BranchpointRule != null)
+			{
+				var tagResolver = new TagResolver(m_log, commits, includedFiles);
+				if (m_switches.PartialTagThreshold != null)
+					tagResolver.PartialTagThreshold = (int)m_switches.PartialTagThreshold.Value;
+
+				var allBranches = includedFiles.SelectMany(f => f.AllBranches).Distinct();
+				var rule = m_switches.BranchpointRule;
+				var branchpointTags = allBranches.Where(b => rule.IsMatch(b)).Select(b => rule.Apply(b));
+
+				if (!tagResolver.Resolve(branchpointTags))
+				{
+					var unresolvedTags = tagResolver.UnresolvedTags.OrderBy(i => i);
+					m_log.WriteLine("Unresolved branchpoint tags:");
+
+					using (m_log.Indent())
+					{
+						foreach (var tag in unresolvedTags)
+							m_log.WriteLine("{0}", tag);
+					}
+				}
+
+				commits = tagResolver.Commits;
+				branchResolver = new ManualBranchResolver(m_log, autoBranchResolver, tagResolver, m_switches.BranchpointRule);
+			}
+
+			// resolve remaining branchpoints 
+			if (!branchResolver.Resolve(includedFiles.SelectMany(f => f.AllBranches).Distinct()))
+			{
+				var unresolvedTags = branchResolver.UnresolvedTags.OrderBy(i => i);
+				m_log.WriteLine("Unresolved branches:");
+
+				using (m_log.Indent())
+				{
+					foreach (var tag in unresolvedTags)
+						m_log.WriteLine("{0}", tag);
+				}
+
+				throw new ImportFailedException(String.Format("Unable to resolve all branches to a single commit: {0}",
+						branchResolver.UnresolvedTags.StringJoin(", ")));
+			}
+
+			return branchResolver;
+		}
+
+		private static ITagResolver ResolveTags(IEnumerable<Commit> commits, FileCollection includedFiles)
+		{
+			var tagResolver = new TagResolver(m_log, commits, includedFiles);
+			if (m_switches.PartialTagThreshold != null)
+				tagResolver.PartialTagThreshold = (int)m_switches.PartialTagThreshold.Value;
+
+			// resolve tags
+			var allTags = includedFiles.SelectMany(f => f.AllTags).Where(t => m_switches.TagMatcher.Match(t));
+			if (!tagResolver.Resolve(allTags.Distinct()))
+			{
+				// ignore branchpoint tags that are unresolved
+				var unresolvedTags = tagResolver.UnresolvedTags.OrderBy(i => i);
+				m_log.WriteLine("Unresolved tags:");
+
+				using (m_log.Indent())
+				{
+					foreach (var tag in unresolvedTags)
+						m_log.WriteLine("{0}", tag);
+				}
+
+				throw new ImportFailedException(String.Format("Unable to resolve all tags to a single commit: {0}",
+						unresolvedTags.StringJoin(", ")));
+			}
+
 			m_resolvedTags = tagResolver.ResolvedTags;
+			return tagResolver;
 		}
 
 		private static void Import()
