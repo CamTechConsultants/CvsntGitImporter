@@ -156,7 +156,7 @@ namespace CTC.CvsntGitImporter
 		{
 			var list = commits.ToListIfNeeded();
 
-			foreach (var commit in commits)
+			foreach (var commit in list)
 			{
 				foreach (var f in commit)
 				{
