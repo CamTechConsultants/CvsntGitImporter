@@ -38,8 +38,8 @@ namespace CTC.CvsntGitImporter.TestCode
 				new Commit("c3").WithRevision(file2, "1.1.2.1"),
 			};
 
-			var resolver = new AutoBranchResolver(m_log, commits, commits.CreateAllFiles());
-			var result = resolver.Resolve(new[] { "branch1" });
+			var resolver = new AutoBranchResolver(m_log, commits.CreateAllFiles());
+			var result = resolver.Resolve(new[] { "branch1" }, commits);
 
 			Assert.IsTrue(result, "Resolve succeeded");
 			Assert.AreSame(resolver.ResolvedTags["branch1"], commits[0]);
@@ -60,8 +60,8 @@ namespace CTC.CvsntGitImporter.TestCode
 				new Commit("c3").WithRevision(file1, "1.2.2.1"),
 			};
 
-			var resolver = new AutoBranchResolver(m_log, commits, commits.CreateAllFiles());
-			var result = resolver.Resolve(new[] { "branch1" });
+			var resolver = new AutoBranchResolver(m_log, commits.CreateAllFiles());
+			var result = resolver.Resolve(new[] { "branch1" }, commits);
 
 			Assert.IsTrue(result, "Resolve succeeded");
 			Assert.AreSame(resolver.ResolvedTags["branch1"], commits[2]);

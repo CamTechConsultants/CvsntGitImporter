@@ -15,20 +15,20 @@ namespace CTC.CvsntGitImporter
 	{
 		private readonly ILogger m_log;
 
-		public TagResolver(ILogger log, IEnumerable<Commit> commits, FileCollection allFiles) :
-				base(log: log, commits: commits, allFiles: allFiles)
+		public TagResolver(ILogger log, FileCollection allFiles) :
+				base(log: log, allFiles: allFiles)
 		{
 			m_log = log;
 		}
 
-		public override bool Resolve(IEnumerable<string> tags)
+		public override bool Resolve(IEnumerable<string> tags, IEnumerable<Commit> commits)
 		{
 			m_log.DoubleRuleOff();
 			m_log.WriteLine("Resolving tags");
 
 			using (m_log.Indent())
 			{
-				return base.Resolve(tags);
+				return base.Resolve(tags, commits);
 			}
 		}
 

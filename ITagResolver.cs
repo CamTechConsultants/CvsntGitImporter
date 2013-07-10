@@ -33,6 +33,6 @@ namespace CTC.CvsntGitImporter
 		/// The last commit that contributes to a tag should be the one that we tag.
 		/// </summary>
 		/// <returns>true if all tags are resolvable, otherwise false</returns>
-		bool Resolve(IEnumerable<string> tags);
+		bool Resolve(IEnumerable<string> tags, IEnumerable<Commit> commits);
 	}
 }

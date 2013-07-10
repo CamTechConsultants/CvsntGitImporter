@@ -129,7 +129,7 @@ namespace CTC.CvsntGitImporter
 		private static ITagResolver ResolveBranches(IEnumerable<Commit> commits, FileCollection includedFiles)
 		{
 			ITagResolver branchResolver;
-			var autoBranchResolver = new AutoBranchResolver(m_log, commits, includedFiles);
+			var autoBranchResolver = new AutoBranchResolver(m_log, includedFiles);
 			if (m_switches.PartialTagThreshold != null)
 				autoBranchResolver.PartialTagThreshold = (int)m_switches.PartialTagThreshold.Value;
 			branchResolver = autoBranchResolver;
@@ -137,7 +137,7 @@ namespace CTC.CvsntGitImporter
 			// if we're matching branchpoints, resolve those tags first
 			if (m_switches.BranchpointRule != null)
 			{
-				var tagResolver = new TagResolver(m_log, commits, includedFiles);
+				var tagResolver = new TagResolver(m_log, includedFiles);
 				if (m_switches.PartialTagThreshold != null)
 					tagResolver.PartialTagThreshold = (int)m_switches.PartialTagThreshold.Value;
 
@@ -145,7 +145,7 @@ namespace CTC.CvsntGitImporter
 				var rule = m_switches.BranchpointRule;
 				var branchpointTags = allBranches.Where(b => rule.IsMatch(b)).Select(b => rule.Apply(b));
 
-				if (!tagResolver.Resolve(branchpointTags))
+				if (!tagResolver.Resolve(branchpointTags, commits))
 				{
 					var unresolvedTags = tagResolver.UnresolvedTags.OrderBy(i => i);
 					m_log.WriteLine("Unresolved branchpoint tags:");
@@ -162,7 +162,7 @@ namespace CTC.CvsntGitImporter
 			}
 
 			// resolve remaining branchpoints 
-			if (!branchResolver.Resolve(includedFiles.SelectMany(f => f.AllBranches).Distinct()))
+			if (!branchResolver.Resolve(includedFiles.SelectMany(f => f.AllBranches).Distinct(), commits))
 			{
 				var unresolvedTags = branchResolver.UnresolvedTags.OrderBy(i => i);
 				m_log.WriteLine("Unresolved branches:");
@@ -182,13 +182,13 @@ namespace CTC.CvsntGitImporter
 
 		private static ITagResolver ResolveTags(IEnumerable<Commit> commits, FileCollection includedFiles)
 		{
-			var tagResolver = new TagResolver(m_log, commits, includedFiles);
+			var tagResolver = new TagResolver(m_log, includedFiles);
 			if (m_switches.PartialTagThreshold != null)
 				tagResolver.PartialTagThreshold = (int)m_switches.PartialTagThreshold.Value;
 
 			// resolve tags
 			var allTags = includedFiles.SelectMany(f => f.AllTags).Where(t => m_switches.TagMatcher.Match(t));
-			if (!tagResolver.Resolve(allTags.Distinct()))
+			if (!tagResolver.Resolve(allTags.Distinct(), commits))
 			{
 				// ignore branchpoint tags that are unresolved
 				var unresolvedTags = tagResolver.UnresolvedTags.OrderBy(i => i);

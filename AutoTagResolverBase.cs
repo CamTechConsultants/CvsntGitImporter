@@ -16,16 +16,14 @@ namespace CTC.CvsntGitImporter
 	abstract class AutoTagResolverBase : ITagResolver
 	{
 		private readonly ILogger m_log;
-		private readonly IList<Commit> m_allCommits;
+		private IList<Commit> m_allCommits;
 		private readonly FileCollection m_allFiles;
 		private readonly bool m_branches;
 		private readonly List<string> m_unresolvedTags = new List<string>();
 
-		protected AutoTagResolverBase(ILogger log, IEnumerable<Commit> commits, FileCollection allFiles,
-				bool branches = false)
+		protected AutoTagResolverBase(ILogger log, FileCollection allFiles, bool branches = false)
 		{
 			m_log = log;
-			m_allCommits = commits.ToListIfNeeded();
 			m_allFiles = allFiles;
 			m_branches = branches;
 			this.PartialTagThreshold = 30;
@@ -78,8 +76,9 @@ namespace CTC.CvsntGitImporter
 		/// </summary>
 		/// <returns>true if all tags were resolved (potentially after being fixed), or false
 		/// if fixing tags failed</returns>
-		public virtual bool Resolve(IEnumerable<string> tags)
+		public virtual bool Resolve(IEnumerable<string> tags, IEnumerable<Commit> commits)
 		{
+			m_allCommits = commits.ToListIfNeeded();
 			SetCommitIndices(m_allCommits);
 
 			m_unresolvedTags.Clear();
