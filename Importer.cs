@@ -5,6 +5,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using CTC.CvsntGitImporter.Win32;
@@ -69,6 +70,10 @@ namespace CTC.CvsntGitImporter
 			{
 				bool printProgress = !Console.IsOutputRedirected;
 				int totalCommits = m_player.Count;
+				var progress = new ImportProgress(totalCommits);
+
+				var stopWatch = new Stopwatch();
+				stopWatch.Start();
 
 				using (m_log.Indent())
 				{
@@ -77,8 +82,9 @@ namespace CTC.CvsntGitImporter
 					{
 						ImportCommit(commit);
 
+						count++;
 						if (printProgress)
-							Console.Out.Write("\rProcessed {0} of {1} commits ({2}%)", ++count, totalCommits, count * 100 / totalCommits);
+							progress.Update(stopWatch.Elapsed, count);
 					}
 
 					if (printProgress)

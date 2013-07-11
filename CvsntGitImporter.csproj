@@ -75,6 +75,7 @@
     <Compile Include="ILogger.cs" />
     <Compile Include="Importer.cs" />
     <Compile Include="ImportFailedException.cs" />
+    <Compile Include="ImportProgress.cs" />
     <Compile Include="InclusionMatcher.cs" />
     <Compile Include="ITagResolver.cs" />
     <Compile Include="ITagResolverExtensions.cs" />
@@ -102,6 +103,7 @@
     <Compile Include="Switches.cs" />
     <Compile Include="TagResolutionException.cs" />
     <Compile Include="TagResolver.cs" />
+    <Compile Include="TimeSpanExtensions.cs" />
     <Compile Include="UnixTime.cs" />
     <Compile Include="User.cs" />
     <Compile Include="UserMap.cs" />
