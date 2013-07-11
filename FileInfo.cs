@@ -165,6 +165,14 @@ namespace CTC.CvsntGitImporter
 		}
 
 		/// <summary>
+		/// Updates a commit that references this file.
+		/// </summary>
+		public void UpdateCommit(Commit commit, Revision r)
+		{
+			m_commits[r] = commit;
+		}
+
+		/// <summary>
 		/// Get a commit for a specific revision.
 		/// </summary>
 		/// <returns>the commit that created that revision or null if not found</returns>

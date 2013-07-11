@@ -149,6 +149,31 @@ namespace CTC.CvsntGitImporter.TestCode
 		}
 
 		[TestMethod]
+		public void Resolve_SplitCommit_FileInfoCommitsUpdated()
+		{
+			var file1 = new FileInfo("file1").WithTag("tag", "1.2");
+			var file2 = new FileInfo("file2").WithTag("tag", "1.3");
+
+			var commits = new List<Commit>()
+			{
+				new Commit("c0").WithRevision(file1, "1.1").WithRevision(file2, "1.1"),
+				new Commit("c1").WithRevision(file1, "1.2"),
+				new Commit("c2").WithRevision(file1, "1.3").WithRevision(file2, "1.2"),
+				new Commit("c3").WithRevision(file2, "1.3"),
+			};
+			var allFiles = commits.CreateAllFiles();
+
+			var resolver = new TagResolver(m_logger, allFiles);
+			var result = resolver.Resolve(new[] { "tag" }, commits);
+
+			Assert.IsTrue(result, "Succeeded");
+
+			// check that the FileInfo Commit lookup gets updated
+			Assert.IsTrue(file1.GetCommit("1.3").CommitId.StartsWith("c2-"));
+			Assert.IsTrue(file2.GetCommit("1.2").CommitId.StartsWith("c2-"));
+		}
+
+		[TestMethod]
 		public void Resolve_SplitCommit_SplitCandidate()
 		{
 			var file1 = new FileInfo("file1").WithTag("tag", "1.2");

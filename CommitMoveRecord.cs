@@ -157,6 +157,7 @@ namespace CTC.CvsntGitImporter
 					Commit commit = files.Contains(revision.File) ? included : excluded;
 					m_log.WriteLine("  {0}: add {1}", commit.CommitId, revision.File.Name);
 					commit.Add(revision);
+					revision.File.UpdateCommit(commit, revision.Revision);
 				}
 			}
 		}
