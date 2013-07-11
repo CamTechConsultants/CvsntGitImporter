@@ -98,9 +98,17 @@ namespace CTC.CvsntGitImporter
 
 					using (m_log.Indent())
 					{
-						m_streams.MoveCommit(commitSource, lastMergeSource);
+						try
+						{
+							m_streams.MoveCommit(commitSource, lastMergeSource);
 
-						// don't update last merge as it has not changed
+							// don't update last merge as it has not changed
+						}
+						catch (ImportFailedException ife)
+						{
+							m_log.WriteLine("{0}", ife.Message);
+							throw;
+						}
 					}
 				}
 				else

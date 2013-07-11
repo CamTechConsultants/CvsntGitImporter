@@ -97,6 +97,7 @@ namespace CTC.CvsntGitImporter
 		/// <summary>
 		/// Move a commit in the list to the position of another.
 		/// </summary>
+		/// <exception cref="ImportException">there was a problem moving the commit</exception>
 		public void MoveCommit(Commit commitToMove, Commit commitToReplace)
 		{
 			// only support moving forwards at the moment
