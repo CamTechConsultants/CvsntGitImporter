@@ -17,7 +17,6 @@ namespace CTC.CvsntGitImporter
 	{
 		private static Config m_config;
 		private static Logger m_log;
-		private static UserMap m_userMap;
 		private static BranchStreamCollection m_streams;
 		private static IDictionary<string, Commit> m_resolvedTags;
 
@@ -34,12 +33,6 @@ namespace CTC.CvsntGitImporter
 					Console.Out.WriteLine(switches.GetHelpText());
 					return 0;
 				}
-
-				// parse user file
-				m_userMap = new UserMap(m_config.DefaultDomain);
-				m_userMap.AddEntry("", m_config.Nobody);
-				if (m_config.UserFile != null)
-					m_userMap.ParseUserFile(m_config.UserFile);
 
 				using (m_log = new Logger(m_config.DebugLogDir, debugEnabled: m_config.Debug))
 				{
@@ -260,7 +253,7 @@ namespace CTC.CvsntGitImporter
 				repository = new CvsRepositoryCache(m_config.CvsCache, repository);
 
 			var cvs = new Cvs(repository, m_config.CvsProcesses);
-			var importer = new Importer(m_log, m_config, m_userMap, m_streams, m_resolvedTags, cvs);
+			var importer = new Importer(m_log, m_config, m_config.Users, m_streams, m_resolvedTags, cvs);
 			importer.Import();
 		}
 
@@ -362,7 +355,7 @@ namespace CTC.CvsntGitImporter
 				.OrderBy(i => i, StringComparer.OrdinalIgnoreCase)
 				.Select(name =>
 				{
-					var user = m_userMap.GetUser(name);
+					var user = m_config.Users.GetUser(name);
 					if (user.Generated)
 						return name;
 					else

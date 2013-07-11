@@ -19,6 +19,7 @@ namespace CTC.CvsntGitImporter
 		private readonly Switches m_switches;
 		private readonly string m_debugLogDir;
 		private User m_nobody;
+		private UserMap m_userMap;
 
 		public Config(Switches switches)
 		{
@@ -144,9 +145,9 @@ namespace CTC.CvsntGitImporter
 		/// <summary>
 		/// A file containing user mappings, if provided, otherwise null.
 		/// </summary>
-		public string UserFile
+		public UserMap Users
 		{
-			get { return m_switches.UserFile; }
+			get { return m_userMap ?? (m_userMap = GetUserMap()); }
 		}
 
 		/// <summary>
@@ -172,6 +173,17 @@ namespace CTC.CvsntGitImporter
 			}
 
 			return new User(m_switches.NobodyName, taggerEmail);
+		}
+
+		private UserMap GetUserMap()
+		{
+			var m_userMap = new UserMap(this.DefaultDomain);
+			m_userMap.AddEntry("", this.Nobody);
+
+			if (m_switches.UserFile != null)
+				m_userMap.ParseUserFile(m_switches.UserFile);
+
+			return m_userMap;
 		}
 
 		#endregion Users

@@ -212,5 +212,24 @@ namespace CTC.CvsntGitImporter.TestCode
 		}
 
 		#endregion Nobody
+
+
+		#region Users
+
+		[TestMethod]
+		public void Users_EmptyUserCreated()
+		{
+			var switches = new Switches()
+			{
+				NobodyName = "fred",
+				NobodyEmail = "fred@example.com",
+			};
+			var config = new Config(switches);
+
+			var nobody = config.Users.GetUser("");
+			Assert.AreEqual(nobody.Name, "fred");
+		}
+
+		#endregion
 	}
 }
