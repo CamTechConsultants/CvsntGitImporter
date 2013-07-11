@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using CTC.CvsntGitImporter.Utils;
 
 namespace CTC.CvsntGitImporter
@@ -37,7 +36,7 @@ namespace CTC.CvsntGitImporter
 				using (m_log = new Logger(m_config.DebugLogDir, debugEnabled: m_config.Debug))
 				{
 					if (m_config.CreateCvsLog)
-						RunOperation("Download CVS Log", () => GetCvsLog(m_config.CvsLogFileName, m_config.Sandbox));
+						RunOperation("Download CVS Log", () => Cvs.DownloadCvsLog(m_config.CvsLogFileName, m_config.Sandbox));
 
 					RunOperation("Analysis", Analyse);
 
@@ -71,47 +70,6 @@ namespace CTC.CvsntGitImporter
 				stopwatch.Stop();
 				m_log.WriteLine("{0} took {1}", name, stopwatch.Elapsed);
 			}
-		}
-
-		private static void GetCvsLog(string cvsLogFile, string sandbox)
-		{
-			var module = ReadModuleName(sandbox);
-
-			var process = new Process()
-			{
-				StartInfo = new ProcessStartInfo()
-				{
-					FileName = "cmd.exe",
-					Arguments = String.Format("/C cvs rlog \"{0}\" > \"{1}\"", module, cvsLogFile),
-					UseShellExecute = false,
-					RedirectStandardError = true,
-					StandardErrorEncoding = Encoding.Default,
-					CreateNoWindow = true,
-				},
-			};
-
-			var error = new StringBuilder();
-			process.ErrorDataReceived += (_, e) =>
-			{
-				if (e.Data != null)
-					error.Append(e.Data);
-			};
-
-			process.Start();
-
-			process.BeginErrorReadLine();
-			process.WaitForExit();
-
-			if (error.Length > 0)
-				throw new ImportFailedException(String.Format("Failed to get CVS log: {0}", error));
-			else if (process.ExitCode != 0)
-				throw new ImportFailedException(String.Format("Failed to get CVS log: cvs exited with exit code {0}", process.ExitCode));
-		}
-
-		private static string ReadModuleName(string sandbox)
-		{
-			var repoPath = Path.Combine(sandbox, @"CVS\Repository");
-			return File.ReadAllText(repoPath).Trim();
 		}
 
 		private static void Analyse()

@@ -5,7 +5,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace CTC.CvsntGitImporter
@@ -69,6 +72,51 @@ namespace CTC.CvsntGitImporter
 		{
 			var f = q.Dequeue();
 			return Task<FileContent>.Factory.StartNew(() => m_repository.GetCvsRevision(f));
+		}
+
+
+		/// <summary>
+		/// Download the log for an entire repository.
+		/// </summary>
+		public static void DownloadCvsLog(string cvsLogFile, string sandbox)
+		{
+			var module = ReadModuleName(sandbox);
+
+			var process = new Process()
+			{
+				StartInfo = new ProcessStartInfo()
+				{
+					FileName = "cmd.exe",
+					Arguments = String.Format("/C cvs rlog \"{0}\" > \"{1}\"", module, cvsLogFile),
+					UseShellExecute = false,
+					RedirectStandardError = true,
+					StandardErrorEncoding = Encoding.Default,
+					CreateNoWindow = true,
+				},
+			};
+
+			var error = new StringBuilder();
+			process.ErrorDataReceived += (_, e) =>
+			{
+				if (e.Data != null)
+					error.Append(e.Data);
+			};
+
+			process.Start();
+
+			process.BeginErrorReadLine();
+			process.WaitForExit();
+
+			if (error.Length > 0)
+				throw new ImportFailedException(String.Format("Failed to get CVS log: {0}", error));
+			else if (process.ExitCode != 0)
+				throw new ImportFailedException(String.Format("Failed to get CVS log: cvs exited with exit code {0}", process.ExitCode));
+		}
+
+		private static string ReadModuleName(string sandbox)
+		{
+			var repoPath = Path.Combine(sandbox, @"CVS\Repository");
+			return File.ReadAllText(repoPath).Trim();
 		}
 	}
 }
