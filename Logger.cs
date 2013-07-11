@@ -107,6 +107,11 @@ namespace CTC.CvsntGitImporter
 			m_writer.WriteLine("===============================================================================");
 		}
 
+		public void Flush()
+		{
+			m_writer.Flush();
+		}
+
 
 		public void WriteDebugFile(string filename, IEnumerable<string> lines)
 		{

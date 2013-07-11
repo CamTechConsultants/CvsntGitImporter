@@ -69,6 +69,7 @@ namespace CTC.CvsntGitImporter
 			{
 				stopwatch.Stop();
 				m_log.WriteLine("{0} took {1}", name, stopwatch.Elapsed);
+				m_log.Flush();
 			}
 		}
 
