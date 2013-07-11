@@ -33,9 +33,6 @@ namespace CTC.CvsntGitImporter
 					return 0;
 				}
 
-				if (m_switches.ExtraArguments.Count != 1)
-					throw new ArgumentException("Need a cvs.log file");
-
 				// parse user file
 				m_userMap = new UserMap(m_switches.DefaultDomain);
 				m_userMap.AddEntry("", m_switches.Nobody);
@@ -46,7 +43,15 @@ namespace CTC.CvsntGitImporter
 				Directory.CreateDirectory(logDir);
 				using (m_log = new Logger(logDir, debugEnabled: m_switches.Debug))
 				{
-					RunOperation("Analysis", Analyse);
+					var cvsLogFile = m_switches.CvsLog;
+					if (m_switches.CvsLog == null || !File.Exists(m_switches.CvsLog))
+					{
+						if (cvsLogFile == null)
+							cvsLogFile = Path.Combine(logDir, "cvs.log");
+						RunOperation("Download CVS Log", () => GetCvsLog(cvsLogFile, m_switches.Sandbox));
+					}
+
+					RunOperation("Analysis", () => Analyse(cvsLogFile));
 
 					if (m_switches.DoImport)
 						RunOperation("Import", Import);
@@ -80,9 +85,50 @@ namespace CTC.CvsntGitImporter
 			}
 		}
 
-		private static void Analyse()
+		private static void GetCvsLog(string cvsLogFile, string sandbox)
 		{
-			var parser = new CvsLogParser(m_switches.Sandbox, m_switches.ExtraArguments[0], m_switches.BranchMatcher);
+			var module = ReadModuleName(sandbox);
+
+			var process = new Process()
+			{
+				StartInfo = new ProcessStartInfo()
+				{
+					FileName = "cmd.exe",
+					Arguments = String.Format("/C cvs rlog \"{0}\" > \"{1}\"", module, cvsLogFile),
+					UseShellExecute = false,
+					RedirectStandardError = true,
+					StandardErrorEncoding = Encoding.Default,
+					CreateNoWindow = true,
+				},
+			};
+
+			var error = new StringBuilder();
+			process.ErrorDataReceived += (_, e) =>
+			{
+				if (e.Data != null)
+					error.Append(e.Data);
+			};
+
+			process.Start();
+
+			process.BeginErrorReadLine();
+			process.WaitForExit();
+
+			if (error.Length > 0)
+				throw new ImportFailedException(String.Format("Failed to get CVS log: {0}", error));
+			else if (process.ExitCode != 0)
+				throw new ImportFailedException(String.Format("Failed to get CVS log: cvs exited with exit code {0}", process.ExitCode));
+		}
+
+		private static string ReadModuleName(string sandbox)
+		{
+			var repoPath = Path.Combine(sandbox, @"CVS\Repository");
+			return File.ReadAllText(repoPath).Trim();
+		}
+
+		private static void Analyse(string cvsLogFile)
+		{
+			var parser = new CvsLogParser(m_switches.Sandbox, cvsLogFile, m_switches.BranchMatcher);
 			var builder = new CommitBuilder(m_log, parser.Parse());
 			var exclusionFilter = new ExclusionFilter(m_log, m_switches.FileMatcher, m_switches.HeadOnlyMatcher, m_switches.BranchRename);
 

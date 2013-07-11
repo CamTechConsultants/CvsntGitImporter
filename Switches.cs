@@ -30,6 +30,9 @@ namespace CTC.CvsntGitImporter
 		[SwitchDef(LongSwitch="--help", ShortSwitch="-h", Description="Display this help")]
 		public bool Help { get; set; }
 
+		[SwitchDef(LongSwitch="--cvs-log", Description="The CVS log file to use for metadata")]
+		public string CvsLog { get; set; }
+
 		[SwitchDef(LongSwitch="--sandbox", Description="The location of the checked out source code from CVS. Required")]
 		public string Sandbox { get; set; }
 
@@ -175,8 +178,13 @@ namespace CTC.CvsntGitImporter
 		{
 			base.Verify();
 
-			if (!this.Help && this.Sandbox == null)
+			if (this.Help)
+				return;
+
+			if (this.Sandbox == null)
 				throw new CommandLineArgsException("No CVS repository specified");
+			else if (!Directory.Exists(this.Sandbox))
+				throw new CommandLineArgsException("Sandbox directory {0} does not exist", this.Sandbox);
 
 			if (CvsProcesses == 0 || CvsProcesses > Cvs.MaxProcessCount)
 				throw new CommandLineArgsException("Invalid number of CVS processes: {0}", CvsProcesses);
