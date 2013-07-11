@@ -245,7 +245,7 @@ namespace CTC.CvsntGitImporter
 			if (!m_log.DebugEnabled)
 				return;
 
-			using (var log = m_log.OpenDebugFile("AllCommits.log"))
+			using (var log = m_log.OpenDebugFile("allcommits.log"))
 			{
 				foreach (var commit in commits)
 				{

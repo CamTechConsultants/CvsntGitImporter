@@ -87,7 +87,7 @@ namespace CTC.CvsntGitImporter
 			public CommitsByMessage(ILogger log)
 			{
 				if (log.DebugEnabled)
-					m_debugLog = log.OpenDebugFile("CreatedCommits.log");
+					m_debugLog = log.OpenDebugFile("created_commits.log");
 				else
 					m_debugLog = TextWriter.Null;
 			}
