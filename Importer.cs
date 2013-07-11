@@ -20,7 +20,7 @@ namespace CTC.CvsntGitImporter
 		private static readonly byte[] m_newLine = m_encoding.GetBytes("\n");
 
 		private readonly ILogger m_log;
-		private readonly Switches m_switches;
+		private readonly Config m_config;
 		private readonly UserMap m_userMap;
 		private readonly BranchStreamCollection m_branches;
 		private readonly IDictionary<string, Commit> m_tags;
@@ -32,11 +32,11 @@ namespace CTC.CvsntGitImporter
 
 		private bool m_isDisposed = false;
 
-		public Importer(ILogger log, Switches switches, UserMap userMap, BranchStreamCollection branches,
+		public Importer(ILogger log, Config config, UserMap userMap, BranchStreamCollection branches,
 				IDictionary<string, Commit> tags, Cvs cvs)
 		{
 			m_log = log;
-			m_switches = switches;
+			m_config = config;
 			m_userMap = userMap;
 			m_branches = branches;
 			m_tags = tags;
@@ -111,13 +111,13 @@ namespace CTC.CvsntGitImporter
 		{
 			m_brokenPipe = false;
 
-			if (m_switches.GitDir == null)
+			if (m_config.GitDir == null)
 			{
 				return new FileStream("import.dat", FileMode.Create, FileAccess.Write);
 			}
 			else
 			{
-				m_git = new GitRepo(m_switches.GitDir);
+				m_git = new GitRepo(m_config.GitDir);
 				m_git.Init();
 				return m_git.StartImport();
 			}
@@ -125,7 +125,7 @@ namespace CTC.CvsntGitImporter
 
 		private void CloseOutput()
 		{
-			if (m_switches.GitDir == null)
+			if (m_config.GitDir == null)
 			{
 				m_stream.Close();
 			}
@@ -153,7 +153,7 @@ namespace CTC.CvsntGitImporter
 
 		private void ImportCommit(Commit commit)
 		{
-			var renamedBranch = m_switches.BranchRename.Process(commit.Branch);
+			var renamedBranch = m_config.BranchRename.Process(commit.Branch);
 			var author = m_userMap.GetUser(commit.Author);
 
 			m_log.WriteLine("Commit {0}/{1}  branch={2} author={3} when={4}{5}", commit.CommitId, commit.Index,
@@ -198,7 +198,7 @@ namespace CTC.CvsntGitImporter
 
 		private void ImportTags()
 		{
-			var renamer = m_switches.TagRename;
+			var renamer = m_config.TagRename;
 
 			foreach (var kvp in m_tags)
 			{
@@ -212,7 +212,7 @@ namespace CTC.CvsntGitImporter
 
 				WriteLine("tag {0}", tagName);
 				WriteLine("from :{0}", commit.Index);
-				WriteLine("tagger {0} {1}", WriteUser(m_switches.Nobody), UnixTime.FromDateTime(commit.Time));
+				WriteLine("tagger {0} {1}", WriteUser(m_config.Nobody), UnixTime.FromDateTime(commit.Time));
 				WriteData(FileContentData.Empty);
 			}
 		}

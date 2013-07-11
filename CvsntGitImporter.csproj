@@ -54,6 +54,7 @@
     <Compile Include="CommitListExtensions.cs" />
     <Compile Include="CommitMoveRecord.cs" />
     <Compile Include="CommitPlayer.cs" />
+    <Compile Include="Config.cs" />
     <Compile Include="Cvs.cs" />
     <Compile Include="CvsException.cs" />
     <Compile Include="CvsIgnoreFile.cs" />

@@ -3,9 +3,7 @@
  * Copyright (c) Cambridge Technology Consultants Ltd. All rights reserved.
  */
 
-using System;
 using System.IO;
-using CTC.CvsntGitImporter;
 using CTC.CvsntGitImporter.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -17,79 +15,6 @@ namespace CTC.CvsntGitImporter.TestCode
 	[TestClass]
 	public class SwitchesTest
 	{
-		#region BranchpointRule
-
-		[TestMethod]
-		public void BranchpointRule_Unspecified()
-		{
-			var switches = new Switches();
-			switches.Parse("--sandbox", Path.GetTempPath());
-
-			Assert.IsNull(switches.BranchpointRule);
-		}
-
-		[TestMethod]
-		public void BranchpointRule_Valid()
-		{
-			var switches = new Switches();
-			switches.Parse("--sandbox", Path.GetTempPath(), "--branchpoint-rule", @"^(.*)$/$1-branchpoint");
-
-			Assert.IsNotNull(switches.BranchpointRule);
-			Assert.AreEqual("x-branchpoint", switches.BranchpointRule.Apply("x"));
-		}
-
-		[TestMethod]
-		[ExpectedException(typeof(CommandLineArgsException))]
-		public void BranchpointRule_Invalid()
-		{
-			var switches = new Switches();
-			switches.Parse("--sandbox", Path.GetTempPath(), "--branchpoint-rule", @"xxx");
-		}
-
-		#endregion BranchpointRule
-
-
-		#region CvsProcesses
-
-		[TestMethod]
-		public void CvsProcesses_DefaultValue()
-		{
-			var switches = new Switches();
-			switches.Parse("--sandbox", Path.GetTempPath());
-
-			Assert.AreEqual(switches.CvsProcesses, (uint)Environment.ProcessorCount);
-		}
-
-		[TestMethod]
-		public void CvsProcesses_ValueProvided()
-		{
-			var switches = new Switches();
-			switches.Parse("--sandbox", Path.GetTempPath(), "--cvs-processes", "42");
-
-			Assert.AreEqual(switches.CvsProcesses, 42u);
-		}
-
-		[TestMethod]
-		[ExpectedException(typeof(CommandLineArgsException))]
-		public void CvsProcesses_Zero()
-		{
-			var switches = new Switches();
-			switches.Parse("--sandbox", Path.GetTempPath(), "--cvs-processes", "0");
-		}
-
-		[TestMethod]
-		[ExpectedException(typeof(CommandLineArgsException))]
-		public void CvsProcesses_InvalidInt()
-		{
-			var switches = new Switches();
-			switches.Parse("--sandbox", Path.GetTempPath(), "--cvs-processes", "blah");
-		}
-
-		#endregion CvsProcesses
-
-
-		#region GitDir
-
 		[TestMethod]
 		[ExpectedException(typeof(CommandLineArgsException))]
 		public void GitDir_NotEmpty()
@@ -110,77 +35,20 @@ namespace CTC.CvsntGitImporter.TestCode
 			switches.Parse("--sandbox", Path.GetTempPath(), "--gitdir", "blah:blah");
 		}
 
-		#endregion GitDir
-
-
-		#region RenameTag/RenameBranch
-
 		[TestMethod]
-		public void RenameTag()
+		[ExpectedException(typeof(CommandLineArgsException))]
+		public void CvsProcesses_Zero()
 		{
 			var switches = new Switches();
-			switches.Parse("--sandbox", Path.GetTempPath(), "--rename-tag", "foo/bar");
-
-			Assert.AreEqual(switches.TagRename.Process("foobar"), "barbar");
-		}
-
-		[TestMethod]
-		public void RenameTag_WhitespaceIsTrimmed()
-		{
-			var switches = new Switches();
-			switches.Parse("--sandbox", Path.GetTempPath(), "--rename-tag", "  foo /  \tbar");
-
-			Assert.AreEqual(switches.TagRename.Process("foobar"), "barbar");
-		}
-
-		[TestMethod]
-		public void RenameBranch()
-		{
-			var switches = new Switches();
-			switches.Parse("--sandbox", Path.GetTempPath(), "--rename-branch", "foo/bar");
-
-			Assert.AreEqual(switches.BranchRename.Process("foobar"), "barbar");
+			switches.Parse("--sandbox", Path.GetTempPath(), "--cvs-processes", "0");
 		}
 
 		[TestMethod]
 		[ExpectedException(typeof(CommandLineArgsException))]
-		public void Rename_RuleMissingSlash()
+		public void CvsProcesses_InvalidInt()
 		{
 			var switches = new Switches();
-			switches.Parse("--sandbox", Path.GetTempPath(), "--rename-tag", "blah");
+			switches.Parse("--sandbox", Path.GetTempPath(), "--cvs-processes", "blah");
 		}
-
-		[TestMethod]
-		[ExpectedException(typeof(CommandLineArgsException))]
-		public void Rename_InvalidRegex()
-		{
-			var switches = new Switches();
-			switches.Parse("--sandbox", Path.GetTempPath(), "--rename-tag", "**/foo");
-		}
-
-		#endregion RenameTag/RenameBranch
-
-
-		#region Nobody
-
-		[TestMethod]
-		public void Nobody_DefaultEmail()
-		{
-			var switches = new Switches();
-			switches.Parse("--sandbox", Path.GetTempPath(), "--default-domain", "example.com", "--nobody-name", "Joe Bloggs");
-
-			Assert.AreEqual(switches.Nobody.Email, "Joe@example.com");
-		}
-
-		[TestMethod]
-		public void Nobody_NoDefaultEmailIfSetExplicitly()
-		{
-			var switches = new Switches();
-			switches.Parse("--sandbox", Path.GetTempPath(), "--default-domain", "example.com", "--nobody-email", "blah@example.com");
-
-			Assert.AreEqual(switches.Nobody.Email, "blah@example.com");
-		}
-
-		#endregion Nobody
 	}
 }

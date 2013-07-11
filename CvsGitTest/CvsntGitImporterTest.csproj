@@ -64,6 +64,7 @@
     <Compile Include="CommitExtensions.cs" />
     <Compile Include="CommitListExtensions.cs" />
     <Compile Include="CommitListExtensionsTest.cs" />
+    <Compile Include="ConfigTest.cs" />
     <Compile Include="CvsIgnoreFileTest.cs" />
     <Compile Include="CvsLogParserTest.cs" />
     <Compile Include="CvsRepositoryCacheTest.cs" />

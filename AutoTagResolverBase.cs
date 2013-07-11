@@ -26,7 +26,7 @@ namespace CTC.CvsntGitImporter
 			m_log = log;
 			m_allFiles = allFiles;
 			m_branches = branches;
-			this.PartialTagThreshold = 30;
+			this.PartialTagThreshold = Config.DefaultPartialTagThreshold;
 		}
 
 		/// <summary>

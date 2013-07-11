@@ -37,7 +37,7 @@ namespace CTC.CvsntGitImporter
 		public string Sandbox { get; set; }
 
 		[SwitchDef(LongSwitch="--noimport", ShortSwitch="-n", Description="Don't actually import the data, just do the analysis")]
-		public bool _NoImport { get; set; }
+		public bool NoImport { get; set; }
 
 		[SwitchDef(LongSwitch="--gitdir", ValueDescription="dir", Description="The directory to create the git repository in. Must not exist or be empty")]
 		public string GitDir { get; set; }
@@ -46,7 +46,7 @@ namespace CTC.CvsntGitImporter
 		public string CvsCache { get; set; }
 
 		[SwitchDef(LongSwitch="--cvs-processes", Description="The number of CVS processes to run in parallel when importing. Defaults to the number of processors on the system")]
-		public uint? _CvsProcesses { get; set; }
+		public uint? CvsProcesses { get; set; }
 
 		[SwitchDef(LongSwitch = "--partial-tag-threshold", Description = "The number of untagged files encountered before a tag is declared to be a partial tag. Set to zero to disable partial tag detection")]
 		public uint? PartialTagThreshold { get; set; }
@@ -59,99 +59,42 @@ namespace CTC.CvsntGitImporter
 		public string UserFile { get; set; }
 
 		[SwitchDef(LongSwitch="--nobody-name", Description="The name to use for the user when creating tags or manufacturer commits")]
-		public string _NobodyName { get; set; }
+		public string NobodyName { get; set; }
 
 		[SwitchDef(LongSwitch="--nobody-email", Description="The e-mail address to use for the user when creating tags or manufacturer commits")]
-		public string _NobodyEmail { get; set; }
+		public string NobodyEmail { get; set; }
 
 
 		[SwitchDef(LongSwitch="--exclude", ValueDescription="regex", Description="A pattern to match files to exclude")]
-		public ObservableCollection<string> _ExcludeFile { get; set; }
+		public ObservableCollection<string> ExcludeFile { get; set; }
 
 		[SwitchDef(LongSwitch="--head-only", ValueDescription="regex", Description="A pattern to match files that should have just their head version imported and no historical versions")]
-		public ObservableCollection<string> _HeadOnly { get; set; }
+		public ObservableCollection<string> HeadOnly { get; set; }
 
 		[SwitchDef(LongSwitch="--head-only-branch", ValueDescription="name", Description="A branch that should have the head version imported for all files that match the --head-only patterns")]
 		public List<string> HeadOnlyBranches { get; set; }
 
 
 		[SwitchDef(LongSwitch="--branchpoint-rule", ValueDescription="rule", Description="A rule to obtain a branchpoint tag for a branch")]
-		public string _BranchpointRule { get; set; }
+		public string BranchpointRule { get; set; }
 
 		[SwitchDef(LongSwitch="--include-tag", ValueDescription="regex", Description="A pattern to match tags that should be imported")]
-		public ObservableCollection<string> _IncludeTag { get; set; }
+		public ObservableCollection<string> IncludeTag { get; set; }
 
 		[SwitchDef(LongSwitch="--exclude-tag", ValueDescription="regex", Description="A pattern to match tags that should not be imported")]
-		public ObservableCollection<string> _ExcludeTag { get; set; }
+		public ObservableCollection<string> ExcludeTag { get; set; }
 
 		[SwitchDef(LongSwitch="--include-branch", ValueDescription="regex", Description="A pattern to match branches that should be imported")]
-		public ObservableCollection<string> _IncludeBranch { get; set; }
+		public ObservableCollection<string> IncludeBranch { get; set; }
 
 		[SwitchDef(LongSwitch="--exclude-branch", ValueDescription="regex", Description="A pattern to match branches that should not be imported")]
-		public ObservableCollection<string> _ExcludeBranch { get; set; }
+		public ObservableCollection<string> ExcludeBranch { get; set; }
 
 		[SwitchDef(LongSwitch="--rename-tag", ValueDescription="rule", Description="A rule to rename tags as they're imported")]
-		public ObservableCollection<string> _RenameTag { get; set; }
+		public ObservableCollection<string> RenameTag { get; set; }
 
 		[SwitchDef(LongSwitch="--rename-branch", ValueDescription="rule", Description="to rename branches as they're imported")]
-		public ObservableCollection<string> _RenameBranch { get; set; }
-
-
-		/// <summary>
-		/// Should we actually import the data?
-		/// </summary>
-		public bool DoImport
-		{
-			get { return !_NoImport; }
-		}
-
-		/// <summary>
-		/// Gets the user to use for creating tags.
-		/// </summary>
-		public User Nobody { get; private set; }
-
-		/// <summary>
-		/// A rule to translate branch names into branchpoint tag names.
-		/// </summary>
-		public RenameRule BranchpointRule;
-
-		/// <summary>
-		/// The matcher for files.
-		/// </summary>
-		public readonly InclusionMatcher FileMatcher = new InclusionMatcher();
-
-		/// <summary>
-		/// The matcher for latest-only files.
-		/// </summary>
-		public readonly InclusionMatcher HeadOnlyMatcher = new InclusionMatcher();
-
-		/// <summary>
-		/// The matcher for tags.
-		/// </summary>
-		public readonly InclusionMatcher TagMatcher = new InclusionMatcher();
-
-		/// <summary>
-		/// The matcher for branches.
-		/// </summary>
-		public readonly InclusionMatcher BranchMatcher = new InclusionMatcher();
-
-		/// <summary>
-		/// The renamer for tags.
-		/// </summary>
-		public readonly Renamer TagRename = new Renamer();
-
-		/// <summary>
-		/// The renamer for tags.
-		/// </summary>
-		public readonly Renamer BranchRename = new Renamer();
-
-		/// <summary>
-		/// Gets the number of CVS processes to run.
-		/// </summary>
-		public uint CvsProcesses
-		{
-			get { return _CvsProcesses ?? (uint)Environment.ProcessorCount; }
-		}
+		public ObservableCollection<string> RenameBranch { get; set; }
 
 
 		public Switches()
@@ -159,19 +102,14 @@ namespace CTC.CvsntGitImporter
 			Config = new ObservableCollection<string>();
 			Config.CollectionChanged += Config_CollectionChanged;
 
-			_ExcludeFile = new RuleCollection(p => AddIncludeRule(FileMatcher, false, p));
-			_HeadOnly = new RuleCollection(p => { AddIncludeRule(FileMatcher, false, p); AddIncludeRule(HeadOnlyMatcher, true, p); });
-			_IncludeTag = new RuleCollection(p => AddIncludeRule(TagMatcher, true, p));
-			_ExcludeTag = new RuleCollection(p => AddIncludeRule(TagMatcher, false, p));
-			_IncludeBranch = new RuleCollection(p => AddIncludeRule(BranchMatcher, true, p));
-			_ExcludeBranch = new RuleCollection(p => AddIncludeRule(BranchMatcher, false, p));
-			_RenameTag = new RuleCollection(r => AddRenameRule(TagRename, r));
-			_RenameBranch = new RuleCollection(r => AddRenameRule(BranchRename, r));
-
-			DefaultDomain = Environment.MachineName;
-			_NobodyName = Environment.GetEnvironmentVariable("USERNAME") ?? "nobody";
-
-			BranchRename.AddRule(new RenameRule("^MAIN$", "master"));
+			ExcludeFile = new ObservableCollection<string>();
+			HeadOnly = new ObservableCollection<string>();
+			IncludeTag = new ObservableCollection<string>();
+			ExcludeTag = new ObservableCollection<string>();
+			IncludeBranch = new ObservableCollection<string>();
+			ExcludeBranch = new ObservableCollection<string>();
+			RenameTag = new ObservableCollection<string>();
+			RenameBranch = new ObservableCollection<string>();
 		}
 
 		public override void Verify()
@@ -189,39 +127,10 @@ namespace CTC.CvsntGitImporter
 			if (CvsProcesses == 0 || CvsProcesses > Cvs.MaxProcessCount)
 				throw new CommandLineArgsException("Invalid number of CVS processes: {0}", CvsProcesses);
 
-			if (GitDir != null && DoImport && Directory.Exists(GitDir))
+			if (GitDir != null && !NoImport && Directory.Exists(GitDir))
 			{
 				if (Directory.EnumerateFileSystemEntries(GitDir).Any())
 					throw new CommandLineArgsException("Git directory {0} is not empty", GitDir);
-			}
-		}
-
-		public override void Parse(params string[] args)
-		{
-			base.Parse(args);
-
-			var taggerEmail = _NobodyEmail;
-			if (taggerEmail == null)
-			{
-				var name = _NobodyName.Trim();
-				var spaceIndex = name.IndexOf(' ');
-				if (spaceIndex > 0)
-					name = name.Remove(spaceIndex);
-				taggerEmail = String.Format("{0}@{1}", name, DefaultDomain);
-			}
-
-			this.Nobody = new User(_NobodyName, taggerEmail);
-
-			if (_BranchpointRule != null)
-			{
-				try
-				{
-					BranchpointRule = RenameRule.Parse(_BranchpointRule);
-				}
-				catch (ArgumentException ae)
-				{
-					throw new CommandLineArgsException("Invalid branchpoint rule: {0}", ae.Message);
-				}
 			}
 		}
 
@@ -291,51 +200,6 @@ namespace CTC.CvsntGitImporter
 			// Parse config files as they're encountered
 			if (e.Action == NotifyCollectionChangedAction.Add)
 				ParseConfigFile(e.NewItems[0] as string);
-		}
-
-		private void AddIncludeRule(InclusionMatcher matcher, bool include, string pattern)
-		{
-			try
-			{
-				var regex = new Regex(pattern);
-
-				if (include)
-					matcher.AddIncludeRule(regex);
-				else
-					matcher.AddExcludeRule(regex);
-			}
-			catch (ArgumentException)
-			{
-				throw new CommandLineArgsException("Invalid regex: {0}", pattern);
-			}
-		}
-
-		private void AddRenameRule(Renamer renamer, string rule)
-		{
-			try
-			{
-				renamer.AddRule(RenameRule.Parse(rule));
-			}
-			catch (ArgumentException ae)
-			{
-				throw new CommandLineArgsException("Invalid rename rule: {0}", ae.Message);
-			}
-		}
-
-		private class RuleCollection : ObservableCollection<string>
-		{
-			private readonly Action<string> m_action;
-
-			public RuleCollection(Action<string> action)
-			{
-				m_action = action;
-			}
-
-			protected override void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
-			{
-				base.OnCollectionChanged(e);
-				m_action(e.NewItems[0] as string);
-			}
 		}
 	}
 }

@@ -32,6 +32,7 @@ namespace CTC.CvsntGitImporter
 		{
 			m_logDir = directoryName;
 			DebugEnabled = debugEnabled;
+			Directory.CreateDirectory(directoryName);
 
 			try
 			{

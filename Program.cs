@@ -15,7 +15,7 @@ namespace CTC.CvsntGitImporter
 {
 	class Program
 	{
-		private static readonly Switches m_switches = new Switches();
+		private static Config m_config;
 		private static Logger m_log;
 		private static UserMap m_userMap;
 		private static BranchStreamCollection m_streams;
@@ -25,35 +25,30 @@ namespace CTC.CvsntGitImporter
 		{
 			try
 			{
-				m_switches.Parse(args);
+				var switches = new Switches();
+				m_config = new Config(switches);
+				m_config.ParseCommandLineSwitches(args);
 
-				if (m_switches.Help)
+				if (switches.Help)
 				{
-					Console.Out.WriteLine(m_switches.GetHelpText());
+					Console.Out.WriteLine(switches.GetHelpText());
 					return 0;
 				}
 
 				// parse user file
-				m_userMap = new UserMap(m_switches.DefaultDomain);
-				m_userMap.AddEntry("", m_switches.Nobody);
-				if (m_switches.UserFile != null)
-					m_userMap.ParseUserFile(m_switches.UserFile);
+				m_userMap = new UserMap(m_config.DefaultDomain);
+				m_userMap.AddEntry("", m_config.Nobody);
+				if (m_config.UserFile != null)
+					m_userMap.ParseUserFile(m_config.UserFile);
 
-				var logDir = Path.Combine(Environment.CurrentDirectory, "DebugLogs");
-				Directory.CreateDirectory(logDir);
-				using (m_log = new Logger(logDir, debugEnabled: m_switches.Debug))
+				using (m_log = new Logger(m_config.DebugLogDir, debugEnabled: m_config.Debug))
 				{
-					var cvsLogFile = m_switches.CvsLog;
-					if (m_switches.CvsLog == null || !File.Exists(m_switches.CvsLog))
-					{
-						if (cvsLogFile == null)
-							cvsLogFile = Path.Combine(logDir, "cvs.log");
-						RunOperation("Download CVS Log", () => GetCvsLog(cvsLogFile, m_switches.Sandbox));
-					}
+					if (m_config.CreateCvsLog)
+						RunOperation("Download CVS Log", () => GetCvsLog(m_config.CvsLogFileName, m_config.Sandbox));
 
-					RunOperation("Analysis", () => Analyse(cvsLogFile));
+					RunOperation("Analysis", Analyse);
 
-					if (m_switches.DoImport)
+					if (m_config.DoImport)
 						RunOperation("Import", Import);
 				}
 			}
@@ -126,11 +121,11 @@ namespace CTC.CvsntGitImporter
 			return File.ReadAllText(repoPath).Trim();
 		}
 
-		private static void Analyse(string cvsLogFile)
+		private static void Analyse()
 		{
-			var parser = new CvsLogParser(m_switches.Sandbox, cvsLogFile, m_switches.BranchMatcher);
+			var parser = new CvsLogParser(m_config.Sandbox, m_config.CvsLogFileName, m_config.BranchMatcher);
 			var builder = new CommitBuilder(m_log, parser.Parse());
-			var exclusionFilter = new ExclusionFilter(m_log, m_switches.FileMatcher, m_switches.HeadOnlyMatcher, m_switches.BranchRename);
+			var exclusionFilter = new ExclusionFilter(m_log, m_config.FileMatcher, m_config.HeadOnlyMatcher, m_config.BranchRename);
 
 			IEnumerable<Commit> commits = builder.GetCommits()
 					.SplitMultiBranchCommits()
@@ -142,7 +137,7 @@ namespace CTC.CvsntGitImporter
 
 			// build lookup of all files
 			var allFiles = new FileCollection(parser.Files);
-			var includedFiles = new FileCollection(parser.Files.Where(f => m_switches.FileMatcher.Match(f.Name)));
+			var includedFiles = new FileCollection(parser.Files.Where(f => m_config.FileMatcher.Match(f.Name)));
 
 			WriteAllCommitsLog(commits);
 			WriteExcludedFileLog(parser);
@@ -153,8 +148,8 @@ namespace CTC.CvsntGitImporter
 			var tagResolver = ResolveTags(commits, includedFiles);
 			commits = tagResolver.Commits;
 
-			WriteTagLog("allbranches.log", branchResolver, parser.ExcludedBranches, m_switches.BranchRename);
-			WriteTagLog("alltags.log", tagResolver, parser.ExcludedTags, m_switches.TagRename);
+			WriteTagLog("allbranches.log", branchResolver, parser.ExcludedBranches, m_config.BranchRename);
+			WriteTagLog("alltags.log", tagResolver, parser.ExcludedTags, m_config.TagRename);
 			WriteUserLog("allusers.log", commits);
 
 			var streams = commits.SplitBranchStreams(branchResolver.ResolvedTags);
@@ -166,7 +161,7 @@ namespace CTC.CvsntGitImporter
 			WriteBranchLogs(streams);
 
 			// add any "head-only" files
-			exclusionFilter.CreateHeadOnlyCommits(m_switches.HeadOnlyBranches, streams, allFiles);
+			exclusionFilter.CreateHeadOnlyCommits(m_config.HeadOnlyBranches, streams, allFiles);
 
 			// store data needed for import
 			m_streams = streams;
@@ -175,20 +170,22 @@ namespace CTC.CvsntGitImporter
 		private static ITagResolver ResolveBranches(IEnumerable<Commit> commits, FileCollection includedFiles)
 		{
 			ITagResolver branchResolver;
-			var autoBranchResolver = new AutoBranchResolver(m_log, includedFiles);
-			if (m_switches.PartialTagThreshold != null)
-				autoBranchResolver.PartialTagThreshold = (int)m_switches.PartialTagThreshold.Value;
+			var autoBranchResolver = new AutoBranchResolver(m_log, includedFiles)
+			{
+				PartialTagThreshold = m_config.PartialTagThreshold
+			};
 			branchResolver = autoBranchResolver;
 
 			// if we're matching branchpoints, resolve those tags first
-			if (m_switches.BranchpointRule != null)
+			if (m_config.BranchpointRule != null)
 			{
-				var tagResolver = new TagResolver(m_log, includedFiles);
-				if (m_switches.PartialTagThreshold != null)
-					tagResolver.PartialTagThreshold = (int)m_switches.PartialTagThreshold.Value;
+				var tagResolver = new TagResolver(m_log, includedFiles)
+				{
+					PartialTagThreshold = m_config.PartialTagThreshold
+				};
 
 				var allBranches = includedFiles.SelectMany(f => f.AllBranches).Distinct();
-				var rule = m_switches.BranchpointRule;
+				var rule = m_config.BranchpointRule;
 				var branchpointTags = allBranches.Where(b => rule.IsMatch(b)).Select(b => rule.Apply(b));
 
 				if (!tagResolver.Resolve(branchpointTags, commits))
@@ -204,7 +201,7 @@ namespace CTC.CvsntGitImporter
 				}
 
 				commits = tagResolver.Commits;
-				branchResolver = new ManualBranchResolver(m_log, autoBranchResolver, tagResolver, m_switches.BranchpointRule);
+				branchResolver = new ManualBranchResolver(m_log, autoBranchResolver, tagResolver, m_config.BranchpointRule);
 			}
 
 			// resolve remaining branchpoints 
@@ -228,12 +225,13 @@ namespace CTC.CvsntGitImporter
 
 		private static ITagResolver ResolveTags(IEnumerable<Commit> commits, FileCollection includedFiles)
 		{
-			var tagResolver = new TagResolver(m_log, includedFiles);
-			if (m_switches.PartialTagThreshold != null)
-				tagResolver.PartialTagThreshold = (int)m_switches.PartialTagThreshold.Value;
+			var tagResolver = new TagResolver(m_log, includedFiles)
+			{
+				PartialTagThreshold = m_config.PartialTagThreshold
+			};
 
 			// resolve tags
-			var allTags = includedFiles.SelectMany(f => f.AllTags).Where(t => m_switches.TagMatcher.Match(t));
+			var allTags = includedFiles.SelectMany(f => f.AllTags).Where(t => m_config.TagMatcher.Match(t));
 			if (!tagResolver.Resolve(allTags.Distinct(), commits))
 			{
 				// ignore branchpoint tags that are unresolved
@@ -257,12 +255,12 @@ namespace CTC.CvsntGitImporter
 		private static void Import()
 		{
 			// do the import
-			ICvsRepository repository = new CvsRepository(m_switches.Sandbox);
-			if (m_switches.CvsCache != null)
-				repository = new CvsRepositoryCache(m_switches.CvsCache, repository);
+			ICvsRepository repository = new CvsRepository(m_config.Sandbox);
+			if (m_config.CvsCache != null)
+				repository = new CvsRepositoryCache(m_config.CvsCache, repository);
 
-			var cvs = new Cvs(repository, m_switches.CvsProcesses);
-			var importer = new Importer(m_log, m_switches, m_userMap, m_streams, m_resolvedTags, cvs);
+			var cvs = new Cvs(repository, m_config.CvsProcesses);
+			var importer = new Importer(m_log, m_config, m_userMap, m_streams, m_resolvedTags, cvs);
 			importer.Import();
 		}
 
@@ -272,14 +270,14 @@ namespace CTC.CvsntGitImporter
 			{
 				var files = parser.Files
 						.Select(f => f.Name)
-						.Where(f => !m_switches.FileMatcher.Match(f) && !m_switches.HeadOnlyMatcher.Match(f))
+						.Where(f => !m_config.FileMatcher.Match(f) && !m_config.HeadOnlyMatcher.Match(f))
 						.OrderBy(i => i, StringComparer.OrdinalIgnoreCase);
 
 				m_log.WriteDebugFile("excluded_files.log", files);
 
 				var headOnly = parser.Files
 						.Select(f => f.Name)
-						.Where(f => m_switches.HeadOnlyMatcher.Match(f))
+						.Where(f => m_config.HeadOnlyMatcher.Match(f))
 						.OrderBy(i => i, StringComparer.OrdinalIgnoreCase);
 
 				m_log.WriteDebugFile("headonly_files.log", headOnly);
