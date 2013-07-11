@@ -249,7 +249,7 @@ namespace CTC.CvsntGitImporter
 					log.WriteLine("{0} | {1} | {2}", commit.Branch, commit.Author, commit.Time);
 
 					foreach (var r in commit)
-						log.WriteLine("  {0} r{1}", r.File.Name, r.Revision);
+						log.WriteLine("  {0} r{1}{2}", r.File.Name, r.Revision, r.IsDead ? " (dead)" : "");
 					log.WriteLine();
 				}
 			}
