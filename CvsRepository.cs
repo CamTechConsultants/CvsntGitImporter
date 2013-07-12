@@ -73,12 +73,12 @@ namespace CTC.CvsntGitImporter
 			};
 
 			process.Start();
+			process.BeginErrorReadLine();
 
 			using (var buf = new MemoryStream())
 			{
 				process.StandardOutput.BaseStream.CopyTo(buf);
 
-				process.BeginErrorReadLine();
 				process.WaitForExit();
 
 				if (error.Length > 0)
