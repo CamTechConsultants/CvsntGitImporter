@@ -46,7 +46,7 @@ namespace CTC.CvsntGitImporter
 			bool mustDispose = false;
 			if (reader == null)
 			{
-				reader = new StreamReader(m_filename, Encoding.UTF8);
+				reader = new StreamReader(m_filename, Encoding.Default);
 				mustDispose = true;
 			}
 

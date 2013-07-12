@@ -86,7 +86,7 @@ namespace CTC.CvsntGitImporter.TestCode.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to RCS file: /cvs/project/File.cs,v
+        ///   Looks up a localized string similar to RCS file: /cvs/xjtag/dev/src/Project/test/File.cs,v
         ///Working file: File.cs
         ///head: 1.2
         ///branch:
@@ -103,7 +103,7 @@ namespace CTC.CvsntGitImporter.TestCode.Properties {
         ///3.0: Add File.
         ///----------------------------
         ///revision 1.1
-        ///date: 2013/05/09 11:01:16;  a [rest of string was truncated]&quot;;.
+        ///date: 2013 [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string FileAddedOnBranch {
             get {
@@ -159,6 +159,31 @@ namespace CTC.CvsntGitImporter.TestCode.Properties {
         internal static string MissingCommitId {
             get {
                 return ResourceManager.GetString("MissingCommitId", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 
+        ///RCS file: /cvs/project/demo©.xje,v
+        ///head: 1.3
+        ///branch:
+        ///locks: strict
+        ///access list:
+        ///symbolic names:
+        ///keyword substitution: kv
+        ///total revisions: 4;	selected revisions: 4
+        ///description:
+        ///----------------------------
+        ///revision 1.3
+        ///date: 2010/06/25 16:50:02;  author: john;  state: dead;  lines: +0 -0;  kopt: kv;  commitid: d584c24de370163;  filename: demo©.xje;  bugid: 5488;
+        ///Blah blah
+        ///----------------------------
+        ///revision 1.2
+        ///date: 2009/06/02 16:33:33;  author: john;  state: Exp;  lines: +359 -0;  kopt:  [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string NonAscii {
+            get {
+                return ResourceManager.GetString("NonAscii", resourceCulture);
             }
         }
         

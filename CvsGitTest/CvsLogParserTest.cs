@@ -6,6 +6,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using CTC.CvsntGitImporter.TestCode.Properties;
 using CTC.CvsntGitImporter.Utils;
@@ -113,6 +114,23 @@ namespace CTC.CvsntGitImporter.TestCode
 			Assert.AreEqual(file.GetBranchpointForBranch("branch1"), Revision.Create("1.1"));
 			Assert.AreEqual(file.GetBranchpointForBranch("branch2"), Revision.Empty);
 			Assert.AreEqual(parser.ExcludedBranches.Single(), "branch2");
+		}
+
+		[TestMethod]
+		public void NonAsciiFile()
+		{
+			using (var temp = new TempDir())
+			{
+				// write the log file in the default encoding, which is what the CVS log will typically be in
+				var cvsLog = temp.GetPath("cvs.log");
+				File.WriteAllText(cvsLog, CvsLogParserResources.NonAscii, Encoding.Default);
+
+				var parser = new CvsLogParser(m_sandbox, cvsLog, m_branchMatcher);
+				parser.Parse().ToList();
+				var file = parser.Files.Single();
+
+				Assert.AreEqual(file.Name, "demo©.xje");
+			}
 		}
 
 
