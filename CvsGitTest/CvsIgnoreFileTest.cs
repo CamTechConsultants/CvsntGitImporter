@@ -53,7 +53,7 @@ namespace CTC.CvsntGitImporter.TestCode
 		[TestMethod]
 		public void Rewrite_DeletedFile()
 		{
-			var cvs = new FileContent(".cvsignore", FileContentData.Empty);
+			var cvs = FileContent.CreateDeadFile(".cvsignore");
 			Assert.IsTrue(cvs.IsDead, ".cvsignore file is dead");
 			var git = CvsIgnoreFile.Rewrite(cvs);
 

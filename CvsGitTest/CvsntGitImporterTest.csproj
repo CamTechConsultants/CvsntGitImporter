@@ -72,6 +72,7 @@
     <Compile Include="EnumerableExtensions.cs" />
     <Compile Include="ExclusionFilterTest.cs" />
     <Compile Include="FileContentDataTest.cs" />
+    <Compile Include="FileContentTest.cs" />
     <Compile Include="FileInfoExtensions.cs" />
     <Compile Include="FileInfoTest.cs" />
     <Compile Include="FileRevisionExtensions.cs" />

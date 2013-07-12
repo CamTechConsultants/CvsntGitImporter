@@ -23,20 +23,22 @@ namespace CTC.CvsntGitImporter
 		/// <summary>
 		/// Is this a file deletion?
 		/// </summary>
-		public bool IsDead
+		public readonly bool IsDead;
+
+		public FileContent(string path, FileContentData data) : this(path, data, false)
 		{
-			get { return Data.Length == 0; }
 		}
 
-		public FileContent(string path, FileContentData name)
+		private FileContent(string path, FileContentData data, bool isDead)
 		{
 			this.Name = path;
-			this.Data = name;
+			this.Data = data;
+			this.IsDead = isDead;
 		}
 
 		public static FileContent CreateDeadFile(string path)
 		{
-			return new FileContent(path, FileContentData.Empty);
+			return new FileContent(path, FileContentData.Empty, true);
 		}
 	}
 }

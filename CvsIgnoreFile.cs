@@ -33,7 +33,7 @@ namespace CTC.CvsntGitImporter
 
 			if (file.IsDead)
 			{
-				return new FileContent(newFilename, FileContentData.Empty);
+				return FileContent.CreateDeadFile(newFilename);
 			}
 			else
 			{
