@@ -28,7 +28,7 @@ namespace CTC.CvsntGitImporter.TestCode
 		{
 			m_temp = new TempDir();
 			Directory.CreateDirectory(m_temp.GetPath("CVS"));
-			File.WriteAllText(m_temp.GetPath(@"CVS\Repository"), "xjtag/dev/src/Project/test");
+			File.WriteAllText(m_temp.GetPath(@"CVS\Repository"), "module");
 			m_sandbox = m_temp.Path;
 			m_branchMatcher = new InclusionMatcher();
 		}

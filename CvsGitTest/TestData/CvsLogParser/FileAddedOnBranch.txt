@@ -1,4 +1,4 @@
-RCS file: /cvs/xjtag/dev/src/Project/test/File.cs,v
+RCS file: /module/File.cs,v
 Working file: File.cs
 head: 1.2
 branch:

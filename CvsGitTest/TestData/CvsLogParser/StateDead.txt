@@ -1,5 +1,5 @@
 
-RCS file: /cvs/xjtag/dev/src/Project/test/.cvsignore,v
+RCS file: /module/.cvsignore,v
 Working file: .cvsignore
 head: 1.2
 branch:

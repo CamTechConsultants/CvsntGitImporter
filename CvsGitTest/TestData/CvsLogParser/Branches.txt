@@ -1,4 +1,4 @@
-RCS file: /cvs/xjtag/dev/src/Project/test/BuiltInLDDTypesTest.cs,v
+RCS file: /module/BuiltInLDDTypesTest.cs,v
 Working file: BuiltInLDDTypesTest.cs
 head: 1.3
 branch:
