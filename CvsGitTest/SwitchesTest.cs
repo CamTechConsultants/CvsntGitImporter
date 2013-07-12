@@ -29,6 +29,18 @@ namespace CTC.CvsntGitImporter.TestCode
 		}
 
 		[TestMethod]
+		public void GitDir_NotEmpty_NoImportSpecified()
+		{
+			using (var temp = new TempDir())
+			{
+				File.WriteAllText(temp.GetPath("file.txt"), "blah");
+
+				var switches = new Switches();
+				switches.Parse("--sandbox", Path.GetTempPath(), "--gitdir", temp.Path, "--noimport");
+			}
+		}
+
+		[TestMethod]
 		public void GitDir_InvalidChars()
 		{
 			var switches = new Switches();
@@ -49,6 +61,25 @@ namespace CTC.CvsntGitImporter.TestCode
 		{
 			var switches = new Switches();
 			switches.Parse("--sandbox", Path.GetTempPath(), "--cvs-processes", "blah");
+		}
+
+		[TestMethod]
+		public void ConfDir_VerifyNotCalledUntilAllSwitchesProcessed()
+		{
+			using (var temp = new TempDir())
+			{
+				var confFileName = temp.GetPath("test.conf");
+				File.WriteAllText(confFileName, "noimport\r\n");
+				var sandbox = temp.GetPath("sandbox");
+				Directory.CreateDirectory(sandbox);
+
+				// specify sandbox directory after the conf file has been processed
+				var switches = new Switches();
+				switches.Parse("-C", confFileName, "--sandbox", sandbox);
+
+				Assert.IsTrue(switches.NoImport);
+				Assert.AreEqual(sandbox, switches.Sandbox);
+			}
 		}
 	}
 }

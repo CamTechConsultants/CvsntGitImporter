@@ -150,7 +150,7 @@ namespace CTC.CvsntGitImporter
 			try
 			{
 				var args = ReadConfigFileEntries(filename).ToArray();
-				this.Parse(args);
+				SwitchesParser.Parse(this, args);
 			}
 			catch (IOException ioe)
 			{

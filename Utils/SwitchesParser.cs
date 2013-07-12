@@ -52,9 +52,6 @@ namespace CTC.CvsntGitImporter.Utils
 				Array.Copy(args, nextArg, extraArgs, 0, args.Length - nextArg);
 				def.SetExtraArguments(extraArgs);
 			}
-
-			// verify
-			def.Verify();
 		}
 
 		#endregion

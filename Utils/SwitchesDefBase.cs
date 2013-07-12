@@ -83,6 +83,7 @@ namespace CTC.CvsntGitImporter.Utils
 		public virtual void Parse(params string[] args)
 		{
 			SwitchesParser.Parse(this, args);
+			Verify();
 		}
 
 		/// <summary>
