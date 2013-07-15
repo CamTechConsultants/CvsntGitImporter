@@ -33,8 +33,10 @@ namespace CTC.CvsntGitImporter
 		{
 			m_ensureAllDirectories.Wait();
 
-			var data = InvokeCvs("-f", "-Q", "update", "-p", "-r" + f.Revision.ToString(), f.File.Name);
-			return new FileContent(f.File.Name, data);
+			InvokeCvs("-f", "-Q", "update", "-r" + f.Revision.ToString(), f.File.Name);
+
+			var dataPath = Path.Combine(m_sandboxPath, f.File.Name.Replace('/', '\\'));
+			return new FileContent(f.File.Name, new FileContentData(File.ReadAllBytes(dataPath)));
 		}
 
 		/// <summary>
@@ -45,7 +47,7 @@ namespace CTC.CvsntGitImporter
 			await Task.Factory.StartNew(() => InvokeCvs("-f", "-Q", "update", "-d"));
 		}
 
-		private FileContentData InvokeCvs(params string[] args)
+		private void InvokeCvs(params string[] args)
 		{
 			var quotedArguments = String.Join(" ", args.Select(a => a.Contains(' ') ? String.Format("\"{0}\"", a) : a));
 
@@ -74,20 +76,12 @@ namespace CTC.CvsntGitImporter
 
 			process.Start();
 			process.BeginErrorReadLine();
+			process.WaitForExit();
 
-			using (var buf = new MemoryStream())
-			{
-				process.StandardOutput.BaseStream.CopyTo(buf);
-
-				process.WaitForExit();
-
-				if (error.Length > 0)
-					throw new CvsException(String.Format("CVS call failed: {0}", error));
-				else if (process.ExitCode != 0)
-					throw new CvsException(String.Format("CVS exited with exit code {0}", process.ExitCode));
-				else
-					return new FileContentData(buf.GetBuffer(), buf.Length);
-			}
+			if (error.Length > 0)
+				throw new CvsException(String.Format("CVS call failed: {0}", error));
+			else if (process.ExitCode != 0)
+				throw new CvsException(String.Format("CVS exited with exit code {0}", process.ExitCode));
 		}
 	}
 }

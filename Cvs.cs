@@ -37,15 +37,23 @@ namespace CTC.CvsntGitImporter
 		/// </summary>
 		public IEnumerable<FileContent> GetCommit(Commit commit)
 		{
-			var liveFiles = new Queue<FileRevision>(commit.Where(f => !f.IsDead));
+			// group the files by directory - CVS can't cope with retrieving files in the same
+			// directory in parallel
+			var packages = from f in commit
+						   where !f.IsDead
+						   group f by Path.GetDirectoryName(f.File.Name) into dir
+						   select dir as IEnumerable<FileRevision>;
+			var dirQueue = new Queue<IEnumerable<FileRevision>>(packages);
 
-			var taskCount = Math.Min(liveFiles.Count, m_cvsProcessCount);
+			var taskCount = Math.Min(dirQueue.Count, m_cvsProcessCount);
 			var tasks = new List<Task<FileContent>>(taskCount);
+			var taskQueues = new List<Queue<FileRevision>>(taskCount);
 
 			// start async tasks off
 			for (int i = 0; i < taskCount; i++)
 			{
-				tasks.Add(StartNextFile(liveFiles));
+				taskQueues.Add(new Queue<FileRevision>(dirQueue.Dequeue()));
+				tasks.Add(StartNextFile(taskQueues[i].Dequeue()));
 			}
 
 			// now return all dead files
@@ -59,19 +67,32 @@ namespace CTC.CvsntGitImporter
 			{
 				int taskIndex = Task.WaitAny(tasks.ToArray());
 				var completedTask = tasks[taskIndex];
-				tasks.RemoveAt(taskIndex);
 
-				if (liveFiles.Any())
-					tasks.Add(StartNextFile(liveFiles));
+				if (taskQueues[taskIndex].Any())
+				{
+					// items left in the task's single directory queue
+					tasks[taskIndex] = StartNextFile(taskQueues[taskIndex].Dequeue());
+				}
+				else if (dirQueue.Any())
+				{
+					// no more items in the task's directory, so start on the next one
+					taskQueues[taskIndex] = new Queue<FileRevision>(dirQueue.Dequeue());
+					tasks[taskIndex] = StartNextFile(taskQueues[taskIndex].Dequeue());
+				}
+				else
+				{
+					// no more directories left
+					taskQueues.RemoveAt(taskIndex);
+					tasks.RemoveAt(taskIndex);
+				}
 
 				yield return completedTask.Result;
 			}
 		}
 
-		private Task<FileContent> StartNextFile(Queue<FileRevision> q)
+		private Task<FileContent> StartNextFile(FileRevision r)
 		{
-			var f = q.Dequeue();
-			return Task<FileContent>.Factory.StartNew(() => m_repository.GetCvsRevision(f));
+			return Task<FileContent>.Factory.StartNew(() => m_repository.GetCvsRevision(r));
 		}
 
 
