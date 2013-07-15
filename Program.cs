@@ -35,13 +35,21 @@ namespace CTC.CvsntGitImporter
 
 				using (m_log = new Logger(m_config.DebugLogDir, debugEnabled: m_config.Debug))
 				{
-					if (m_config.CreateCvsLog)
-						RunOperation("Download CVS Log", () => Cvs.DownloadCvsLog(m_config.CvsLogFileName, m_config.Sandbox));
+					try
+					{
+						if (m_config.CreateCvsLog)
+							RunOperation("Download CVS Log", () => Cvs.DownloadCvsLog(m_config.CvsLogFileName, m_config.Sandbox));
 
-					RunOperation("Analysis", Analyse);
+						RunOperation("Analysis", Analyse);
 
-					if (m_config.DoImport)
-						RunOperation("Import", Import);
+						if (m_config.DoImport)
+							RunOperation("Import", Import);
+					}
+					catch (Exception e)
+					{
+						m_log.WriteLine("{0}", e);
+						throw;
+					}
 				}
 			}
 			catch (Exception e)

@@ -145,15 +145,17 @@ namespace CTC.CvsntGitImporter
 				{
 					Console.Error.WriteLine();
 					Console.Error.WriteLine(ioe.Message);
+
 					m_log.DoubleRuleOff();
 					m_log.WriteLine(ioe.Message);
-					throw;
+
+					throw new ImportFailedException("Git reported an error during the import");
 				}
 
 				// this should not occur - if the stdin pipe broke, it implies that git fast-import
 				// exited prematurely, which means we should have had an error from it above
 				if (m_brokenPipe)
-					throw new IOException("Git process exited prematurely");
+					throw new ImportFailedException("Git process exited prematurely");
 			}
 		}
 
