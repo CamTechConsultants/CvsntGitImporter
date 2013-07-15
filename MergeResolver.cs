@@ -96,11 +96,26 @@ namespace CTC.CvsntGitImporter
 					m_log.WriteLine("Merges from {0} to {1} are crossed ({2}->{3})",
 							commitSource.Branch, commitDest.Branch, commitSource.CommitId, commitDest.CommitId);
 
-					using (m_log.Indent())
+					if (commitSource.Branches.Any())
 					{
-						m_streams.MoveCommit(commitSource, lastMergeSource);
+						m_log.WriteLine("Warning: not moving {0} as it is a branchpoint for {1}", commitSource.CommitId,
+								String.Join(", ", commitSource.Branches.Select(c => c.Branch)));
+						continue;
+					}
+					else if (lastMergeSource.Branches.Any())
+					{
+						m_log.WriteLine("Warning: not moving {0} as it is a branchpoint for {1}", lastMergeSource.CommitId,
+								String.Join(", ", lastMergeSource.Branches.Select(c => c.Branch)));
+						continue;
+					}
+					else
+					{
+						using (m_log.Indent())
+						{
+							m_streams.MoveCommit(commitSource, lastMergeSource);
 
-						// don't update last merge as it has not changed
+							// don't update last merge as it has not changed
+						}
 					}
 				}
 				else
