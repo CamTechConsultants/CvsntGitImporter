@@ -42,6 +42,9 @@ namespace CTC.CvsntGitImporter
 		[SwitchDef(LongSwitch="--gitdir", ValueDescription="dir", Description="The directory to create the git repository in. Must not exist or be empty")]
 		public string GitDir { get; set; }
 
+		[SwitchDef(LongSwitch="--repack", Description="Repack the repository after the import")]
+		public bool Repack { get; set; }
+
 		[SwitchDef(LongSwitch="--cvs-cache", Description="A directory to cache versions of files in. Useful if the import needs to be run more than once")]
 		public string CvsCache { get; set; }
 

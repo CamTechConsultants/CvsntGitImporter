@@ -16,12 +16,14 @@ namespace CTC.CvsntGitImporter
 	/// </summary>
 	class GitRepo
 	{
+		private readonly ILogger m_log;
 		private readonly string m_dir;
 		private readonly StringBuilder m_stderr = new StringBuilder();
 		private Process m_importProcess;
 
-		public GitRepo(string directory)
+		public GitRepo(ILogger log, string directory)
 		{
+			m_log = log;
 			m_dir = directory;
 		}
 
@@ -36,26 +38,7 @@ namespace CTC.CvsntGitImporter
 				if (!Directory.Exists(m_dir))
 					Directory.CreateDirectory(m_dir);
 
-				var startInfo = new ProcessStartInfo()
-				{
-					FileName = "git.exe",
-					Arguments = "init --bare",
-					WorkingDirectory = m_dir,
-					UseShellExecute = false,
-					RedirectStandardError = true,
-				};
-
-				var git = Process.Start(startInfo);
-				var errorOutput = git.StandardError.ReadToEnd();
-				git.WaitForExit();
-
-				if (git.ExitCode != 0)
-				{
-					if (errorOutput.Length > 0)
-						throw new IOException(String.Format("Git init failed: {0}", errorOutput));
-					else
-						throw new IOException(String.Format("Git init failed with exit code {0}", git.ExitCode));
-				}
+				RunGitProcess("Git init", "init --bare");
 			}
 			catch (UnauthorizedAccessException uae)
 			{
@@ -79,16 +62,8 @@ namespace CTC.CvsntGitImporter
 
 			try
 			{
-				var git = new Process();
-				git.StartInfo = new ProcessStartInfo()
-				{
-					FileName = "git.exe",
-					Arguments = "fast-import",
-					WorkingDirectory = m_dir,
-					UseShellExecute = false,
-					RedirectStandardInput = true,
-					RedirectStandardError = true,
-				};
+				var git = CreateGitProcess("fast-import");
+				git.StartInfo.RedirectStandardInput = true;
 
 				git.ErrorDataReceived += (_, e) =>
 				{
@@ -138,6 +113,62 @@ namespace CTC.CvsntGitImporter
 			{
 				m_importProcess = null;
 				m_stderr.Clear();
+			}
+		}
+
+		/// <summary>
+		/// Repack a repository.
+		/// </summary>
+		public void Repack()
+		{
+			RunGitProcess("Repack", "repack -f -a -d --depth=250 --window=250");
+		}
+
+
+		private Process CreateGitProcess(string arguments)
+		{
+			return new Process()
+			{
+				StartInfo = new ProcessStartInfo()
+				{
+					FileName = "git.exe",
+					Arguments = arguments,
+					WorkingDirectory = m_dir,
+					UseShellExecute = false,
+					RedirectStandardOutput = true,
+					RedirectStandardError = true,
+				}
+			};
+		}
+
+		private void RunGitProcess(string description, string arguments)
+		{
+			m_log.WriteLine("{0}: Command line: git {1}", description, arguments);
+			var errorOutput = new StringBuilder();
+
+			var git = CreateGitProcess(arguments);
+			git.OutputDataReceived += (_, e) =>
+			{
+				if (e.Data != null)
+					m_log.WriteLine(e.Data.TrimEnd());
+			};
+			git.ErrorDataReceived += (_, e) =>
+			{
+				if (e.Data != null)
+					errorOutput.Append(e.Data);
+			};
+
+			git.Start();
+			git.BeginOutputReadLine();
+			git.BeginErrorReadLine();
+			git.WaitForExit();
+
+			if (git.ExitCode != 0)
+			{
+				if (errorOutput.Length > 0)
+					throw new IOException(String.Format("{0} failed: {1}", description, errorOutput));
+				else
+					throw new IOException(String.Format("{0} failed with exit code {1}", description, git.ExitCode));
 			}
 		}
 	}

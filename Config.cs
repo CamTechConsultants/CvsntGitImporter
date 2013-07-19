@@ -114,6 +114,14 @@ namespace CTC.CvsntGitImporter
 		}
 
 		/// <summary>
+		/// Should we repack the git repository after import?
+		/// </summary>
+		public bool Repack
+		{
+			get { return m_switches.Repack; }
+		}
+
+		/// <summary>
 		/// The path to the CVS cache, if specified, otherwise null.
 		/// </summary>
 		public string CvsCache

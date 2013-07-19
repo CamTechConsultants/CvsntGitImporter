@@ -43,7 +43,12 @@ namespace CTC.CvsntGitImporter
 						RunOperation("Analysis", Analyse);
 
 						if (m_config.DoImport)
+						{
 							RunOperation("Import", Import);
+
+							if (m_config.Repack)
+								RunOperation("Repack", Repack);
+						}
 					}
 					catch (Exception e)
 					{
@@ -222,6 +227,12 @@ namespace CTC.CvsntGitImporter
 			var cvs = new Cvs(repository, m_config.CvsProcesses);
 			var importer = new Importer(m_log, m_config, m_config.Users, m_streams, m_resolvedTags, cvs);
 			importer.Import();
+		}
+
+		private static void Repack()
+		{
+			var git = new GitRepo(m_log, m_config.GitDir);
+			git.Repack();
 		}
 
 		private static void WriteExcludedFileLog(CvsLogParser parser)

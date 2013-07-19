@@ -6,6 +6,7 @@
 using System.IO;
 using CTC.CvsntGitImporter.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Rhino.Mocks;
 
 namespace CTC.CvsntGitImporter.TestCode
 {
@@ -15,12 +16,20 @@ namespace CTC.CvsntGitImporter.TestCode
 	[TestClass]
 	public class GitRepoTest
 	{
+		private ILogger m_log;
+
+		public GitRepoTest()
+		{
+			m_log = MockRepository.GenerateStub<ILogger>();
+		}
+
+
 		[TestMethod]
 		public void Init_CreatesGitFiles()
 		{
 			using (var temp = new TempDir())
 			{
-				var git = new GitRepo(temp.Path);
+				var git = new GitRepo(m_log, temp.Path);
 				git.Init();
 
 				Assert.IsTrue(Directory.Exists(temp.GetPath("refs")));
@@ -34,7 +43,7 @@ namespace CTC.CvsntGitImporter.TestCode
 			using (var temp = new TempDir())
 			{
 				var gitdir = temp.GetPath(@"dir1\dir2");
-				var git = new GitRepo(gitdir);
+				var git = new GitRepo(m_log, gitdir);
 				git.Init();
 
 				Assert.IsTrue(Directory.Exists(gitdir));
