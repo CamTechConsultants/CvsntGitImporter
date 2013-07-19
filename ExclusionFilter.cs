@@ -93,15 +93,15 @@ namespace CTC.CvsntGitImporter
 
 		private void CreateHeadOnlyCommit(string branch, BranchStreamCollection streams, FileCollection allFiles, string branchMergeFrom)
 		{
-			var repoState = m_headOnlyState[branch];
+			var headOnlyState = m_headOnlyState[branch];
 			var commitId = String.Format("headonly-{0}", branch);
 			var commit = new Commit(commitId);
 
 			var message = String.Format("Adding head-only files to {0}", m_branchRenamer.Process(branch));
 
-			foreach (var file in repoState.LiveFiles)
+			foreach (var file in headOnlyState.LiveFiles.OrderBy(i => i, StringComparer.OrdinalIgnoreCase))
 			{
-				var fileRevision = new FileRevision(allFiles[file], repoState[file],
+				var fileRevision = new FileRevision(allFiles[file], headOnlyState[file],
 						mergepoint: Revision.Empty, time: DateTime.Now, author: "", commitId: commitId);
 				fileRevision.AddMessage(message);
 				commit.Add(fileRevision);
