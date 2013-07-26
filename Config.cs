@@ -207,7 +207,7 @@ namespace CTC.CvsntGitImporter
 		/// <summary>
 		/// The matcher for latest-only files.
 		/// </summary>
-		public readonly InclusionMatcher HeadOnlyMatcher = new InclusionMatcher();
+		public readonly InclusionMatcher HeadOnlyMatcher = new InclusionMatcher() { Default = false };
 
 		/// <summary>
 		/// The branches to import "head-only" files for.

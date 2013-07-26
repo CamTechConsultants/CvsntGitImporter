@@ -90,6 +90,24 @@ namespace CTC.CvsntGitImporter.TestCode
 		}
 
 		[TestMethod]
+		public void Filter_Exclude_NoHeadOnlyRules()
+		{
+			var f1 = new FileInfo("file1");
+			var f2 = new FileInfo("file2");
+			var commit1 = new Commit("c1").WithRevision(f1, "1.1").WithRevision(f2, "1.1");
+			var commit2 = new Commit("c2").WithRevision(f1, "1.2");
+
+			var matcher = new InclusionMatcher();
+			matcher.AddExcludeRule(new Regex(@"^file1$"));
+			var filter = new ExclusionFilter(m_log, matcher, new InclusionMatcher() { Default = false }, new Renamer());
+
+			var commits = filter.Filter(new[] { commit1, commit2 });
+			Assert.AreEqual(commits.Single().CommitId, "c1");
+
+			Assert.IsFalse(filter.HeadOnlyState["MAIN"].LiveFiles.Any(), "No headonly files");
+		}
+
+		[TestMethod]
 		public void CreateHeadOnlyCommits_OnlyProcessListedBranches()
 		{
 			var f1 = new FileInfo("file1").WithBranch("branch1", "1.2.0.2");

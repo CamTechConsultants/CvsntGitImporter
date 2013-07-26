@@ -124,6 +124,25 @@ namespace CTC.CvsntGitImporter.TestCode
 		#endregion CvsProcesses
 
 
+		#region Matchers
+
+		[TestMethod]
+		public void FileMatcher_DefaultIsTrue()
+		{
+			var config = new Config(new Switches());
+			Assert.IsTrue(config.FileMatcher.Default);
+		}
+
+		[TestMethod]
+		public void HeadOnlyMatcher_DefaultIsFalse()
+		{
+			var config = new Config(new Switches());
+			Assert.IsFalse(config.HeadOnlyMatcher.Default);
+		}
+
+		#endregion Matchers
+
+
 		#region RenameTag/RenameBranch
 
 		[TestMethod]

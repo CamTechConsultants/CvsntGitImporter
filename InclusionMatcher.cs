@@ -17,6 +17,10 @@ namespace CTC.CvsntGitImporter
 	{
 		private readonly List<Rule> m_rules = new List<Rule>();
 
+		/// <summary>
+		/// The default match value if no rules are added. The default is true.
+		/// </summary>
+		public bool Default = true;
 
 		/// <summary>
 		/// Add a rule that includes items if it matches.
@@ -45,7 +49,7 @@ namespace CTC.CvsntGitImporter
 		/// </summary>
 		public bool Match(string item)
 		{
-			return m_rules.Aggregate(true, (isMatched, rule) => rule.Match(item, isMatched));
+			return m_rules.Aggregate(Default, (isMatched, rule) => rule.Match(item, isMatched));
 		}
 
 
