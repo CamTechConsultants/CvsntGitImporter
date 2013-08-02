@@ -71,6 +71,7 @@
     <Compile Include="CvsLogReader.cs" />
     <Compile Include="GitRepo.cs" />
     <Compile Include="HashSetExtensions.cs" />
+    <Compile Include="IConfig.cs" />
     <Compile Include="ICvsRepository.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="Importer.cs" />

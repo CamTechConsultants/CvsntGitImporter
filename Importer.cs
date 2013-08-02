@@ -21,7 +21,7 @@ namespace CTC.CvsntGitImporter
 		private static readonly byte[] m_newLine = m_encoding.GetBytes("\n");
 
 		private readonly ILogger m_log;
-		private readonly Config m_config;
+		private readonly IConfig m_config;
 		private readonly UserMap m_userMap;
 		private readonly BranchStreamCollection m_branches;
 		private readonly IDictionary<string, Commit> m_tags;
@@ -33,7 +33,7 @@ namespace CTC.CvsntGitImporter
 
 		private bool m_isDisposed = false;
 
-		public Importer(ILogger log, Config config, UserMap userMap, BranchStreamCollection branches,
+		public Importer(ILogger log, IConfig config, UserMap userMap, BranchStreamCollection branches,
 				IDictionary<string, Commit> tags, Cvs cvs)
 		{
 			m_log = log;

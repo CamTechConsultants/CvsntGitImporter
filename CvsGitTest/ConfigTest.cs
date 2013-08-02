@@ -124,23 +124,46 @@ namespace CTC.CvsntGitImporter.TestCode
 		#endregion CvsProcesses
 
 
-		#region Matchers
+		#region IncludeFile/IsHeadOnly
 
 		[TestMethod]
-		public void FileMatcher_DefaultIsTrue()
+		public void IncludeFile_DefaultIsTrue()
 		{
 			var config = new Config(new Switches());
-			Assert.IsTrue(config.FileMatcher.Default);
+			Assert.IsTrue(config.IncludeFile("file1"));
 		}
 
 		[TestMethod]
-		public void HeadOnlyMatcher_DefaultIsFalse()
+		public void IncludeFile_IncludesHeadOnly()
 		{
-			var config = new Config(new Switches());
-			Assert.IsFalse(config.HeadOnlyMatcher.Default);
+			var switches = new Switches();
+			var config = new Config(switches);
+			config.ParseCommandLineSwitches("--sandbox", Path.GetTempPath(), "--head-only", "^file1", "--include", "^file2");
+
+			Assert.IsFalse(config.IncludeFile("file1"));
+			Assert.IsTrue(config.IncludeFile("file2"));
+			Assert.IsFalse(config.IncludeFile("file3"));
 		}
 
-		#endregion Matchers
+		[TestMethod]
+		public void IsHeadOnly_DefaultIsFalse()
+		{
+			var config = new Config(new Switches());
+			Assert.IsFalse(config.IsHeadOnly("file1"));
+		}
+
+		[TestMethod]
+		public void IsHeadOnly_ExcludesExcludedFiles()
+		{
+			var switches = new Switches();
+			var config = new Config(switches);
+			config.ParseCommandLineSwitches("--sandbox", Path.GetTempPath(), "--head-only", "^file", "--include", "^file2");
+
+			Assert.IsFalse(config.IsHeadOnly("file1"));
+			Assert.IsTrue(config.IsHeadOnly("file2"));
+		}
+
+		#endregion IncludeFile/IsHeadOnly
 
 
 		#region RenameTag/RenameBranch

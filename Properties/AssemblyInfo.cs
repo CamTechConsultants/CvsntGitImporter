@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("CvsGitConverter")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("CvsntGitImporter")]
+[assembly: AssemblyDescription("CVSNT to Git Importer")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("CvsGitConverter")]
-[assembly: AssemblyCopyright("Copyright ©  2013")]
+[assembly: AssemblyCompany("Cambridge Technology Consultants")]
+[assembly: AssemblyProduct("CvsntGitImporter")]
+[assembly: AssemblyCopyright("Copyright © 2013 Cambridge Technology Consultants Ltd.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

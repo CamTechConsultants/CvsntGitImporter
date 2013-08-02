@@ -108,7 +108,7 @@ namespace CTC.CvsntGitImporter
 				StartInfo = new ProcessStartInfo()
 				{
 					FileName = "cmd.exe",
-					Arguments = String.Format("/C cvs rlog \"{0}\" > \"{1}\"", module, cvsLogFile),
+					Arguments = String.Format("/C cvs -f -Q rlog \"{0}\" > \"{1}\"", module, cvsLogFile),
 					UseShellExecute = false,
 					RedirectStandardError = true,
 					StandardErrorEncoding = Encoding.Default,
