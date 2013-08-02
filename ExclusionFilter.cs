@@ -16,17 +16,15 @@ namespace CTC.CvsntGitImporter
 	class ExclusionFilter
 	{
 		private readonly ILogger m_log;
-		private readonly InclusionMatcher m_fileMatcher;
-		private readonly InclusionMatcher m_headOnly;
+		private readonly IConfig m_config;
 		private readonly Renamer m_branchRenamer;
 		private readonly RepositoryState m_headOnlyState;
 
-		public ExclusionFilter(ILogger log, InclusionMatcher fileMatcher, InclusionMatcher headOnly, Renamer branchRenamer)
+		public ExclusionFilter(ILogger log, IConfig config)
 		{
 			m_log = log;
-			m_fileMatcher = fileMatcher;
-			m_headOnly = headOnly;
-			m_branchRenamer = branchRenamer;
+			m_config = config;
+			m_branchRenamer = config.BranchRename;
 			m_headOnlyState = RepositoryState.CreateWithBranchChangesOnly();
 		}
 
@@ -43,17 +41,17 @@ namespace CTC.CvsntGitImporter
 		{
 			foreach (var commit in commits)
 			{
-				if (commit.All(f => m_fileMatcher.Match(f.File.Name)))
+				if (commit.All(f => m_config.IncludeFile(f.File.Name)))
 				{
 					yield return commit;
 				}
 				else
 				{
-					var replacement = SplitCommit(commit, f => m_fileMatcher.Match(f.Name));
+					var replacement = SplitCommit(commit, f => m_config.IncludeFile(f.Name));
 					if (replacement != null)
 						yield return replacement;
 
-					var headOnly = SplitCommit(commit, f => !m_fileMatcher.Match(f.Name) && m_headOnly.Match(f.Name));
+					var headOnly = SplitCommit(commit, f => m_config.IsHeadOnly(f.Name));
 					if (headOnly != null)
 						m_headOnlyState.Apply(headOnly);
 				}

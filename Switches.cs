@@ -68,6 +68,9 @@ namespace CTC.CvsntGitImporter
 		public string NobodyEmail { get; set; }
 
 
+		[SwitchDef(LongSwitch="--include", ValueDescription="regex", Description="A pattern to match files to include")]
+		public ObservableCollection<string> IncludeFile { get; set; }
+
 		[SwitchDef(LongSwitch="--exclude", ValueDescription="regex", Description="A pattern to match files to exclude")]
 		public ObservableCollection<string> ExcludeFile { get; set; }
 
@@ -105,6 +108,7 @@ namespace CTC.CvsntGitImporter
 			Config = new ObservableCollection<string>();
 			Config.CollectionChanged += Config_CollectionChanged;
 
+			IncludeFile = new ObservableCollection<string>();
 			ExcludeFile = new ObservableCollection<string>();
 			HeadOnly = new ObservableCollection<string>();
 			IncludeTag = new ObservableCollection<string>();

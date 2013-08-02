@@ -90,7 +90,7 @@ namespace CTC.CvsntGitImporter
 		{
 			var parser = new CvsLogParser(m_config.Sandbox, m_config.CvsLogFileName, m_config.BranchMatcher);
 			var builder = new CommitBuilder(m_log, parser.Parse());
-			var exclusionFilter = new ExclusionFilter(m_log, m_config.FileMatcher, m_config.HeadOnlyMatcher, m_config.BranchRename);
+			var exclusionFilter = new ExclusionFilter(m_log, m_config);
 
 			IEnumerable<Commit> commits = builder.GetCommits()
 					.SplitMultiBranchCommits()
@@ -102,7 +102,7 @@ namespace CTC.CvsntGitImporter
 
 			// build lookup of all files
 			var allFiles = new FileCollection(parser.Files);
-			var includedFiles = new FileCollection(parser.Files.Where(f => m_config.FileMatcher.Match(f.Name)));
+			var includedFiles = new FileCollection(parser.Files.Where(f => m_config.IncludeFile(f.Name)));
 
 			WriteAllCommitsLog(commits);
 			WriteExcludedFileLog(parser);
@@ -241,14 +241,14 @@ namespace CTC.CvsntGitImporter
 			{
 				var files = parser.Files
 						.Select(f => f.Name)
-						.Where(f => !m_config.FileMatcher.Match(f) && !m_config.HeadOnlyMatcher.Match(f))
+						.Where(f => !m_config.IncludeFile(f))
 						.OrderBy(i => i, StringComparer.OrdinalIgnoreCase);
 
 				m_log.WriteDebugFile("excluded_files.log", files);
 
 				var headOnly = parser.Files
 						.Select(f => f.Name)
-						.Where(f => m_config.HeadOnlyMatcher.Match(f))
+						.Where(f => m_config.IsHeadOnly(f))
 						.OrderBy(i => i, StringComparer.OrdinalIgnoreCase);
 
 				m_log.WriteDebugFile("headonly_files.log", headOnly);

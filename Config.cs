@@ -14,23 +14,31 @@ using CTC.CvsntGitImporter.Utils;
 
 namespace CTC.CvsntGitImporter
 {
-	class Config
+	class Config : IConfig
 	{
 		private readonly Switches m_switches;
 		private readonly string m_debugLogDir;
 		private User m_nobody;
 		private UserMap m_userMap;
+		private readonly InclusionMatcher m_fileMatcher = new InclusionMatcher();
+		private readonly InclusionMatcher m_headOnlyMatcher = new InclusionMatcher() { Default = false };
+
 
 		public Config(Switches switches)
 		{
 			m_switches = switches;
 			m_debugLogDir = Path.Combine(Environment.CurrentDirectory, "DebugLogs");
 
+			TagMatcher = new InclusionMatcher();
+			TagRename = new Renamer();
+			BranchMatcher = new InclusionMatcher();
+			BranchRename = new Renamer();
+
 			BranchRename.AddRule(new RenameRule("^MAIN$", "master"));
 
-			ObserveCollection(m_switches.ExcludeFile, x => AddIncludeRule(FileMatcher, false, x));
-			ObserveCollection(m_switches.HeadOnly, x => AddIncludeRule(FileMatcher, false, x));
-			ObserveCollection(m_switches.HeadOnly, x => AddIncludeRule(HeadOnlyMatcher, true, x));
+			ObserveCollection(m_switches.IncludeFile, x => AddIncludeRule(m_fileMatcher, true, x));
+			ObserveCollection(m_switches.ExcludeFile, x => AddIncludeRule(m_fileMatcher, false, x));
+			ObserveCollection(m_switches.HeadOnly, x => AddIncludeRule(m_headOnlyMatcher, true, x));
 			ObserveCollection(m_switches.IncludeTag, x => AddIncludeRule(TagMatcher, true, x));
 			ObserveCollection(m_switches.ExcludeTag, x => AddIncludeRule(TagMatcher, false, x));
 			ObserveCollection(m_switches.IncludeBranch, x => AddIncludeRule(BranchMatcher, true, x));
@@ -200,21 +208,28 @@ namespace CTC.CvsntGitImporter
 		#region File inclusion
 
 		/// <summary>
-		/// The matcher for files.
-		/// </summary>
-		public readonly InclusionMatcher FileMatcher = new InclusionMatcher();
-
-		/// <summary>
-		/// The matcher for latest-only files.
-		/// </summary>
-		public readonly InclusionMatcher HeadOnlyMatcher = new InclusionMatcher() { Default = false };
-
-		/// <summary>
 		/// The branches to import "head-only" files for.
 		/// </summary>
 		public IEnumerable<string> HeadOnlyBranches
 		{
 			get { return m_switches.HeadOnlyBranches ?? Enumerable.Empty<string>(); }
+		}
+
+		/// <summary>
+		/// Should a file be imported?
+		/// </summary>
+		/// <remarks>Excludes files that are "head-only"</remarks>
+		public bool IncludeFile(string filename)
+		{
+			return m_fileMatcher.Match(filename) && !m_headOnlyMatcher.Match(filename);
+		}
+
+		/// <summary>
+		/// Is a file a "head-only" file, i.e. one whose head revision only should be imported?
+		/// </summary>
+		public bool IsHeadOnly(string filename)
+		{
+			return m_fileMatcher.Match(filename) && m_headOnlyMatcher.Match(filename);
 		}
 
 		#endregion
@@ -238,12 +253,12 @@ namespace CTC.CvsntGitImporter
 		/// <summary>
 		/// The matcher for tags.
 		/// </summary>
-		public readonly InclusionMatcher TagMatcher = new InclusionMatcher();
+		public InclusionMatcher TagMatcher { get; private set; }
 
 		/// <summary>
 		/// The renamer for tags.
 		/// </summary>
-		public readonly Renamer TagRename = new Renamer();
+		public Renamer TagRename { get; private set; }
 
 		#endregion Tags
 
@@ -258,12 +273,12 @@ namespace CTC.CvsntGitImporter
 		/// <summary>
 		/// The matcher for branches.
 		/// </summary>
-		public readonly InclusionMatcher BranchMatcher = new InclusionMatcher();
+		public InclusionMatcher BranchMatcher { get; private set; }
 
 		/// <summary>
 		/// The renamer for tags.
 		/// </summary>
-		public readonly Renamer BranchRename = new Renamer();
+		public Renamer BranchRename { get; private set; }
 
 		#endregion Branches
 
