@@ -20,7 +20,7 @@ import.conf, to go along with it:
         default-domain example.com
         nobody-name    nobody
 
-Run
+Ensure that git is on the path and run
 
     CvsntGitImporter -C import.conf
 
@@ -120,17 +120,19 @@ attempt to find a commit that represents the state at a particular tag.
 Sometimes, this is not immediately possible, particularly when tags have been
 moved or made on a tree that is only partially up to date. The importer will
 attempt to reorder and split up commits in these cases to find a suitable
-commit.
+commit. However, if the tag is too far away from being a snapshot in time of
+the tree, then it will probably fail to be resolved.
 
 Branches can be resolved in a similar way to tags, but it is less reliable,
-partocularly if files have been added on the branch. In some cases it is not
+particularly if files have been added on the branch. In some cases it is not
 possible to determine that a file has been added on the branch at a later point
 after the branch was made, rather than being there when the branch was made. For
 this reason, if possible, use the *branchpoint-rule* option to specify a tag
 that points to the point at which the branch was made, assuming that you created
 such tags.
 
-**Note, tags and branches made on subsets of the CVS tree are not supported.**
+**Note, partial tags and branches (i.e. those made on a subset of the CVS tree)
+are not supported.**
 
 ## Users ##
 

@@ -107,6 +107,11 @@ namespace CTC.CvsntGitImporter
 		Renamer TagRename { get; }
 
 		/// <summary>
+		/// The tag to mark imports with.
+		/// </summary>
+		string MarkerTag { get; }
+
+		/// <summary>
 		/// A rule to translate branch names into branchpoint tag names if specified, otherwise null.
 		/// </summary>
 		RenameRule BranchpointRule { get; }

@@ -54,6 +54,9 @@ namespace CTC.CvsntGitImporter
 		[SwitchDef(LongSwitch = "--partial-tag-threshold", Description = "The number of untagged files encountered before a tag is declared to be a partial tag. Set to zero to disable partial tag detection")]
 		public uint? PartialTagThreshold { get; set; }
 
+		[SwitchDef(LongSwitch = "--import-marker-tag", Description = "The tag to mark the import with")]
+		public string MarkerTag { get; set; }
+
 
 		[SwitchDef(LongSwitch="--default-domain", Description="The default domain name to use for unknown users")]
 		public string DefaultDomain { get; set; }
@@ -188,7 +191,7 @@ namespace CTC.CvsntGitImporter
 				{
 					// switch with an argument
 					yield return String.Format("--{0}", match.Groups[1].Value);
-					yield return match.Groups[2].Value.Trim();
+					yield return Unquote(match.Groups[2].Value.Trim());
 				}
 				else if (!Regex.IsMatch(line, @"\s"))
 				{
@@ -207,6 +210,15 @@ namespace CTC.CvsntGitImporter
 			// Parse config files as they're encountered
 			if (e.Action == NotifyCollectionChangedAction.Add)
 				ParseConfigFile(e.NewItems[0] as string);
+		}
+
+		static string Unquote(string value)
+		{
+			if (value == null)
+				return null;
+
+			var match = Regex.Match(value, @"^\s*""(.*)""\s*$");
+			return match.Success ? match.Groups[1].Value : value;
 		}
 	}
 }
