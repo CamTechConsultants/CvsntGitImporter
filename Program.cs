@@ -220,7 +220,7 @@ namespace CTC.CvsntGitImporter
 		private static void Import()
 		{
 			// do the import
-			ICvsRepository repository = new CvsRepository(m_config.Sandbox);
+			ICvsRepository repository = new CvsRepository(m_log, m_config.Sandbox);
 			if (m_config.CvsCache != null)
 				repository = new CvsRepositoryCache(m_config.CvsCache, repository);
 
