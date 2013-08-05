@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using CTC.CvsntGitImporter.Win32;
 
@@ -78,9 +79,13 @@ namespace CTC.CvsntGitImporter
 				using (m_log.Indent())
 				{
 					int count = 0;
+					Commit lastMainCommit = null;
 					foreach (var commit in m_player.Play())
 					{
 						ImportCommit(commit);
+
+						if (commit.Branch == "MAIN")
+							lastMainCommit = commit;
 
 						count++;
 						if (printProgress)
@@ -91,6 +96,9 @@ namespace CTC.CvsntGitImporter
 						Console.Out.WriteLine();
 
 					ImportTags();
+
+					if (lastMainCommit != null && m_config.MarkerTag != null)
+						ImportTag(m_config.MarkerTag, lastMainCommit);
 				}
 
 				m_log.WriteLine();
@@ -216,13 +224,18 @@ namespace CTC.CvsntGitImporter
 					continue;
 
 				var tagName = renamer.Process(kvp.Key);
-				m_log.WriteLine("Tag {0}: {1}/{2}", tagName, commit.CommitId, commit.Index);
-
-				WriteLine("tag {0}", tagName);
-				WriteLine("from :{0}", commit.Index);
-				WriteLine("tagger {0} {1}", WriteUser(m_config.Nobody), UnixTime.FromDateTime(commit.Time));
-				WriteData(FileContentData.Empty);
+				ImportTag(tagName, commit);
 			}
+		}
+
+		private void ImportTag(string tagName, Commit commit)
+		{
+			m_log.WriteLine("Tag {0}: {1}/{2}", tagName, commit.CommitId, commit.Index);
+
+			WriteLine("tag {0}", tagName);
+			WriteLine("from :{0}", commit.Index);
+			WriteLine("tagger {0} {1}", WriteUser(m_config.Nobody), UnixTime.FromDateTime(commit.Time));
+			WriteData(FileContentData.Empty);
 		}
 
 		private string WriteUser(User user)

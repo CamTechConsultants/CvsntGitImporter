@@ -81,5 +81,23 @@ namespace CTC.CvsntGitImporter.TestCode
 				Assert.AreEqual(sandbox, switches.Sandbox);
 			}
 		}
+
+		[TestMethod]
+		public void MarkerTag_LeftBlank()
+		{
+			using (var temp = new TempDir())
+			{
+				var confFileName = temp.GetPath("test.conf");
+				File.WriteAllText(confFileName, "import-marker-tag  \"\"\r\n");
+
+				var sandbox = temp.GetPath("sandbox");
+				Directory.CreateDirectory(sandbox);
+
+				var switches = new Switches();
+				switches.Parse("-C", confFileName, "--sandbox", sandbox);
+
+				Assert.AreEqual(switches.MarkerTag, "");
+			}
+		}
 	}
 }

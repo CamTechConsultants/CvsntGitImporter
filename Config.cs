@@ -260,6 +260,22 @@ namespace CTC.CvsntGitImporter
 		/// </summary>
 		public Renamer TagRename { get; private set; }
 
+		/// <summary>
+		/// The tag to mark imports with.
+		/// </summary>
+		public string MarkerTag
+		{
+			get
+			{
+				if (m_switches.MarkerTag == null)
+					return "cvs-import";
+				else if (m_switches.MarkerTag.Length == 0)
+					return null;
+				else
+					return m_switches.MarkerTag;
+			}
+		}
+
 		#endregion Tags
 
 

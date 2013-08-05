@@ -224,6 +224,44 @@ namespace CTC.CvsntGitImporter.TestCode
 		#endregion RenameTag/RenameBranch
 
 
+		#region MarkerTag
+
+		[TestMethod]
+		public void MarkerTag_Unspecified_SetToDefault()
+		{
+			var switches = new Switches();
+			var config = new Config(switches);
+
+			switches.MarkerTag = null;
+
+			Assert.AreEqual(config.MarkerTag, "cvs-import");
+		}
+
+		[TestMethod]
+		public void MarkerTag_Specified()
+		{
+			var switches = new Switches();
+			var config = new Config(switches);
+
+			switches.MarkerTag = "blah";
+
+			Assert.AreEqual(config.MarkerTag, "blah");
+		}
+
+		[TestMethod]
+		public void MarkerTag_LeftBlank()
+		{
+			var switches = new Switches();
+			var config = new Config(switches);
+
+			switches.MarkerTag = "";
+
+			Assert.IsNull(config.MarkerTag);
+		}
+
+		#endregion
+
+
 		#region Nobody
 
 		[TestMethod]
