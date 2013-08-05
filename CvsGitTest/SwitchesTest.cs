@@ -64,7 +64,7 @@ namespace CTC.CvsntGitImporter.TestCode
 		}
 
 		[TestMethod]
-		public void ConfDir_VerifyNotCalledUntilAllSwitchesProcessed()
+		public void ConfFile_VerifyNotCalledUntilAllSwitchesProcessed()
 		{
 			using (var temp = new TempDir())
 			{
