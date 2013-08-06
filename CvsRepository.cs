@@ -18,11 +18,13 @@ namespace CTC.CvsntGitImporter
 	/// </summary>
 	class CvsRepository : ICvsRepository
 	{
+		private readonly ILogger m_log;
 		private readonly string m_sandboxPath;
 		private readonly Task m_ensureAllDirectories;
 
-		public CvsRepository(string sandboxPath)
+		public CvsRepository(ILogger log, string sandboxPath)
 		{
+			m_log = log;
 			m_sandboxPath = sandboxPath;
 			
 			// start the CVS update command that ensures that all empty directories are created
@@ -44,7 +46,7 @@ namespace CTC.CvsntGitImporter
 		/// </summary>
 		private async Task EnsureAllDirectories()
 		{
-			await Task.Factory.StartNew(() => InvokeCvs("-f", "-Q", "update", "-d"));
+			await Task.Factory.StartNew(() => InvokeCvs("-f", "-q", "update", "-d"));
 		}
 
 		private void InvokeCvs(params string[] args)
@@ -71,17 +73,44 @@ namespace CTC.CvsntGitImporter
 			process.ErrorDataReceived += (_, e) =>
 			{
 				if (e.Data != null)
-					error.Append(e.Data);
+					error.AppendLine(e.Data);
+			};
+
+			var output = new StringBuilder();
+			process.OutputDataReceived += (_, e) =>
+			{
+				if (e.Data != null)
+					output.AppendLine(e.Data);
 			};
 
 			process.Start();
 			process.BeginErrorReadLine();
+			process.BeginOutputReadLine();
 			process.WaitForExit();
 
-			if (error.Length > 0)
-				throw new CvsException(String.Format("CVS call failed: {0}", error));
-			else if (process.ExitCode != 0)
-				throw new CvsException(String.Format("CVS exited with exit code {0}", process.ExitCode));
+			if (error.Length > 0 || process.ExitCode != 0)
+			{
+				m_log.DoubleRuleOff();
+				m_log.WriteLine("Cvs command failed");
+				m_log.WriteLine("Command: cvs {0}", quotedArguments);
+
+				if (error.Length > 0)
+				{
+					m_log.RuleOff();
+					m_log.WriteLine("Error:");
+					m_log.WriteLine("{0}", error);
+				}
+
+				if (output.Length > 0)
+				{
+					m_log.RuleOff();
+					m_log.WriteLine("Output:");
+					m_log.WriteLine("{0}", output);
+				}
+			}
+
+			if (process.ExitCode != 0)
+				throw new CvsException(String.Format("CVS exited with exit code {0} (see debug log for details)", process.ExitCode));
 		}
 	}
 }

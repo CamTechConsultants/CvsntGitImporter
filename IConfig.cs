@@ -46,6 +46,11 @@ namespace CTC.CvsntGitImporter
 		string GitDir { get; }
 
 		/// <summary>
+		/// Gets any configuration options to apply to the new repository.
+		/// </summary>
+		IEnumerable<GitConfigOption> GitConfig { get; }
+
+		/// <summary>
 		/// Should we repack the git repository after import?
 		/// </summary>
 		bool Repack { get; }

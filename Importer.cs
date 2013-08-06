@@ -132,7 +132,7 @@ namespace CTC.CvsntGitImporter
 			else
 			{
 				m_git = new GitRepo(m_log, m_config.GitDir);
-				m_git.Init();
+				m_git.Init(m_config.GitConfig);
 				return m_git.StartImport();
 			}
 		}

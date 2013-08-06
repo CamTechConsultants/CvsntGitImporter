@@ -5,6 +5,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using CTC.CvsntGitImporter.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -124,6 +125,49 @@ namespace CTC.CvsntGitImporter.TestCode
 		#endregion CvsProcesses
 
 
+		#region GitConfigSet/GitConfigAdd
+
+		[TestMethod]
+		public void GitConfigSet_AddedToCollection()
+		{
+			var switches = new Switches();
+			var config = new Config(switches);
+
+			switches.GitConfigSet.Add("name=value");
+			var option = config.GitConfig.Single();
+
+			Assert.AreEqual(option.Name, "name");
+			Assert.AreEqual(option.Value, "value");
+			Assert.IsFalse(option.Add);
+		}
+
+		[TestMethod]
+		public void GitConfigAdd_AddedToCollection()
+		{
+			var switches = new Switches();
+			var config = new Config(switches);
+
+			switches.GitConfigAdd.Add("name=value");
+			var option = config.GitConfig.Single();
+
+			Assert.AreEqual(option.Name, "name");
+			Assert.AreEqual(option.Value, "value");
+			Assert.IsTrue(option.Add);
+		}
+
+		[TestMethod]
+		[ExpectedException(typeof(CommandLineArgsException))]
+		public void GitConfigSet_InvalidValue()
+		{
+			var switches = new Switches();
+			var config = new Config(switches);
+
+			switches.GitConfigAdd.Add("blah");
+		}
+
+		#endregion GitConfigSet/GitConfigAdd
+
+
 		#region IncludeFile/IsHeadOnly
 
 		[TestMethod]
@@ -146,6 +190,16 @@ namespace CTC.CvsntGitImporter.TestCode
 		}
 
 		[TestMethod]
+		public void IncludeFile_CaseInsensitive()
+		{
+			var switches = new Switches();
+			var config = new Config(switches);
+			config.ParseCommandLineSwitches("--sandbox", Path.GetTempPath(), "--include", "^file2");
+
+			Assert.IsTrue(config.IncludeFile("File2"));
+		}
+
+		[TestMethod]
 		public void IsHeadOnly_DefaultIsFalse()
 		{
 			var config = new Config(new Switches());
@@ -161,6 +215,17 @@ namespace CTC.CvsntGitImporter.TestCode
 
 			Assert.IsFalse(config.IsHeadOnly("file1"));
 			Assert.IsTrue(config.IsHeadOnly("file2"));
+		}
+
+		[TestMethod]
+		public void IsHeadOnly_CaseInsensitive()
+		{
+			var switches = new Switches();
+			var config = new Config(switches);
+			config.ParseCommandLineSwitches("--sandbox", Path.GetTempPath(), "--head-only", "^file", "--include", "^file2");
+
+			Assert.IsFalse(config.IsHeadOnly("File1"));
+			Assert.IsTrue(config.IsHeadOnly("File2"));
 		}
 
 		#endregion IncludeFile/IsHeadOnly

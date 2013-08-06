@@ -4,6 +4,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -31,7 +32,7 @@ namespace CTC.CvsntGitImporter
 		/// Initialise the repository.
 		/// </summary>
 		/// <exception cref="IOException">there was an error creating the repository</exception>
-		public void Init()
+		public void Init(IEnumerable<GitConfigOption> options)
 		{
 			try
 			{
@@ -39,6 +40,15 @@ namespace CTC.CvsntGitImporter
 					Directory.CreateDirectory(m_dir);
 
 				RunGitProcess("Git init", "init --bare");
+
+				foreach (var option in options)
+				{
+					var name = EscapeConfigValue(option.Name);
+					var value = EscapeConfigValue(option.Value);
+					var addString = option.Add ? " --add" : "";
+
+					RunGitProcess("Git config", String.Format("config{0} \"{1}\" \"{2}\"", addString, name, value));
+				}
 			}
 			catch (UnauthorizedAccessException uae)
 			{
@@ -170,6 +180,11 @@ namespace CTC.CvsntGitImporter
 				else
 					throw new IOException(String.Format("{0} failed with exit code {1}", description, git.ExitCode));
 			}
+		}
+
+		private static string EscapeConfigValue(string x)
+		{
+			return x.Replace("\\", @"\\").Replace("\"", @"\""");
 		}
 	}
 }

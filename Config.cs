@@ -20,8 +20,9 @@ namespace CTC.CvsntGitImporter
 		private readonly string m_debugLogDir;
 		private User m_nobody;
 		private UserMap m_userMap;
-		private readonly InclusionMatcher m_fileMatcher = new InclusionMatcher();
-		private readonly InclusionMatcher m_headOnlyMatcher = new InclusionMatcher() { Default = false };
+		private List<GitConfigOption> m_gitConfigOptions;
+		private readonly InclusionMatcher m_fileMatcher = new InclusionMatcher(ignoreCase: true);
+		private readonly InclusionMatcher m_headOnlyMatcher = new InclusionMatcher(ignoreCase: true) { Default = false };
 
 
 		public Config(Switches switches)
@@ -29,21 +30,26 @@ namespace CTC.CvsntGitImporter
 			m_switches = switches;
 			m_debugLogDir = Path.Combine(Environment.CurrentDirectory, "DebugLogs");
 
-			TagMatcher = new InclusionMatcher();
-			TagRename = new Renamer();
-			BranchMatcher = new InclusionMatcher();
-			BranchRename = new Renamer();
+			ObserveCollection(m_switches.GitConfigSet, x => AddGitConfigOption(x, add: false));
+			ObserveCollection(m_switches.GitConfigAdd, x => AddGitConfigOption(x, add: true));
 
+			TagMatcher = new InclusionMatcher(ignoreCase: false);
+			TagRename = new Renamer();
+
+			BranchMatcher = new InclusionMatcher(ignoreCase: false);
+			BranchRename = new Renamer();
 			BranchRename.AddRule(new RenameRule("^MAIN$", "master"));
 
-			ObserveCollection(m_switches.IncludeFile, x => AddIncludeRule(m_fileMatcher, true, x));
-			ObserveCollection(m_switches.ExcludeFile, x => AddIncludeRule(m_fileMatcher, false, x));
-			ObserveCollection(m_switches.HeadOnly, x => AddIncludeRule(m_headOnlyMatcher, true, x));
-			ObserveCollection(m_switches.IncludeTag, x => AddIncludeRule(TagMatcher, true, x));
-			ObserveCollection(m_switches.ExcludeTag, x => AddIncludeRule(TagMatcher, false, x));
-			ObserveCollection(m_switches.IncludeBranch, x => AddIncludeRule(BranchMatcher, true, x));
-			ObserveCollection(m_switches.ExcludeBranch, x => AddIncludeRule(BranchMatcher, false, x));
+			ObserveCollection(m_switches.IncludeFile, x => AddIncludeRule(m_fileMatcher, x, include: true));
+			ObserveCollection(m_switches.ExcludeFile, x => AddIncludeRule(m_fileMatcher, x, include: false));
+			ObserveCollection(m_switches.HeadOnly, x => AddIncludeRule(m_headOnlyMatcher, x, include:true));
+
+			ObserveCollection(m_switches.IncludeTag, x => AddIncludeRule(TagMatcher, x, include: true));
+			ObserveCollection(m_switches.ExcludeTag, x => AddIncludeRule(TagMatcher, x, include: false));
 			ObserveCollection(m_switches.RenameTag, x => AddRenameRule(TagRename, x));
+
+			ObserveCollection(m_switches.IncludeBranch, x => AddIncludeRule(BranchMatcher, x, include: true));
+			ObserveCollection(m_switches.ExcludeBranch, x => AddIncludeRule(BranchMatcher, x, include: false));
 			ObserveCollection(m_switches.RenameBranch, x => AddRenameRule(BranchRename, x));
 		}
 
@@ -119,6 +125,14 @@ namespace CTC.CvsntGitImporter
 		public string GitDir
 		{
 			get { return m_switches.GitDir; }
+		}
+
+		/// <summary>
+		/// Gets any configuration options to apply to the new repository.
+		/// </summary>
+		public IEnumerable<GitConfigOption> GitConfig
+		{
+			get { return m_gitConfigOptions ?? Enumerable.Empty<GitConfigOption>(); }
 		}
 
 		/// <summary>
@@ -299,16 +313,31 @@ namespace CTC.CvsntGitImporter
 		#endregion Branches
 
 
-		private void AddIncludeRule(InclusionMatcher matcher, bool include, string pattern)
+		private void AddGitConfigOption(string x, bool add)
 		{
 			try
 			{
-				var regex = new Regex(pattern);
+				var option = GitConfigOption.Parse(x, add);
 
-				if (include)
-					matcher.AddIncludeRule(regex);
+				if (m_gitConfigOptions == null)
+					m_gitConfigOptions = new List<GitConfigOption>() { option };
 				else
-					matcher.AddExcludeRule(regex);
+					m_gitConfigOptions.Add(option);
+			}
+			catch (ArgumentException ae)
+			{
+				throw new CommandLineArgsException("Invalid git option: {0}", ae.Message);
+			}
+		}
+
+		private void AddIncludeRule(InclusionMatcher matcher, string pattern, bool include)
+		{
+			try
+			{
+				if (include)
+					matcher.AddIncludeRule(pattern);
+				else
+					matcher.AddExcludeRule(pattern);
 			}
 			catch (ArgumentException)
 			{
