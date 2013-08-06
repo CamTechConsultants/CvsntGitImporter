@@ -42,6 +42,12 @@ namespace CTC.CvsntGitImporter
 		[SwitchDef(LongSwitch="--gitdir", ValueDescription="dir", Description="The directory to create the git repository in. Must not exist or be empty")]
 		public string GitDir { get; set; }
 
+		[SwitchDef(LongSwitch="--git-config-set", ValueDescription="name=value", Description="Sets a git option in the repository. The argument is in the form name=value")]
+		public ObservableCollection<string> GitConfigSet { get; set; }
+
+		[SwitchDef(LongSwitch="--git-config-add", ValueDescription="name=value", Description="Adds a git option in the repository. The argument is in the form name=value")]
+		public ObservableCollection<string> GitConfigAdd { get; set; }
+
 		[SwitchDef(LongSwitch="--repack", Description="Repack the repository after the import")]
 		public bool Repack { get; set; }
 
@@ -111,14 +117,19 @@ namespace CTC.CvsntGitImporter
 			Config = new ObservableCollection<string>();
 			Config.CollectionChanged += Config_CollectionChanged;
 
+			GitConfigSet = new ObservableCollection<string>();
+			GitConfigAdd = new ObservableCollection<string>();
+
 			IncludeFile = new ObservableCollection<string>();
 			ExcludeFile = new ObservableCollection<string>();
 			HeadOnly = new ObservableCollection<string>();
+
 			IncludeTag = new ObservableCollection<string>();
 			ExcludeTag = new ObservableCollection<string>();
+			RenameTag = new ObservableCollection<string>();
+
 			IncludeBranch = new ObservableCollection<string>();
 			ExcludeBranch = new ObservableCollection<string>();
-			RenameTag = new ObservableCollection<string>();
 			RenameBranch = new ObservableCollection<string>();
 		}
 
