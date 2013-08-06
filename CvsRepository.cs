@@ -73,14 +73,14 @@ namespace CTC.CvsntGitImporter
 			process.ErrorDataReceived += (_, e) =>
 			{
 				if (e.Data != null)
-					error.Append(e.Data);
+					error.AppendLine(e.Data);
 			};
 
 			var output = new StringBuilder();
 			process.OutputDataReceived += (_, e) =>
 			{
 				if (e.Data != null)
-					output.Append(e.Data);
+					output.AppendLine(e.Data);
 			};
 
 			process.Start();
@@ -109,9 +109,7 @@ namespace CTC.CvsntGitImporter
 				}
 			}
 
-			if (error.Length > 0)
-				throw new CvsException(String.Format("CVS failed: {0}", error));
-			else if (process.ExitCode != 0)
+			if (process.ExitCode != 0)
 				throw new CvsException(String.Format("CVS exited with exit code {0} (see debug log for details)", process.ExitCode));
 		}
 	}
