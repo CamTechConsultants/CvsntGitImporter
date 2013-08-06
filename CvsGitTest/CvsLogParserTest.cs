@@ -104,8 +104,8 @@ namespace CTC.CvsntGitImporter.TestCode
 		[TestMethod]
 		public void ExcludeBranches()
 		{
-			m_branchMatcher.AddExcludeRule(new Regex(@"^branch2"));
-			m_branchMatcher.AddIncludeRule(new Regex(@"^branch1"));
+			m_branchMatcher.AddExcludeRule(@"^branch2");
+			m_branchMatcher.AddIncludeRule(@"^branch1");
 
 			var parser = CreateParser(CvsLogParserResources.Branches);
 			parser.Parse().ToList();

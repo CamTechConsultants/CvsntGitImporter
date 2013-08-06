@@ -16,6 +16,7 @@ namespace CTC.CvsntGitImporter
 	class InclusionMatcher
 	{
 		private readonly List<Rule> m_rules = new List<Rule>();
+		private readonly RegexOptions m_regexOptions;
 
 		/// <summary>
 		/// The default match value if no rules are added. The default is true.
@@ -23,25 +24,38 @@ namespace CTC.CvsntGitImporter
 		public bool Default = true;
 
 		/// <summary>
+		/// Should this matcher ignore case?
+		/// </summary>
+		public readonly bool IgnoreCase;
+
+		public InclusionMatcher(bool ignoreCase = false)
+		{
+			IgnoreCase = ignoreCase;
+			m_regexOptions = ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None;
+		}
+
+		/// <summary>
 		/// Add a rule that includes items if it matches.
 		/// </summary>
-		public void AddIncludeRule(Regex regex)
+		/// <exception cref="ArgumentException">the regex pattern is invalid</exception>
+		public void AddIncludeRule(string regex)
 		{
 			if (m_rules.Count == 0)
-				m_rules.Add(new Rule(new Regex("."), false));
+				m_rules.Add(MakeRule(".", false));
 
-			m_rules.Add(new Rule(regex, true));
+			m_rules.Add(MakeRule(regex, true));
 		}
 
 		/// <summary>
 		/// Add a rule that excludes items if it matches.
 		/// </summary>
-		public void AddExcludeRule(Regex regex)
+		/// <exception cref="ArgumentException">the regex pattern is invalid</exception>
+		public void AddExcludeRule(string regex)
 		{
 			if (m_rules.Count == 0)
-				m_rules.Add(new Rule(new Regex("."), true));
+				m_rules.Add(MakeRule(".", true));
 
-			m_rules.Add(new Rule(regex, false));
+			m_rules.Add(MakeRule(regex, false));
 		}
 
 		/// <summary>
@@ -52,6 +66,10 @@ namespace CTC.CvsntGitImporter
 			return m_rules.Aggregate(Default, (isMatched, rule) => rule.Match(item, isMatched));
 		}
 
+		private Rule MakeRule(string regex, bool include)
+		{
+			return new Rule(new Regex(regex, m_regexOptions), include);
+		}
 
 		private class Rule
 		{

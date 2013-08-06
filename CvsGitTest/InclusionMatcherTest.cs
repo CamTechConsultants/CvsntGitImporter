@@ -20,7 +20,7 @@ namespace CTC.CvsntGitImporter.TestCode
 		public void AddIncludeRuleFirst_ExcludesByDefault()
 		{
 			var matcher = new InclusionMatcher();
-			matcher.AddIncludeRule(new Regex(@"xx"));
+			matcher.AddIncludeRule(@"xx");
 
 			var result = matcher.Match("blah");
 			Assert.IsFalse(result);
@@ -30,7 +30,7 @@ namespace CTC.CvsntGitImporter.TestCode
 		public void AddExcludeRuleFirst_IncludesByDefault()
 		{
 			var matcher = new InclusionMatcher();
-			matcher.AddExcludeRule(new Regex(@"xx"));
+			matcher.AddExcludeRule(@"xx");
 
 			var result = matcher.Match("blah");
 			Assert.IsTrue(result);
@@ -40,8 +40,8 @@ namespace CTC.CvsntGitImporter.TestCode
 		public void AddExcludeThenInclude_Matches()
 		{
 			var matcher = new InclusionMatcher();
-			matcher.AddExcludeRule(new Regex(@"xx"));
-			matcher.AddIncludeRule(new Regex(@"yy"));
+			matcher.AddExcludeRule(@"xx");
+			matcher.AddIncludeRule(@"yy");
 
 			var result = matcher.Match("aaxx");
 			Assert.IsFalse(result);
@@ -54,14 +54,34 @@ namespace CTC.CvsntGitImporter.TestCode
 		public void AddIncludeThenExclude_Matches()
 		{
 			var matcher = new InclusionMatcher();
-			matcher.AddIncludeRule(new Regex(@"xx"));
-			matcher.AddExcludeRule(new Regex(@"yy"));
+			matcher.AddIncludeRule(@"xx");
+			matcher.AddExcludeRule(@"yy");
 
 			var result = matcher.Match("aaxx");
 			Assert.IsTrue(result);
 
 			result = matcher.Match("xxyy");
 			Assert.IsFalse(result);
+		}
+
+		[TestMethod]
+		public void CaseSensitive_MatchesCase()
+		{
+			var matcher = new InclusionMatcher(ignoreCase: false);
+			matcher.AddIncludeRule(@"xx");
+
+			var result = matcher.Match("XX");
+			Assert.IsFalse(result);
+		}
+
+		[TestMethod]
+		public void CaseInsensitive_IgnoresCase()
+		{
+			var matcher = new InclusionMatcher(ignoreCase: true);
+			matcher.AddIncludeRule(@"xx");
+
+			var result = matcher.Match("XX");
+			Assert.IsTrue(result);
 		}
 	}
 }

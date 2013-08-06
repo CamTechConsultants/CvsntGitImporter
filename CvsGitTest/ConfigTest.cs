@@ -146,6 +146,16 @@ namespace CTC.CvsntGitImporter.TestCode
 		}
 
 		[TestMethod]
+		public void IncludeFile_CaseInsensitive()
+		{
+			var switches = new Switches();
+			var config = new Config(switches);
+			config.ParseCommandLineSwitches("--sandbox", Path.GetTempPath(), "--include", "^file2");
+
+			Assert.IsTrue(config.IncludeFile("File2"));
+		}
+
+		[TestMethod]
 		public void IsHeadOnly_DefaultIsFalse()
 		{
 			var config = new Config(new Switches());
@@ -161,6 +171,17 @@ namespace CTC.CvsntGitImporter.TestCode
 
 			Assert.IsFalse(config.IsHeadOnly("file1"));
 			Assert.IsTrue(config.IsHeadOnly("file2"));
+		}
+
+		[TestMethod]
+		public void IsHeadOnly_CaseInsensitive()
+		{
+			var switches = new Switches();
+			var config = new Config(switches);
+			config.ParseCommandLineSwitches("--sandbox", Path.GetTempPath(), "--head-only", "^file", "--include", "^file2");
+
+			Assert.IsFalse(config.IsHeadOnly("File1"));
+			Assert.IsTrue(config.IsHeadOnly("File2"));
 		}
 
 		#endregion IncludeFile/IsHeadOnly
