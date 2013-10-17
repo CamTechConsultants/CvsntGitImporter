@@ -62,7 +62,35 @@ namespace CTC.CvsntGitImporter
 		private static IEnumerable<string> ReadCvsIgnoreFile(FileContent file)
 		{
 			var content = file.Data.ToString();
-			return Regex.Split(content, @"\s+", RegexOptions.Singleline);
+
+			int start = 0;
+			bool seenEscape = false;
+
+			for (int i = 0; i < content.Length; i++)
+			{
+				if (content[i] == '\\')
+				{
+					seenEscape = !seenEscape;
+				}
+				else
+				{
+					if (Char.IsWhiteSpace(content[i]))
+					{
+						if (!seenEscape)
+						{
+							// end of filename
+							if (start < i)
+								yield return content.Substring(start, i - start);
+							start = i + 1;
+						}
+					}
+
+					seenEscape = false;
+				}
+			}
+
+			if (start < content.Length)
+				yield return content.Substring(start);
 		}
 	}
 }
