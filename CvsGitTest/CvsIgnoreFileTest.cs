@@ -87,6 +87,55 @@ namespace CTC.CvsntGitImporter.TestCode
 		}
 
 		[TestMethod]
+		public void Rewrite_SpaceInFilename()
+		{
+			var cvs = new FileContent(".cvsignore", MakeContents(@"file\ with\ spaces.txt"));
+			var git = CvsIgnoreFile.Rewrite(cvs);
+
+			Assert.AreEqual(git.Name, ".gitignore");
+			var contents = GetContents(git);
+			Assert.AreEqual(contents.Length, 1);
+			Assert.AreEqual(contents[0], @"/file\ with\ spaces.txt");
+		}
+
+		[TestMethod]
+		public void Rewrite_EscapedBackslash()
+		{
+			var cvs = new FileContent(".cvsignore", MakeContents(@"dir\\file.txt"));
+			var git = CvsIgnoreFile.Rewrite(cvs);
+
+			Assert.AreEqual(git.Name, ".gitignore");
+			var contents = GetContents(git);
+			Assert.AreEqual(contents.Length, 1);
+			Assert.AreEqual(contents[0], @"/dir\\file.txt");
+		}
+
+		[TestMethod]
+		public void Rewrite_LeadingSpace()
+		{
+			var cvs = new FileContent(".cvsignore", MakeContents(@"  file.txt"));
+			var git = CvsIgnoreFile.Rewrite(cvs);
+
+			Assert.AreEqual(git.Name, ".gitignore");
+			var contents = GetContents(git);
+			Assert.AreEqual(contents.Length, 1);
+			Assert.AreEqual(contents[0], @"/file.txt");
+		}
+
+		[TestMethod]
+		public void Rewrite_MultipleSpacesBetween()
+		{
+			var cvs = new FileContent(".cvsignore", MakeContents("file1.txt \t file2.txt"));
+			var git = CvsIgnoreFile.Rewrite(cvs);
+
+			Assert.AreEqual(git.Name, ".gitignore");
+			var contents = GetContents(git);
+			Assert.AreEqual(contents.Length, 2);
+			Assert.AreEqual(contents[0], "/file1.txt");
+			Assert.AreEqual(contents[1], "/file2.txt");
+		}
+
+		[TestMethod]
 		public void Rewrite_FileInSubdir()
 		{
 			var cvs = new FileContent("dir1/dir2/.cvsignore", MakeContents("file1"));
